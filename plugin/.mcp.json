@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "confluence": {
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "CONFLUENCE_PERSONAL_TOKEN=$(grep '^CONFLUENCE_TOKEN=' ~~home-folder/work/Secrets/secrets.env | cut -d= -f2-) CONFLUENCE_URL=~~confluence-base-url CONFLUENCE_SSL_VERIFY=true exec uvx mcp-atlassian"
+      ]
+    },
+    "jira": {
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "JIRA_API_TOKEN=$(grep '^JIRA_TOKEN=' ~~home-folder/work/Secrets/secrets.env | cut -d= -f2-) JIRA_USER_EMAIL=$(grep '^JIRA_EMAIL=' ~~home-folder/work/Secrets/secrets.env | cut -d= -f2-) JIRA_BASE_URL=~~jira-base-url JIRA_TYPE=server JIRA_AUTH_TYPE=basic exec node ~~jira-mcp-path/build/index.js"
+      ]
+    }
+  }
+}

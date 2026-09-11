@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Secrets: nothing that looks like a credential, ever
+*.env
+secrets.*
+*.pem
+*.key
+.git-credentials
+# ...except the template with fake values
+!templates/secrets.env.example
+
+# Local editor / scratch
+.idea/
+.vscode/
+*.swp
+*.tmp
+
+# Private working material, not for the public repo
+speaker-notes/
+speech/
+private/
+reviews/
+prompts/
+scripts/
+Claude outputs/
+_to_delete/
+10b-continuity.md
+*.zip
+
+# Ukrainian originals live in docs/uk, the working copies at root stay local
+/0*.md
+/1*.md
