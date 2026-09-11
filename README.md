@@ -2,7 +2,7 @@
 
 **An AI framework and personal operating system for a project manager.**
 
-[Українською](README.uk.md) · [Notion template](https://golden-hygienic-fa1.notion.site/PM-Control-Tower-3d7666a1bdda81e48f11ec424881dc8e) · [Documentation](docs/en/)
+[Українською](README.uk.md) · [Notion template](https://bodco.notion.site/) · [Documentation](docs/en/)
 
 Built over a year on a real fintech delivery project and cleaned up for public use.
 Routine work (collecting context, preparing for meetings, writing reports, tracking
@@ -40,7 +40,7 @@ Knowledge Base, Projects, Workspaces.
 
 A ready-to-duplicate template is published here:
 
-**https://golden-hygienic-fa1.notion.site/PM-Control-Tower-3d7666a1bdda81e48f11ec424881dc8e**
+**https://bodco.notion.site/**
 
 Duplicate it, then point the skills at your own database IDs. The template is fully
 usable on its own, with none of the automation in this repository.
