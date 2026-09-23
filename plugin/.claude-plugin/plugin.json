@@ -1,7 +1,16 @@
 {
   "name": "pm-control-tower",
-  "version": "1.0.0",
-  "description": "Control Tower: a config-driven PM automation library. Twenty one project-agnostic skills for meeting preps, client reports, risk register, board hygiene, mail and Slack collection, backed by a Notion memory hub. All project facts live in one config file per project, never inside the skills.",
-  "author": { "name": "Bohdan Neymet" },
-  "keywords": ["project-management", "notion", "jira", "reporting", "automation", "pm"]
+  "version": "1.1.0",
+  "description": "Control Tower: a config-driven PM automation library. Twenty-one project-agnostic skills for meeting preps, client reports, risk register, board hygiene, mail and Slack collection, backed by a Notion memory hub. All project facts live in one config file per project, never inside the skills.",
+  "author": {
+    "name": "Bohdan Neymet"
+  },
+  "keywords": [
+    "project-management",
+    "notion",
+    "jira",
+    "reporting",
+    "automation",
+    "pm"
+  ]
 }

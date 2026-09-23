@@ -6,14 +6,14 @@
 
 | Шар | Що входить | Як адаптувати |
 |---|---|---|
-| **1. Ядро** | Принципи (`00`, `03`, `11`), `projects/SKILL.md` з правилами реєстру, `projects/_template.md`, шаблон глобальних інструкцій Cowork, структура Notion Control Tower (дублікат шаблону з порожніми базами), цей setup guide | Використовується як є. Змінюються тільки значення у власному конфігу |
-| **2. Генеричні скіли (двигуни)** | `slack-collector`, `mac-mail-collector`, `daily-team-prep`, `client-meeting-prep`, `jira-board-health`, `weekly-overview`, `client-report`, `velocity-report`, `risk-register`, `client-satisfaction-tracker`, `notion-meeting-topics`, `topic-analyzer`, `inbox-responder`, `jira-management`, `sentry-assistant`, `deploy-analysis`, `stability-scan`, `thread-ticket-sync`, промпти scheduled tasks | Працюють без змін, якщо стек такий самий (Jira, Slack, Notion, Gmail, Sentry). Для іншого стеку - адаптаційна матриця нижче |
-| **3. Проєктні адаптери (приклади)** | `acme-debug`, `acme-db-assistant`, `acme-env-audit`, `authorizer-code-review`, `acme-beneficiary-audit`, `calyx-export` тощо, KB-структура (SYSTEM.md, SDLC.md, LESSONS.md) | Не переносяться. Це зразки, як виглядає адаптер під конкретний стек; для свого проєкту робите свої за тим же шаблоном. Шари 1-2 = ядро (~80%), шар 3 = ваші 20% |
+| **1. Ядро** | Принципи (`00`, `03`, `11`), `projects/SKILL.md` з правилами реєстру, `projects/_template.md`, шаблон глобальних інструкцій Cowork, публічний шаблон Notion Control Tower (11 порожніх баз), цей setup guide | Використовується як є. Змінюються тільки значення у власному конфігу |
+| **2. Генеричні скіли (двигуни)** | `slack-collector`, `mac-mail-collector`, `daily-team-prep`, `client-meeting-prep`, `jira-board-health`, `weekly-overview`, `client-report`, `velocity-report`, `risk-register`, `client-satisfaction-tracker`, `notion-meeting-topics`, `topic-manager`, `inbox-responder`, `jira-management`, `sentry-assistant`, `deploy-analysis`, `stability-scan`, `thread-ticket-sync`, `change-request`, `project-lifecycle`, шаблон промпта scheduled task | Працюють без змін, якщо стек такий самий (Jira, Slack, Notion, Gmail, Sentry). Для іншого стеку - адаптаційна матриця нижче |
+| **3. Проєктні адаптери (приклади)** | `acme-debug`, `acme-db-assistant`, `acme-env-audit`, `acme-core-code-review`, `acme-beneficiary-audit`, `<portal>-export` тощо, KB-структура (SYSTEM.md, SDLC.md, LESSONS.md) | Не переносяться. Це зразки, як виглядає адаптер під конкретний стек; для свого проєкту робите свої за тим же шаблоном. Шари 1-2 = ядро (~80%), шар 3 = ваші 20% |
 
 ## Крок 1. Інструменти
 
 1. **Claude Max** (на Pro $20 не тестовано: токенів менше, автопілот може не вміщатись). Увімкнути **Cowork mode** у Claude Desktop (macOS).
-2. **Notion** з увімкненими AI Meeting Notes (транскрипція мітингів). План: Plus/Business; SQL-запити до баз через MCP потребують Enterprise, фреймворк їх не використовує.
+2. **Notion** з AI Meeting Notes (транскрипція мітингів). План Plus/Business плюс Notion AI як платний додаток: без нього немає транскриптів, а отже і Meetings → Topics. SQL-запити до баз через MCP потребують Enterprise, фреймворк їх не використовує.
 3. Опційно: **Gemini Desktop** (Spark) для шару 5.
 
 ## Крок 2. MCP-конектори
@@ -22,8 +22,8 @@
 |---|---|---|
 | Slack, Notion, Gmail, Google Calendar, Google Drive | офіційні конектори у Claude (Settings → Connectors) | працюють і локально, і в хмарних сесіях |
 | Slack (додатковий воркспейс) | локальний MCP-сервер (`slack-workspace2`), конфіг у Claude Desktop | коли офіційний конектор зайнятий іншим воркспейсом; токен читається з `Secrets/secrets.env` через `sh -c`, у JSON немає секрету |
-| Jira Server / Data Center | локальний MCP-сервер (два варіанти використано: `jira-cosmix` для запису, `jira-rixbeck` для читання), конфіг у Claude Desktop | на Jira Server 7.x запис повертає косметичну помилку JSON, оновлення проходять; Jira Cloud - офіційний Atlassian MCP; токени читаються з `Secrets/secrets.env` через `sh -c`. Два конектори лишені свідомо: один резервний |
-| Confluence Server | локальний MCP-сервер (`confluence-our-company`), конфіг у Claude Desktop | працює; URL `wiki.your-company.com` після міграції домену; токен читається з `Secrets/secrets.env` через `sh -c` |
+| Jira Server / Data Center | локальний MCP-сервер: у `.mcp.json` плагіна він називається `jira`, у конфігу проєкту імена задаються у `jira.mcp_write` / `jira.mcp_read` (автор тримає два сервери: один на запис, один на читання) | на Jira Server 7.x запис повертає косметичну помилку JSON, оновлення проходять; Jira Cloud - офіційний Atlassian MCP; токени читаються з `Secrets/secrets.env` через `sh -c`. Другий сервер лишений свідомо як резервний |
+| Confluence Server | локальний MCP-сервер (`confluence` у `.mcp.json` плагіна), конфіг у Claude Desktop | працює; URL `wiki.your-company.com` після міграції домену; токен читається з `Secrets/secrets.env` через `sh -c` |
 | Control Chrome | локальний MCP-сервер, окремо від конектора Claude in Chrome | керування вкладками реального Chrome на Маку, без токена |
 | Sentry | не MCP: REST API з токеном у конфігу (project:read, event:read, team:read) | self-hosted і SaaS однаково |
 | CloudWatch / інші логи | експорт у папку на диску; Claude читає файли | без прямого AWS-доступу з Cowork |
@@ -37,13 +37,13 @@
 1. Дублювати шаблон сторінки CONTROL TOWER з 11 базами (Inbox, Tasks Tracker, Meetings, Threads, Topics, Knowledge Base, Risks, Reports, Projects, Workspaces, Decisions) або створити за описом у `02-notion-control-tower.md`.
 2. Записати data source ID кожної бази (з URL або через Notion MCP fetch) у майбутній конфіг.
 3. Створити сторінку клієнта у Workspaces і сторінку проєкту у Projects.
-4. Перевірити назви relation-властивостей у Topics (`💬 Meetings`, `📨 Threads`) або привести скіл `topic-analyzer` до своїх назв.
+4. Перевірити, що relation у всіх базах називаються `Project`, `Workspace`, `Meetings`, `Threads`, `Knowledge Base`, `Tasks Tracker`, `Inbox` (без емодзі), статус AI-ревʼю - `AI Review`, а прогрес у Topics - `Progress`: саме ці назви зашиті у двигуни. Якщо ваша схема відрізняється, правте схему, а не двадцять скілів.
 
 ## Крок 4. Пам'ять Claude
 
 1. **Глобальні інструкції Cowork** (Settings → Cowork): блок "PM Workspace" з таблицею проєктів (назва, slug, ключ трекера) і 2-3 правилами (мова звітів, заборонені символи, дефолти). Коротко: усе проєктне живе у конфігу.
 2. **Пам'ять Claude**: 3-5 фактів про себе і стиль (роль, компанія, мова внутрішніх і клієнтських документів).
-3. **Реєстр `projects/`**: завантажити як скіл папку з `SKILL.md`, `_template.md`, `<slug>.md` (Крок 5).
+3. **Реєстр `projects/`**: у плагіні він уже є (`plugin/skills/projects/`), конфіг `<slug>.md` кладеться поруч з `_template.md` до встановлення. У standalone-варіанті папку з `SKILL.md`, `_template.md`, `<slug>.md` завантажують як скіл (Крок 5).
 
 ## Крок 5. Конфіг проєкту
 
@@ -51,10 +51,9 @@
 
 ## Крок 6. Скіли
 
-Стартовий набір на перший день: `daily-team-prep`, `weekly-overview`, `mac-mail-collector`. Логіка: миттєвий ефект без налаштування Sentry, логів і деплоїв. Якщо пошта не в Mail.app, третім іде `slack-collector`.
+Стартовий набір на перший день: `daily-team-prep`, `weekly-overview`, `mac-mail-collector` (або `slack-collector`, якщо пошта не в Mail.app і основний канал - Slack). Логіка: миттєвий ефект без налаштування Sentry, логів і деплоїв. Плюс Notion AI Meeting Notes: це не скіл, але без транскриптів prep-и до мітингів порожні.
 
-
-1. Завантажити генеричні скіли (Settings → Cowork → Skills → Upload). Кожен - папка або `.skill` zip.
+1. Встановити плагін `dist/pm-control-tower.plugin` (розділ "Портативність" нижче). У standalone-варіанті скіли завантажують по одному (Settings → Cowork → Skills → Upload, папка або `.skill` zip).
 2. Прочитати description кожного і за потреби додати свої тригерні слова (мова, сленг команди).
 3. Перевірити один скіл вручну: "збери слак <Project> за минулий тиждень". Дивитись на Threads DB: relation, статуси, іконки.
 4. Далі по одному: prep до мітингу, weekly-overview. Кожен збій - спершу конфіг, потім скіл.
@@ -71,36 +70,36 @@
 
 | Стек колеги | Підхід | Статус (2026-04, оновлено 09) | Складність |
 |---|---|---|---|
-| Confluence Server (документація) | конектор `confluence-our-company`; use-case: meeting-notes-to-confluence, weekly-status-to-confluence, confluence-search-context, decision-log-to-confluence, release-notes-to-confluence | конектор працює, скіли ще не написані | легко |
+| Confluence Server (документація) | локальний MCP `confluence` (блок у `.mcp.json` плагіна); use-case: meeting-notes-to-confluence, weekly-status-to-confluence, confluence-search-context, decision-log-to-confluence, release-notes-to-confluence | конектор працює, скіли ще не написані | легко |
 | Папка з `.md` / Obsidian замість Notion | Cowork читає файли напряму; бази замінюються на папки з frontmatter; втрачаються relation і в'юшки | готово концептуально | легко, але бідніше |
-| Jira Server (задачі) | `jira-cosmix` / `jira-rixbeck` | готово | легко |
+| Jira Server (задачі) | локальний MCP `jira` (у автора два сервери: запис і читання) | готово | легко |
 | Jira Cloud | офіційний Atlassian MCP | не тестовано | легко |
 | Slack + Gmail (комунікації) | офіційні конектори | готово | легко |
 | Microsoft Teams / Outlook | немає готового шляху; варіанти: експорт у файли, браузер | не зроблено | середньо |
 | Azure DevOps / Linear / ClickUp з API | потрібен MCP або REST через скіл; двигуни залишаються, змінюється Step "Data Sources" | не зроблено | середньо |
-| Будь-який трекер клієнта **без API** (Jira Cloud, Linear, Trello, Asana, Monday, клієнтський Notion за SSO/MDM) | `task_tracker.api_access: false` у конфігу; джерела: ручний експорт CSV у `~/work/<slug>/exports/`, браузер (Chrome-скіл за зразком `calyx-export`), action items з Meeting Notes, пошта. Двигуни працюють у режимі деградації | концепція зафіксована, скіли ще не адаптовані | середньо; це найчастіший випадок в аутсорсі |
+| Будь-який трекер клієнта **без API** (Jira Cloud, Linear, Trello, Asana, Monday, клієнтський Notion за SSO/MDM) | `task_tracker.api_access: false` у конфігу; джерела: ручний експорт CSV у `~/work/<slug>/exports/`, браузер (Chrome-скіл за зразком `<portal>-export`), action items з Meeting Notes, пошта. Двигуни працюють у режимі деградації | ключі у `_template.md`, перевірка `api_access` у 14 двигунах; гілка `false` наживо ще не проганялась | середньо; це найчастіший випадок в аутсорсі |
 | Sentry SaaS / Datadog | Sentry так само REST; Datadog - REST зі своїм токеном, треба адаптувати `stability-scan` | частково | середньо |
-| GitHub / GitLab замість Bitbucket | локальні клони працюють однаково; PR-ревʼю через API або локальний diff | готово для локального режиму | легко |
+| GitHub / GitLab / Bitbucket | локальні клони працюють однаково; PR-ревʼю через API або локальний diff | готово для локального режиму | легко |
 | Google Docs замість docx | `client-report` генерує docx; для Docs - через Drive-конектор | не зроблено | легко |
 
 ## Типові помилки при розгортанні
 
 1. Почати зі скілів, а не з конфігу і Notion. Скіли без конфігу брешуть, без Notion їм нікуди писати.
-0. Очікувати від фреймворку "усе як на Acme" на проєкті без API. Спершу визначити `task_tracker.api_access` і `fallback_source`, потім очікування.
-2. Захардкодити факти проєкту у скілі "тимчасово". Через місяць ніхто не пам'ятає, де вони.
-3. Увімкнути 10 scheduled tasks у перший день. Результат: 10 незрозумілих звітів і недовіра до системи. По одному.
-4. Не заходити у Control Tower вранці. Тоді все, що генерується, нікому не потрібне.
-5. Автоматичне надсилання клієнту. Ніколи. Драфти - так, відправка - людина.
-6. Забути про приватність: клієнтський контекст у `.ai/` і у скілах не має потрапляти у репозиторії, до яких має доступ клієнт.
+2. Очікувати від фреймворку "усе як на Acme" на проєкті без API. Спершу визначити `task_tracker.api_access` і `fallback_source`, потім очікування.
+3. Захардкодити факти проєкту у скілі "тимчасово". Через місяць ніхто не пам'ятає, де вони.
+4. Увімкнути 10 scheduled tasks у перший день. Результат: 10 незрозумілих звітів і недовіра до системи. По одному.
+5. Не заходити у Control Tower вранці. Тоді все, що генерується, нікому не потрібне.
+6. Автоматичне надсилання клієнту. Ніколи. Драфти - так, відправка - людина.
+7. Забути про приватність: клієнтський контекст у `.ai/` і у скілах не має потрапляти у репозиторії, до яких має доступ клієнт.
 
 ## Що ви забираєте з собою (артефакти)
 
-- Ця папка Control Tower (документи 00-13).
+- Ця папка Control Tower (документи 00-14).
 - `projects/SKILL.md`, `projects/_template.md`.
 - Набір генеричних скілів (шар 2).
 - Шаблон глобальних інструкцій Cowork.
-- Промпти scheduled tasks (з `~/Documents/Claude/Scheduled/`, знеособлені).
-- Презентація воркшопу (AI_PM_Framework_Workshop, квітень 2026) як вступ.
+- Шаблон промпта scheduled task з `05` (самі задачі колега створює під свій розклад).
+- Презентація для колег (`speaker-notes/`, внутрішня, у публічний пакет не входить) як вступ.
 - Notion: сторінка "Claude Skills & Prompts" як зразок README бібліотеки; PM Toolkit (метрики, шаблони, мітинги) у Knowledge Base.
 
 ## Портативність: як колега піднімає систему в себе
@@ -122,12 +121,13 @@
    натискає кнопку встановлення. Усередині 21 знеособлений скіл, `.mcp.json` з
    блоками Jira і Confluence (без значень секретів), `SETUP.md`, `CONNECTORS.md`.
 2. **Посилання на публічний шаблон Notion.** Колега дублює його собі.
-3. **`templates/secrets.env.example`** (лежить і всередині плагіна): куди класти
+3. **`plugin/templates/secrets.env.example`** (їде всередині плагіна): куди класти
    файл секретів і які змінні заповнити.
 
-Далі колега каже Claude «налаштуй плагін pm-control-tower під мене». Вбудований
-майстер знаходить усі місця, позначені `~~`, і проводить по них питаннями: ID баз
-його Notion, домашня папка, шлях до локального сервера Jira.
+Далі колега каже Claude «налаштуй плагін pm-control-tower під мене». Це штатний
+флоу кастомізації плагінів у Cowork: Claude знаходить усі місця, позначені `~~`, і
+проводить по них питаннями (ID баз його Notion, домашня папка, шлях до локального
+сервера Jira). Значення лягають у копію плагіна колеги, вихідник не змінюється.
 
 ### Що НЕ переноситься
 

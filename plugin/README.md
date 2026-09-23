@@ -50,8 +50,13 @@ period), `change-request` (sorting client asks into scope and hours).
 ## Installation
 
 Step by step in `SETUP.md`. In short: duplicate the Notion template, create a
-secrets file, tell Claude "set up the pm-control-tower plugin for me", and fill
-in the config for your own project.
+secrets file, tell Claude "customize the pm-control-tower plugin for me" (Cowork's
+plugin customization flow fills in the `~~` placeholders), add the config for
+your own project inside the plugin and run the first skills by hand.
+
+Status: version 1.1.0 is the first release that was reviewed end to end against
+the Notion template and the config template, but it has not yet been installed
+by anyone except the author. Expect rough edges and report them.
 
 ## What is deliberately missing
 
@@ -72,7 +77,8 @@ The set travels **whole or not at all**. If you install the plugin and then load
 a separate file with a skill of the same name, the plugin version overrides it,
 and the skill will look for configs somewhere other than where they actually
 sit. This goes for `projects` in particular: there must be exactly one of it in
-the system.
+the system. New project configs are added inside the installed plugin (see
+`SETUP.md`, step 4), never as a separate upload.
 
 If you want to add a skill of your own on top, give it its own name with a
 project prefix, for example `acme-debug`.

@@ -1,6 +1,6 @@
 ---
 name: jira-board-health
-description: "Scans the project's tracker board (project key and statuses come from the project config) for hygiene issues and generates a health report: stale tickets, missing labels, Done without fixVersion, long-blocked items, tickets stuck in status, and active work without an owner. Declines politely when the project has no tracker API. Use this skill whenever the user mentions \"board health\", \"борда\", \"гігієна борди\", \"health check\", \"stale tickets\", \"зависші тікети\", \"перевір борду\", \"review prep\", \"підготовка до рев'ю\", or any request to audit the state of the board. Also triggers as part of the Friday review prep workflow. When triggered, execute immediately - do not ask for confirmation."
+description: "Scans the project's tracker board (project key and statuses come from the project config) for hygiene issues and generates a health report: stale tickets, missing labels, Done without fixVersion, long-blocked items, tickets stuck in status, and active work without an owner. Declines politely when the project has no tracker API. Use this skill whenever the user mentions \"board health\", \"борда\", \"гігієна борди\", \"health check\", \"stale tickets\", \"зависші тікети\", \"перевір борду\", \"review prep\", \"підготовка до рев'ю\", or any request to audit the state of the board. Also when run on a schedule before the weekly review. When triggered, execute immediately - do not ask for confirmation."
 ---
 
 # Board Health Check
@@ -12,7 +12,11 @@ description: "Scans the project's tracker board (project key and statuses come f
    in `projects/`). See the Default Project Rule in `projects/SKILL.md`.
 2. Read the project config `../projects/{project_slug}.md` relative to this skill's
    folder (fallback: Glob `**/projects/{project_slug}.md`).
-3. All values marked `{config.xxx}` come from that config.
+3. All values marked `{config.xxx}` come from that config. Also read `projects/SKILL.md`
+   (cross-cutting rules) and `../projects/_standards.md` section 2: the thresholds
+   (stale days, blocked days, WIP) come from `{config.pm_profile.metrics_profile}` and
+   the catalog; the numbers below are the defaults when the profile is absent, and the
+   report then says `PM Profile: SKIPPED`.
 4. **Check tracker access.** This skill is the one case where degradation is not
    possible: board hygiene is a property of a live board, and a manual export cannot
    tell you what has been sitting untouched for five days.
@@ -38,9 +42,9 @@ is a signal, not an action.
 
 ## Connectors
 
-Use the connectors named in `{config.task_tracker}` / `{config.jira}`: the write/search
-connector for JQL (`search_issues`) and the read connector for full ticket details with
-assignee (`getTask`).
+Use the Jira MCP server named in `{config.jira.mcp_read}` (default `jira`): `search_issues`
+for JQL and `get_issue` for full ticket details with assignee. This skill only reads;
+writes allowed without asking are limited to the report page (5-minute rule).
 
 Watch the config's `known_bug` note: on some servers writes return "Unexpected end of
 JSON input" while actually succeeding. This skill only reads, so it should not hit that.
@@ -51,8 +55,9 @@ Every JQL query MUST start with `project = {config.task_tracker.project_key}`. T
 company tracker is shared across clients; an unscoped query pulls another project's
 tickets into this report and is the worst failure mode of the system.
 
-Status names come from the config's Workflow table, verbatim. Watch the spaces: on acme
-`"On Hold / Blocked"` with spaces around the slash, otherwise JQL returns a 400.
+Status names come from the config's Workflow table, verbatim. Watch the spaces: a status
+like `"On Hold / Blocked"` must be quoted exactly as the table spells it, spaces around
+the slash included, otherwise JQL returns a 400.
 
 ## Health Check Categories
 
@@ -61,15 +66,14 @@ Run these in parallel where possible, then compile into one report.
 ### 1. Tickets without labels
 
 ```
-project = {KEY} AND status != Done AND labels IS EMPTY ORDER BY updated DESC
+project = {KEY} AND status != "{done status}" AND labels IS EMPTY ORDER BY updated DESC
 ```
 
 Invisible in label-based reports and likely miscategorized.
 
 ### 2. Stale active work (no updates > 5 days)
 
-For each status the config's Workflow table marks as active development (on acme:
-`In Progress`, `On Dev`):
+For each status the config's Workflow table marks as "in work":
 
 ```
 project = {KEY} AND status = "{active status}" AND updated <= -5d ORDER BY updated ASC
@@ -80,12 +84,12 @@ Tickets sitting in active statuses without updates may be silently blocked or fo
 ### 3. Done without fixVersion
 
 ```
-project = {KEY} AND status = Done AND fixVersion IS EMPTY AND resolved >= -30d ORDER BY resolved DESC
+project = {KEY} AND status = "{done status}" AND fixVersion IS EMPTY AND resolved >= -30d ORDER BY resolved DESC
 ```
 
-Per the config's fixVersion convention, fixVersion is set when a ticket reaches Done
-(retrospective, by resolved month). Missing fixVersion means the ticket will not appear
-in release reports.
+Only when the config's fixVersion Convention is not `none`: it says when fixVersion is
+set (e.g. retrospectively by resolved month). Missing fixVersion then means the ticket
+will not appear in release reports. With `none`, skip this category with one line.
 
 ### 4. Long-blocked tickets (blocked > 14 days)
 
@@ -122,6 +126,7 @@ PM". Those are expected, not defects: list them separately.
 Generate in Ukrainian:
 
 ```
+Джерела: Jira OK · PM Profile {OK | SKIPPED}
 ## Здоров'я борди {KEY} - [date]
 
 ### Критичні (потребують дії)
@@ -175,7 +180,8 @@ Use `notion-create-pages` with these properties (Reports uses relations `Project
 | Type | `Board Health` |
 | Skill | `jira-board-health` |
 | Summary | 2-3 sentence summary of key findings |
-| Workspace | `["{config.notion.workspace_page_id}"]` |
-| Project | `["{config.notion.project_page_id}"]` |
+| Visibility | `Internal` |
+| Workspace | `["https://app.notion.com/p/{config.notion.workspace_page_id}"]` (ID without dashes) |
+| Project | `["https://app.notion.com/p/{config.notion.project_page_id}"]` (ID without dashes) |
 
 The **full report content** goes as the page body (Notion Markdown).

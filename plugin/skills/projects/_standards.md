@@ -1,7 +1,7 @@
 # PM Standards (спільні для всіх проєктів)
 
 > Машинна версія PM Toolkit з Notion (CONTROL TOWER / Knowledge Base / Project Management /
-> PM Toolkit, `~~notion-page-id`). Створено 2026-09-10.
+> PM Toolkit, ID сторінки у `pm_profile.documents.pm_toolkit_page_id` конфігу проєкту).
 >
 > **Розподіл ролей.** Конфіг `projects/<slug>.md` = СТАН проєкту (Rule Zero). Цей файл =
 > СТАНДАРТИ, однакові для всіх проєктів: каталог метрик, профілі, аґенди мітингів, скелети
@@ -56,7 +56,7 @@
 | `client_satisfaction` | Client Satisfaction | тон + сигнали (скіл `client-satisfaction-tracker`) | місяць | стабільний | див. розділ 7 |
 
 `hours_burn` рахується лише коли в PM Profile є `hours_cap_month`. Години понад кап
-подаються як факт з контекстом, а не як перевиконання (урок серпневого звіту Acme, README 0.6.0).
+подаються як факт з контекстом ("12 годин понад кап через інциденти"), а не як перевиконання і не як подарунок клієнту.
 
 ## 3. Профілі метрик (ключ `metrics_profile` у PM Profile)
 
@@ -100,7 +100,7 @@ internal/client з `daily-team-prep` і `client-meeting-prep`).
 | `sprint_review` | Sprint Review / Demo | фідбек | ціль спринту; демо по фічах; прийнято / відхилено; що не встигли і чому; наступні пріоритети |
 | `retro` | Retrospective | 1-3 дії з owner і датою | метрики спринту; що добре / погано; дії |
 | `internal_delivery_sync` | Internal Delivery Sync | рішення по комерції / ресурсах | hours_burn; ризики по людях (Internal); upsell / renewal сигнали |
-| `one_on_one` | 1-on-1 | сигнали по людях | **лише** календар, відкриті action items і технічний фідбек по тікетах. Скіл НЕ аналізує настрій чи психологічний стан людини (етична межа, `06` домен 5) |
+| `one_on_one` | 1-on-1 | сигнали по людях | **лише** календар, відкриті action items і технічний фідбек по тікетах. Скіл НЕ аналізує настрій чи психологічний стан людини (етична межа фреймворку: агент не аналізує людей) |
 
 ### Клієнтські
 | Ключ | Мітинг | Output | Аґенда |
@@ -118,7 +118,7 @@ internal/client з `daily-team-prep` і `client-meeting-prep`).
 
 | Документ (Toolkit) | Де живе в Control Tower | Кейс A | Кейс B | Кейс C |
 |---|---|---|---|---|
-| Pre-start Checklist | Phase 0 у `08-new-project-flow.md` | так | так | так |
+| Pre-start Checklist | режим kickoff скіла `project-lifecycle` (Phase 0 у документі 08 фреймворку) | так | так | так |
 | Project Charter | сторінка під сторінкою проєкту в Notion, генерується з конфігу; факти в `pm_profile` | так | так | так (коротко) |
 | Stakeholder Register | конфіг: `Team - Client` з колонками Influence / Interest / Channel / Cadence | так | так | так |
 | RACI | конфіг: `pm_profile.decision_rights` | так | так | за потреби |
@@ -147,7 +147,7 @@ internal/client з `daily-team-prep` і `client-meeting-prep`).
   в одного виконавця); уся комунікація з клієнтом лише через ПМа без deputy.
 
 Перед тим як позначати мовчання стейкхолдера як сигнал, скіл читає `Notes` у `Team - Client`
-конфігу: там зафіксовано, чиє мовчання є нормою (приклад: Acme, записи від 2026-09-09).
+конфігу: там зафіксовано, чиє мовчання є нормою (колонка Notes у таблиці Team - Client).
 
 ## 8. RAID у Risks DB
 
@@ -173,4 +173,4 @@ internal/client з `daily-team-prep` і `client-meeting-prep`).
 ## 10. Естімація
 
 Цифру естімейту дає виконавець. Скіл декомпозує задачу і показує історичний plan_vs_fact,
-але не пропонує власну цифру і не якорить її на дедлайні з запиту (беклог README 0.6.2).
+але не пропонує власну цифру і не якорить її на дедлайні з запиту (правило естімації, розділ 8).

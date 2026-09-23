@@ -11,7 +11,18 @@ description: Generates a detailed bilingual (EN/UA) meeting report from a Notion
 
 When this skill triggers, immediately start executing step by step using available tools.
 
-The ONLY question allowed: if no Notion URL is provided, ask for it.
+The ONLY questions allowed: if no Notion URL is provided, ask for it; if the meeting page has no `Project` relation and the project is not named in the request, ask which project (Default Project Rule).
+
+---
+
+## Step 0: Project config (always first)
+
+1. Determine the project: from the request if named; otherwise from the `Project` relation of the meeting page (Step 1). If both are empty, ask, listing the configs in `projects/`. See the Default Project Rule in `projects/SKILL.md`.
+2. Read `../projects/{project_slug}.md` (fallback: Glob `**/projects/{project_slug}.md`) and `projects/SKILL.md` for the cross-cutting rules.
+3. Take from the config: `{config.default_language}` (the internal half of the report), `{config.client_language}` (the summary that could be shared with the client), the Transcript Alias Map (transcripts garble names; map them to real people before writing), the Team tables (who is ours, who is the client's).
+4. Writes allowed without asking (the 5-minute rule in `projects/SKILL.md`): appending the report to the meeting page or creating a child page under it. Nothing else.
+
+If the config file doesn't exist, tell the user: "Project config not found. Available projects: [list files in projects/]" and stop.
 
 ---
 
@@ -28,6 +39,7 @@ Extract from the result:
 - The meeting date (from properties or title)
 - The AI-generated summary (from `<summary>` section)
 - The page ID (for later update)
+- The `Project` relation (used in Step 0 when the project was not named)
 
 ---
 
@@ -53,9 +65,9 @@ Using BOTH the transcript and the summary, generate a comprehensive bilingual re
 
 For EACH topic discussed, create a section with:
 
-1. **Section header** - numbered, bilingual (EN / UA)
-2. **EN:** paragraph - detailed description in English
-3. **UA:** paragraph - detailed description in Ukrainian
+1. **Section header** - numbered, bilingual (client_language / default_language, by default EN / UA)
+2. **EN:** paragraph - detailed description in `{config.client_language}`
+3. **UA:** paragraph - detailed description in `{config.default_language}`
 4. **Proposals / Пропозиції** (if any were made during discussion)
 5. **Decision / Рішення** or **Action / Дія** - what was decided or what action items came out
 
@@ -80,8 +92,8 @@ Add a "Summary of Key Decisions / Підсумок ключових рішень
 ### Writing Rules
 
 - Write in professional but accessible tone
-- Never use em dashes (-). Use short dashes (-), commas, or restructure sentences
-- Be specific: include names, dates, technical details
+- Never use em dashes or en dashes. Use short hyphens, commas, or restructure sentences
+- Be specific: include names (as resolved through the Transcript Alias Map), dates, technical details
 - If a proposal was discussed but no decision made, note it as "Open / Відкрито"
 - If conflicting opinions were expressed, capture both sides
 
@@ -143,6 +155,8 @@ After successful update, respond briefly:
 
 > Звіт додано на сторінку мітінгу: [Meeting Title](page_url)
 
+The confirmation opens with the Data Completeness header from `projects/SKILL.md` when a source was missing (e.g. `Джерела: Notion page OK · Transcript FAILED (not available, report from summary only)`); when everything was available, the header is the single line `Джерела: Notion page OK · Transcript OK`.
+
 Do not repeat the full report in chat. The user can see it on the Notion page.
 
 ---
@@ -151,7 +165,7 @@ Do not repeat the full report in chat. The user can see it on the Notion page.
 
 - **No transcript available**: Generate report from summary only. Add a note at the top: "Report generated from AI summary only - transcript was not available / Звіт згенеровано лише з AI-саммарі - транскрипт недоступний."
 - **Very short meeting**: Still generate the report, even if it's brief.
-- **Meeting in Spanish**: The Acme team meetings are often in English with Spanish-speaking participants. Always output the report in EN/UA regardless of the meeting language.
+- **Mixed-language meeting**: meetings may mix languages. Always output the report in the two languages from the config regardless of the meeting language.
 - **Multiple topics with same theme**: Group related discussions under one section rather than creating tiny sections.
 - **Page has no editable content (only meeting-notes block)**: Fall back to child page creation as described in Step 4.
 - **update_content fails for any reason**: Fall back to child page, then inform the user that append was not possible and a child page was created instead.

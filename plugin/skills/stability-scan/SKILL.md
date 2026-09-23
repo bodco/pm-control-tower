@@ -1,6 +1,6 @@
 ---
 name: stability-scan
-description: "Weekly stability digest combining Sentry unresolved issues and CloudWatch log analysis for a project. Reads scope and paths from the project config and the Sentry token from the project's secrets file; skips a source with one line when it is not configured. Use this skill whenever the user mentions \"stability scan\", \"скан стабільності\", \"помилки за тиждень\", \"weekly errors\", \"cloudwatch\", \"aws logs\", \"лог аналіз\", \"error digest\", \"що ламається\", \"stability report\", or any request to review application health across Sentry and CloudWatch. Also triggers as part of the Thursday evening scheduled scan. When triggered, execute immediately."
+description: "Weekly stability digest combining Sentry unresolved issues and CloudWatch log analysis for a project. Reads scope and paths from the project config and the Sentry token from the project's secrets file; skips a source with one line when it is not configured. Use this skill whenever the user mentions \"stability scan\", \"скан стабільності\", \"помилки за тиждень\", \"weekly errors\", \"cloudwatch\", \"aws logs\", \"лог аналіз\", \"error digest\", \"що ламається\", \"stability report\", or any request to review application health across Sentry and CloudWatch. Also when run on a schedule (typically weekly, in the evening). When triggered, execute immediately."
 ---
 
 # Stability Scan
@@ -11,7 +11,9 @@ description: "Weekly stability digest combining Sentry unresolved issues and Clo
    named, do not guess and do not default: ask (list the configs in `projects/`). See
    the Default Project Rule in `projects/SKILL.md`.
 2. Read the project config `../projects/{project_slug}.md` relative to this skill's
-   folder (fallback: Glob `**/projects/{project_slug}.md`).
+   folder (fallback: Glob `**/projects/{project_slug}.md`) and `projects/SKILL.md` for
+   the cross-cutting rules. Writes allowed without asking (the 5-minute rule): the
+   report page and new tickets in the backlog; everything else is a recommendation.
 3. All values marked `{config.xxx}` come from that config.
 4. **Check the two sources.** If BOTH are absent, say the project has nothing to scan
    and stop. If one is absent, scan the other and say which is missing:
@@ -58,9 +60,10 @@ default.
 
 ### Known API limitation
 
-Self-hosted Sentry may only support `statsPeriod=14d` or `24h` (not `7d`). If `7d`
-returns an error, fall back to `14d` and say so in the report so the numbers are not
-read as a 7-day count.
+Self-hosted Sentry may reject `statsPeriod`. Try `statsPeriod` first; on an error fall
+back to explicit `start` / `end` ISO dates for the exact period (the same approach as
+the other Sentry-reading skills) and say so in the report so the numbers are read for
+the right window.
 
 ### Queries
 
@@ -222,9 +225,6 @@ searching blindly.
 
 [3-5 речень: загальний стан, найгірші компоненти, тренди, що потребує уваги]
 
-### Джерела, яких немає або які не відпрацювали
-[Sentry / CloudWatch / старі логи - або рядок опускається]
-
 ### Рекомендації та створені тікети
 
 | # | Пріоритет | Тікет | Опис | Assignee |
@@ -298,6 +298,8 @@ of JSON input" while succeeding (HTTP 204). Always verify with a follow-up searc
 
 ## Behavior
 
+0. The report (both languages) and the chat summary OPEN with the Data Completeness
+   header (`projects/SKILL.md`), e.g. `Джерела: Sentry OK (2 проєкти) · CloudWatch STALE (export from 2026-08-31) · Jira SKIPPED (api_access: false)`.
 1. Stage CloudWatch logs via the device bridge (if configured).
 2. Run Sentry queries for the in-scope projects (parallel curl where possible).
 3. Grep the logs for error patterns.
@@ -325,8 +327,9 @@ Use `notion-create-pages` with these properties (Reports uses relations `Project
 | Type | `Stability Scan` |
 | Skill | `stability-scan` |
 | Summary | 2-3 sentence summary of key findings |
-| Workspace | `["https://www.notion.so/{workspace_page_id_no_dashes}"]` |
-| Project | `["https://www.notion.so/{project_page_id_no_dashes}"]` |
+| Visibility | `Internal` |
+| Workspace | `["https://app.notion.com/p/{config.notion.workspace_page_id}"]` (ID without dashes) |
+| Project | `["https://app.notion.com/p/{config.notion.project_page_id}"]` (ID without dashes) |
 
 **Important:** relation properties require full Notion URLs, not bare UUIDs. Remove
 dashes from the page ID when constructing the URL.

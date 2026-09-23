@@ -1,6 +1,6 @@
 ---
 name: client-meeting-prep
-description: "Generates status update and prep notes for the project's client meetings. Attendees, meeting types and cadence come from the Meetings Schedule in the project config (for acme: planning, status syncs, 1-1 with Client PM, Friday review). Degrades gracefully when the project has no tracker API. Use this skill whenever the user mentions \"client prep\", \"підготовка до клієнтського міту\", \"prep для Хуана\", \"Client PM prep\", \"planning prep\", \"review prep\", \"status update для клієнта\", \"що сказати клієнту\", \"підготуй апдейт\", or any request to prepare for a meeting with the client team. When triggered, execute immediately."
+description: "Generates status update and prep notes for the project's client meetings. Attendees, meeting types and cadence come from the Meetings Schedule in the project config (e.g. planning, status syncs, 1-1 with the client PM, demo or review). Degrades gracefully when the project has no tracker API. Use this skill whenever the user mentions \"client prep\", \"підготовка до клієнтського міту\", \"prep для клієнтського PM\", \"Client PM prep\", \"planning prep\", \"review prep\", \"status update для клієнта\", \"що сказати клієнту\", \"підготуй апдейт\", or any request to prepare for a meeting with the client team, also when run on a schedule. When triggered, execute immediately."
 ---
 
 # Client Meeting Prep
@@ -12,24 +12,38 @@ description: "Generates status update and prep notes for the project's client me
    in `projects/`). See the Default Project Rule in `projects/SKILL.md`.
 2. Read the project config `../projects/{project_slug}.md` relative to this skill's
    folder (fallback: Glob `**/projects/{project_slug}.md`).
-3. All values marked `{config.xxx}` come from that config.
+3. All values marked `{config.xxx}` come from that config. Also read `projects/SKILL.md`
+   for the cross-cutting rules (Default Project Rule, JQL Isolation Validator, Data
+   Completeness header, PM standards, the 5-minute rule) and
+   `../projects/_standards.md` (sections 1 and 5).
 4. **Determine the meeting type** from the config's Meetings Schedule plus today's day
    of week, or from the user's explicit request. The schedule is authoritative: do not
    assume a day or a time. If the day matches no meeting in the schedule, ask which
-   meeting is meant.
+   meeting is meant. The row's `Agenda` key selects the prep structure from
+   `_standards.md` section 5 (fallback: map by `Type`, ask if ambiguous); the formats
+   below are the fallback structures.
 5. **Check which sources this project has:**
 
 | Config value | If present | If absent |
 |---|---|---|
 | `task_tracker.api_access: true` | query the tracker | use `task_tracker.fallback_source` (newest manual export, meeting action items, Threads) and open the prep with the source and its date |
-| `client_tracker` not `none` | mention where the client sees status and when it was last synced | skip |
-| `slack.channels_all` non-empty | scan Slack | skip with one line |
+| `client_tracker.type` not `none` | mention where the client sees status and when it was last synced | skip |
+| `slack.slack_access` not `none` (`mcp | mcp_local | chrome`) and `slack.channels_all` non-empty | scan Slack | skip with one header line |
 
 6. **Secrets** (if any source needs a token): read at runtime from
-   `{config.*.secrets_file}` by variable name; never print a token.
+   `{config.sentry.secrets_file}` by the variable named in `{config.sentry.token_env}`;
+   never print a token.
 
 If the config file doesn't exist, tell the user: "Project config not found.
 Available projects: [list files in projects/]"
+
+## Step 0b - Verify the live schema (before any Notion write)
+
+Before the first write of a run, fetch the Reports data source (`notion-fetch` on
+`{config.notion.reports_db}`) and use the property names it actually reports (`Report
+Name`, `Date`, `Type`, `Skill`, `Visibility`, `Summary`, `Project`, `Workspace`). If the
+live schema differs from this skill, the live schema wins: write with the real names and
+report the discrepancy in chat so the config and this skill are fixed the same day.
 
 ---
 
@@ -39,8 +53,11 @@ The prep adapts its structure to the meeting type, but the data collection is th
 ## Data Collection
 
 Run in parallel. All tracker queries MUST be scoped with
-`project = {config.task_tracker.project_key}`: the company tracker is shared across
-clients and an unscoped query leaks another project's tickets into a client-facing prep.
+`project = {config.task_tracker.project_key}` (JQL Isolation Validator in
+`projects/SKILL.md`): the company tracker is shared across clients and an unscoped query
+leaks another project's tickets into a client-facing prep. Reads go to the Jira MCP
+server from `{config.jira.mcp_read}` (default `jira`): `search_issues`, `get_issue`.
+Status names come from the config's Workflow table, verbatim.
 
 ### 1. Board state
 
@@ -60,29 +77,36 @@ project = {config.task_tracker.project_key} AND status = Done AND resolved >= st
 ### 3. Tickets awaiting client input
 
 ```
-project = {config.task_tracker.project_key} AND status = "On Hold / Blocked" ORDER BY updated DESC
+project = {config.task_tracker.project_key} AND status = "{blocked status from the Workflow table}" ORDER BY updated DESC
 ```
 
 Keep the ones whose summary or latest comments point at the client (a decision, a spec,
 an access, an approval). Read recent comments for context.
 
-### 4. Client-side work (only if the config still has an active external-dev flow)
+### 4. Client-side work (only if the config's Labels Taxonomy has an active label for work done by the client's developers)
 
-If the config's Labels Taxonomy marks `external-dev` as HISTORICAL, skip this section
+If the Labels Taxonomy has no such label, or marks it HISTORICAL, skip this section
 entirely and never ask the client about client-developer PRs. Otherwise:
 ```
-project = {config.task_tracker.project_key} AND labels = "external-dev" AND status != Done ORDER BY updated DESC
+project = {config.task_tracker.project_key} AND labels = "{client-side label from the Labels Taxonomy}" AND status != Done ORDER BY updated DESC
 ```
 
 ### 5. Recent Slack threads with client context
 
 Channels `{config.slack.channels_all}`, last 3 days, threads that mention client topics
-or need client input.
+or need client input. Access per `{config.slack.slack_access}`: `mcp` = the Slack
+connector tools (`slack_read_channel`, `slack_read_thread`,
+`slack_search_public_and_private`); `mcp_local` = the local server named in
+`{config.slack.mcp_local_server}` (typically `conversations_history`,
+`conversations_replies`); `chrome` = the Claude in Chrome connector.
 
 ### 6. Notion threads and risks
 
 - Threads DB (`{config.notion.threads_db}`): open threads for this project with Status
-  `Awaiting Reply` or `Need Follow-up`
+  `Awaiting Reply` or `Need Follow-up` (`notion-fetch` the data source and filter by the
+  `Project` relation). Email evidence comes from here (Type `["Email"]`); Gmail tools
+  (`gmail_search_messages`, `gmail_read_thread`) only when
+  `{config.gmail.client_search_filter}` is not `none`
 - Risks DB (`{config.notion.risks_db}`): open risks with `Visibility` = `External` or
   `Both`. Internal-only risks never go into a client prep
 - Decisions DB (`{config.notion.decisions_db}`): decisions from the last two weeks, so
@@ -90,19 +114,34 @@ or need client input.
 
 ### 7. Client tracker sync state
 
-If `{config.client_tracker}` is configured: when was it last synced, and is anything
-Done since then not yet reflected on the client's board. The client sees that board, so
-a stale board becomes a meeting question.
+If `{config.client_tracker.type}` is not `none`: when was it last synced (per
+`{config.client_tracker.sync_cadence}` and `sync_method`), and is anything Done since
+then not yet reflected on the client's board (`{config.client_tracker.roadmap_url}` /
+`db_id`). The client sees that board, so a stale board becomes a meeting question.
+Never claim to know statuses from a client tracker with `api_access: false`.
 
 ## Report Format by Meeting Type
 
-The meeting names below map to the `Type` column of the config's Meetings Schedule.
-Use the attendee names from the config's client team table, not from memory.
+The meeting names below map to the `Agenda` key (fallback: the `Type` column) of the
+config's Meetings Schedule: planning = `sprint_planning` / `backlog_refinement`, status
+sync = `client_status_sync`, 1-1 = `stakeholder_1on1`, review = `client_demo` /
+`sprint_review`. Use the attendee names from the config's client team table, not from
+memory.
+
+The FIRST line of every prep is the Data Completeness header (`projects/SKILL.md`): one
+line with the state of every source the skill was supposed to use, `PM Profile`
+included, in English when `{config.default_language}` is English, e.g.
+`Джерела: Tracker OK · Slack SKIPPED (slack_access: none) · Threads OK · Risks EMPTY · Decisions OK · Client board STALE (синк від {date}) · PM Profile OK`.
+
+Reader rule (`_standards.md` sections 1 and 5): every client prep ends, right before
+"Мої теми", with a "Рішення, які треба отримати на цьому мітингу" block (the prep's
+"Decisions needed from you"; if none, say so explicitly).
 
 ### Planning prep
 
 ```
 ## Planning Prep - [day] [date] (міт з клієнтом [час з конфігу])
+Джерела: [Data Completeness header]
 [рядок про джерело задач і свіжість - тільки якщо це не живий трекер]
 
 ### Pipeline Overview

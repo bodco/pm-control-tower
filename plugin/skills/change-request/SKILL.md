@@ -31,11 +31,19 @@ need it into a Change Request the PM can send.
 3. From the config: `pm_profile.contract` (type, `hours_cap_month`), `pm_profile.decision_rights`
    (`scope_priorities`, `estimates`, `budget_margin`), Assignment Rules, Team - Client,
    Engagement Status / Scope of Responsibility, `pm_profile.documents.extras_log_page_id`
-   and `pm_profile.goodwill_budget_pct` if present.
-4. Goodwill budget: `pm_profile.goodwill_budget_pct` if present, else **10% of
+   and `pm_profile.contract.goodwill_budget_pct` if present.
+4. Goodwill budget: `pm_profile.contract.goodwill_budget_pct` if present, else **10% of
    `hours_cap_month`** (калібрувати; Toolkit orientir 10-15% of capacity). No cap →
    count items and hours only, no percentage, and say so.
-5. Open every report with the Data Completeness header.
+5. Open every report with the Data Completeness header (`projects/SKILL.md`), listing
+   `PM Profile` as one of the sources.
+6. Writes allowed without asking (the 5-minute rule in `projects/SKILL.md`): rows in the
+   Extras Log, a CR draft page in Reports, tasks in the Tasks Tracker, a Decisions row
+   that records a decision the PM reported. Everything else is a draft for the PM.
+7. Before the first write of a run, fetch the Decisions and Risks data sources and use
+   the property names they report (`Trade-off`, `Review trigger`, `Door`, `Kind`); if
+   one is missing, create the property when possible, otherwise put the value into the
+   page body and report the discrepancy.
 
 ## Step 1 - Collect the asks
 
@@ -112,8 +120,10 @@ Internal note for the PM (Ukrainian, chat + the Extras Log row): bucket rational
 contract lens, goodwill budget state, precedent warning if the same kind of ask was done
 free before ("керуй прецедентом").
 
-Storage: Reports DB, Type `Change Request` (create option if missing), Skill
-`change-request` (create option if missing), Visibility `External`, Summary = one line.
+Storage: Reports DB (`{config.notion.reports_db}`), Type `Change Request` (create option
+if missing), Skill `change-request` (create option if missing), Visibility `External`,
+Summary = one line, relations `Project` = `["https://app.notion.com/p/{config.notion.project_page_id}"]`
+and `Workspace` = `["https://app.notion.com/p/{config.notion.workspace_page_id}"]` (IDs without dashes).
 Body = the client-facing CR only. Tasks Tracker: "Надіслати CR-{nn} клієнту"
 (Source `change-request`, due in 2 working days) and, if needed, "Отримати оцінку
 CR-{nn} від {assignee}".
@@ -136,7 +146,7 @@ share of B/C done without a CR. Overflow signals (`_standards.md` + Toolkit): fr
 above budget; planned work slipping while extras grow; the team working evenings for
 extras; the client treating small = free and instant; an "A" that turned out to be C.
 - Above budget or any overflow signal → propose a Risks DB entry (Category `Scope`,
-  `Kind = Risk`, Visibility `Internal`); create it with Status `Claude` only if the user
+  `Kind = Risk`, Visibility `Internal`); create it with Status `AI Review` only if the user
   agrees or this is the scheduled run.
 - Client transparency block (English) for the monthly client report, optional for the PM:
   "For transparency: delivered beyond the agreed scope this month" with the free items in

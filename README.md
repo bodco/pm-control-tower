@@ -30,7 +30,7 @@ library works with the new reality a second later. Nothing is hardcoded anywhere
 | `dist/pm-control-tower.plugin` | The same plugin, packed and ready to install in one click |
 | `docs/en/` | Framework documentation in English |
 | `docs/uk/` | The same documentation in Ukrainian |
-| `templates/` | `secrets.env.example`: variable names, fake values, and where the real file must live |
+| `templates/` | `secrets.env.example`: variable names, fake values, and where the real file must live (the same copy travels inside the plugin) |
 
 ## The Notion template
 
@@ -99,6 +99,22 @@ exactly one in the system.
   Those skills are written in place.
 - **Third-party MCP server code.** The configuration travels, the Jira server itself
   you clone yourself.
+
+---
+
+## Status and versions
+
+**Status: beta.** The author uses this every day, but the plugin has never been installed on
+anyone else's account yet: the first handover pilot with a colleague is still ahead
+(`docs/en/13-open-questions.md`, #49). Budget one quiet evening for the basic loop and a few
+weeks of calibration for your own project, not an hour.
+
+| Version | Date | What changed |
+|---|---|---|
+| 1.0.0 | 2026-09-11 | First public package: 21 skills, the Notion template, documentation in two languages |
+| 1.1.0 | 2026-09-19 | Plugin aligned with the documentation and the public Notion template (relation names, the `AI Review` / `Progress` statuses, config keys from `_template.md`, `task_tracker.api_access` in 14 engines, the 5-minute rule); anonymization; `.mcp.json` with the `jira` and `confluence` servers; the secrets template inside the plugin |
+
+Open questions and the technical backlog: `docs/en/13-open-questions.md`.
 
 ---
 

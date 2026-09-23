@@ -23,15 +23,16 @@ The ONLY questions allowed:
 
 1. Determine the project from the user's request. If the project is NOT explicitly named, do not guess and do not default: ask the user which project (list the configs in `projects/`). See the Default Project Rule in projects/SKILL.md.
 2. Read the project config `../projects/{project_slug}.md` relative to this skill's folder; if that fails, Glob `**/projects/{project_slug}.md` under the skills directory.
-3. All supplementary context (Notion DB IDs, team roster, transcript aliases, email routing) lives in the same `projects/{project_slug}.md`. There is no separate CLAUDE.md - do not look for one.
+3. All supplementary context (Notion DB IDs, team roster, transcript aliases, email routing, Cultural Profile) lives in the same `projects/{project_slug}.md`. Also read `projects/SKILL.md` for the cross-cutting rules. Writes allowed without asking (the 5-minute rule): the report page only. This report is `Visibility: Internal` and is never shown to the client.
 4. Curly-brace tokens like `{config.notion.meetings_db}` below name a real config value (a YAML key or a clearly labeled field). Where the config carries the same information as a markdown table instead of a scalar value (client roster, transcript aliases), this skill says so explicitly and reads the table - it does not invent a fake key for it.
 
 From the config, extract specifically:
 - **Client team roster** - the "Team - Client" table in the project config (Name / Role / Notes columns). Match Slack/email/transcript authors against the Name column.
-- `{config.slack.channels_all}` - channels to scan (comma-separated IDs; both may be private, resolve by ID not name)
+- `{config.slack.slack_access}` (`mcp | mcp_local | chrome | none`; `none` = skip Slack with one header line) and `{config.slack.channels_all}` - channels to scan, resolved to IDs through `{config.slack.channel_ids}` (channels may be private: resolve by ID, not by name search)
 - `{config.notion.threads_db}` - Threads DB ID. This is the source for BOTH Slack-collected and email-collected client communication (see "Email" below).
 - `{config.notion.meetings_db}` - Meetings DB ID. See "Notion" in the project config.
-- **Transcript Alias Map** - the "Transcript Alias Map" table in the project config (e.g. "Client Ops" → "Client Ops"), not a scalar key
+- **Transcript Alias Map** - the "Transcript Alias Map" table in the project config, not a scalar key
+- **Cultural Profile** - `{config.cultural_profile.client_country}`, the scales table and the "Downgrader multipliers" table. A multiplier > 1 for a person means they soften bad news: scale the seriousness of their indirect wording by it. When the section is `unknown`, use no multipliers and say `Cultural Profile: SKIPPED` in the header; never hardcode a country or a person here.
 
 If config missing in both paths, or the "Team - Client" table is empty: tell user and stop.
 
@@ -49,19 +50,19 @@ For each channel ID in `{config.slack.channels_all}`:
 
 ### 2. Email - Client Threads (via Notion Threads DB)
 
-`mac-mail-collector` runs on its own daily schedule (independent of this skill) and writes matching email threads from `~~home-folder/work/Mail/` straight into the project's Notion **Threads DB** (`{config.notion.threads_db}`), tagged `Type` = `Email` (as opposed to `Slack`, `Signal`, `Zoom`, `Other`), with a `Project` relation and a `Reported at` date.
+`mac-mail-collector` runs on its own daily schedule (independent of this skill) and writes matching email threads from the Mail.app buffer (`~/work/Mail/`) straight into the project's Notion **Threads DB** (`{config.notion.threads_db}`), tagged `Type` = `Email` (as opposed to `Slack`, `Signal`, `Zoom`, `Other`), with a `Project` relation and a `Reported at` date.
 
 **Do NOT invoke or wait on `mac-mail-collector` from this skill.** Take whatever is already sitting in the Threads DB at the moment this skill runs - this skill is a read-only consumer of that inbox, not a trigger for it. If mac-mail-collector hasn't run recently or missed something, that's a gap to note in the report ("email: Threads DB had no newer sync since X"), not something to chase mid-run.
 
 To collect:
-1. Query the Threads DB (`API-query-data-source` / `notion-query-data-source`) filtered to: `Type` contains `Email`, `Project` relation contains the project's `project_page_id`, and `Reported at` within the requested period.
-2. Each result's `Description` property is a short LLM-written summary of the thread (not the raw email body) - it usually names the sender inline (e.g. "from client.pm@example-client.com", "Client Dev (Acme)", "Client AM (our company)"). There is no separate structured "From" field - read the sender out of the `Description` text, and cross-check the name/email against `email_routing.client_emails` (client) vs `email_routing.team_emails` / any `@our-company.com` (internal) in the project config. Do not score a thread as client sentiment unless the sender is clearly a client roster member.
+1. Query the Threads DB (fetch the data source with `notion-fetch` and filter, or `notion-query-data-sources` when the plan allows) filtered to: `Type` contains `Email`, `Project` relation contains the project's `project_page_id`, and `Reported at` within the requested period.
+2. Each result's `Description` property is a short LLM-written summary of the thread (not the raw email body) - it usually names the sender inline (e.g. "from client.pm@example-client.com", "Client Dev (Client Co)", "Client AM (Client Co)"). There is no separate structured "From" field - read the sender out of the `Description` text, and cross-check the name/email against `email_routing.client_emails` (client) vs `email_routing.team_emails` / our company domain (internal) in the project config. Do not score a thread as client sentiment unless the sender is clearly a client roster member.
 3. `Thread Name` (title) and `Email Link` (a `message://...` URI, not a web link - do not try to open it, just cite it as a reference) round out what you need per thread.
 4. Treat each thread's `Description` as a paraphrased summary, not a verbatim quote - when quoting client tone in the report, only quote text that the Description itself renders as a direct quote (e.g. after "Client Dev:" or similar), and otherwise describe the content in your own words rather than presenting a paraphrase as verbatim.
 
-**If the project has no `email_routing` block configured, or the project still runs on direct Gmail (pre mac-mail-collector migration):**
-- With `email_routing` absent but Gmail still live: use `gmail_search_messages` with a query built from the config's documented client sender list, date range for the period, `gmail_read_thread` for full content.
-- If neither Threads DB email entries nor a Gmail path apply: skip email collection for this run and say so in the report ("email: no configured source, skipped") - do not guess a search filter, and do not search a Knowledge Base DB "Client Emails" label - that path is legacy and unreliable; Threads DB is the current source of truth for collected email.
+**If the Threads DB has no email entries for the period:**
+- If `{config.gmail.client_search_filter}` is set (not `none`), the PM keeps client mail in Gmail: use `gmail_search_messages` with that filter and the period, `gmail_read_thread` for full content. This is the only case in which the skill touches Gmail.
+- Otherwise skip email collection for this run and say so in the header (`Email SKIPPED (no configured source)`) - do not guess a search filter and do not search the Knowledge Base for address lists; the Threads DB is the source of truth for collected email.
 
 For each matching thread: date (`Reported at`), sender (parsed from `Description`), thread title, summarized content, `Email Link` reference.
 
@@ -153,6 +154,7 @@ Write report in Ukrainian (per `{config.default_language}` for internal) or Engl
 Report structure:
 
 ```markdown
+Джерела: Slack OK · Email (Threads) OK · Meetings OK · Cultural Profile {OK | SKIPPED}
 # Client Satisfaction Tracker - {config.project_name} - {period}
 
 ## Загальна оцінка: {Green / Yellow / Red / Cooling / Warming}
@@ -160,7 +162,6 @@ Report structure:
 **Overall sentiment score**: {X.XX} (previous period: {Y.YY}, delta: {+/-}{Z.ZZ})
 **Messages analyzed**: {N} Slack, {M} email, {K} meeting quotes
 **Client members covered**: {list}
-**Sources not available this run**: {list, e.g. "email: no configured source" - or "none"}
 
 ---
 
@@ -243,8 +244,9 @@ Save to Notion Reports DB (`{config.notion.reports_db}`):
 | Type | `Client Satisfaction` |
 | Skill | `client-satisfaction-tracker` |
 | Summary | Overall sentiment + key warning signals (2-3 sentences) |
-| Workspace | `["{config.notion.workspace_page_id}"]` |
-| Project | `["{config.notion.project_page_id}"]` |
+| Visibility | `Internal` |
+| Workspace | `["https://app.notion.com/p/{config.notion.workspace_page_id}"]` (ID without dashes) |
+| Project | `["https://app.notion.com/p/{config.notion.project_page_id}"]` (ID without dashes) |
 
 Body: the full report above.
 
@@ -282,7 +284,7 @@ The sentiment scoring is a **signal, not a verdict**. Always combine with direct
 ## Critical Pitfalls
 
 1. **Sarcasm and context** - detected tone can mislead; always read the surrounding thread before scoring
-2. **Cultural differences** - what sounds formal in Spanish/English may be neutral in that culture; calibrate against baseline for that person
+2. **Cultural differences** - what sounds formal or cold in one culture may be neutral in another; calibrate against the config's Cultural Profile and against the baseline for that person
 3. **Non-client messages** - NEVER include team internal messages; only quotes from the "Team - Client" roster
 4. **Aliases** - resolve all name variants via the config's Transcript Alias Map table before analyzing
 5. **Cherry-picking** - include both positive and negative quotes; a report with only negative signals is biased

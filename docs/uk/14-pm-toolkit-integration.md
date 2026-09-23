@@ -4,7 +4,7 @@
 
 ## 1. Рішення і навіщо
 
-Bohdan погодив напрям: PM Toolkit з Notion перестає бути лише бібліотекою для людини і стає стандартом, за яким працюють скіли на всіх проєктах.
+ПМ погодив напрям: PM Toolkit з Notion перестає бути лише бібліотекою для людини і стає стандартом, за яким працюють скіли на всіх проєктах.
 
 Стан до цього дня:
 - Toolkit фізично жив у Control Tower (Knowledge Base / Project Management / PM Toolkit), але жоден скіл на нього не посилався: пошук по синхронізованих скілах не знайшов ні ID його сторінок, ні Charter, RAID чи Stakeholder Register, ні секції "рішення від читача" у звітах.
@@ -36,7 +36,7 @@ Bohdan погодив напрям: PM Toolkit з Notion перестає бут
 | **2. Технічний старт** (тижні 1-2, якщо є розробка) | "Технічний старт з командою розробки" | невідомі NFR стають записами `Kind = Assumption` з датою перевірки; кандидати в one-way рішення стають задачами ПМа; задачі "архітектура на серветці" і spike | організовує експертну увагу на 3-5 несучих рішеннях, фіксує їх у Decisions з `Door = One-way` |
 | **3. Стале життя: день** | аґенди daily і клієнтського синку, work item age | prep за ключем `Agenda`, завжди з блоком "рішення, які треба отримати"; застряглі айтеми за профілем метрик | веде мітинги до рішень, розблоковує |
 | **3. Стале життя: тиждень** | метрики flow і якості, RAID, early warning signals | `weekly-overview`, `jira-board-health`, `risk-register` веде весь RAID (ризики, припущення, issues, залежності), сигнали клієнта і команди з цитатами, bus factor | читає, вирішує пріоритети, ескалує |
-| **3. Стале життя: місяць** | Client Monthly, Steering / Exec Update, дашборд метрик, Health Check | 1-ше: Monthly Digest, Client Satisfaction, Skill Health Check; 2-ге: **Project Health Check** по кожному активному проєкту (8 областей RAG з доказами, ⚪ де даних немає); `client-report` monthly і steering з годинами проти капу і "Decisions Needed From You" | вичитує і відправляє звіти вручну, закриває топ-3 з health check |
+| **3. Стале життя: місяць** | Client Monthly, Steering / Exec Update, дашборд метрик, Health Check | 1-ше: Monthly Digest, Client Satisfaction, Automation Health Check; 2-ге: **Project Health Check** по кожному активному проєкту (8 областей RAG з доказами, ⚪ де даних немає); `client-report` monthly і steering з годинами проти капу і "Decisions Needed From You" | вичитує і відправляє звіти вручну, закриває топ-3 з health check |
 | **4. Зміни скоупу** (за подією) | Change Request, "Scope creep & гра в маленькі хотєлки" | `change-request`: кожне прохання у відро A (дрібниця, облік) / B (години) / C (торкається даних, грошей, безпеки, публічних контрактів: завжди CR); Extras Log з безкоштовною роботою; чернетка CR англійською; goodwill-бюджет | вирішує, чи брати, відправляє CR, фіксує рішення клієнта |
 | **5. Люди** (за подією) | Team Member Onboarding, Bus factor | `project-lifecycle` team-onboarding / offboarding: сторінка онбордингу з доступами як запитами, патч конфігу, рядок у Decisions, перевірка bus factor при відході | робить доступи, призначає buddy, розмовляє з людьми |
 | **6. Прийом проєкту** (кейс B) | KT / Handover Checklist | `project-lifecycle` handover-in: KT з доказами, список незадокументованих усних обіцянок з цитатами, письмовий "стан на момент прийому", health check на 10-й день | проводить KT-сесії, перевіряє "все зелено" |
@@ -67,24 +67,24 @@ Bohdan погодив напрям: PM Toolkit з Notion перестає бут
 ### Хвиля 1 (0.7.0): стандарти і схема
 - `projects.skill` v0.7.0: новий `_standards.md`; `_template.md` з PM Profile, колонками стейкхолдерів, `Agenda`, повним списком спільних баз і уніфікованими назвами relation; `SKILL.md` з правилами "PM standards and PM Profile" і відновленими JQL Isolation Validator та Data Completeness header; PM Profile у `acme.md` лише з фактами самого конфігу.
 - Notion: Decisions DB + `Trade-off`, `Review trigger`, `Door`; Risks DB + `Kind`; callout-и на 8 сторінках Toolkit, таблиця "де що живе" на його корені.
-- Документи: цей файл, `08` (Pre-start, PM Profile, Charter, реєстрація через Upload, Claude Projects), `02` приведений до живих схем, `03`, `04`, `06`, `12`, промпт `prompts/new-project-onboarding.md`.
+- Документи: цей файл, `08` (Pre-start, PM Profile, Charter, реєстрація через Upload, Claude Projects), `02` приведений до живих схем, `03`, `04`, `06`, `12`, промпт онбордингу нового проєкту (згодом став режимом kickoff у `project-lifecycle`).
 
 ### Хвиля 2 (0.7.1): двигуни
 - Нові скіли `project-lifecycle` (kickoff, handover-in, health-check, team-onboarding / offboarding, closure) і `change-request` (відра A/B/C, Extras Log, CR, рішення в Decisions, goodwill-бюджет).
 - Оновлені `risk-register` (RAID через `Kind`, early warning signals, bus factor, "Decisions needed from you", Assumptions і Dependencies не закриваються мовчанням, виправлена назва title-властивості `Name`) і `client-report` (Steering Update, статус і "Decisions Needed From You" у всіх форматах, години проти капу, "Delivered beyond scope", правило locked template, прибраний проєктний факт з тіла двигуна).
 
 ### Доведення (0.7.2): каденс і реєстр
-- Health check **щомісяця, не щокварталу** (рішення Bohdan): хмарна задача "Project Health Check (monthly)", 2-ге число 05:30 UTC, автоматичне схвалення, одна сторінка на проєкт у Reports DB. `_standards.md` і `project-lifecycle` оновлені під місячний каденс.
+- Health check **щомісяця, не щокварталу** (рішення ПМ): хмарна задача "Project Health Check (monthly)", 2-ге число 05:30 UTC, автоматичне схвалення, одна сторінка на проєкт у Reports DB. `_standards.md` і `project-lifecycle` оновлені під місячний каденс.
 - `projects.skill` v0.7.2: поля `goodwill_budget_pct` і `extras_log_page_id` у шаблоні; Gamma `status: archived` (проєкт фактично завершений, рядок у Decisions DB); у `acme.md` виправлено лише підтверджене ПМом (години DevOps за новим контрактом, кап годин).
 
-Нові значення select створюються скілами при першому записі (Notion створює опцію автоматично, так уже сталося з `Monthly Digest` і `Skill Health Check`): Reports `Type` = `Project Kickoff`, `Project Handover`, `Project Health Check`, `Team Change`, `Project Closure`, `Change Request`, `Steering Update`; Reports `Skill` і Tasks Tracker `Source` = `project-lifecycle`, `change-request`.
+Нові значення select створюються скілами при першому записі (Notion створює опцію автоматично, так уже сталося з `Monthly Digest` і `Automation Health Check`): Reports `Type` = `Project Kickoff`, `Project Handover`, `Project Health Check`, `Team Change`, `Project Closure`, `Change Request`, `Steering Update`; Reports `Skill` і Tasks Tracker `Source` = `project-lifecycle`, `change-request`.
 
 ## 6. Знахідки й уроки
 
 1. **Документація казала, що правило діє, а в живому скілі його не було.** JQL Isolation Validator і Data Completeness header з версії 0.6.1 були відсутні в синхронізованому `projects/SKILL.md`: картка або не збереглась, або її перезаписало наступне збереження. Відновлено в 0.7.0. Урок: стан скіла перевіряється грепом по синхронізованій копії, а не за документацією; після кожного збереження звіряти побайтно.
 2. **Шаблон застаріває непомітно.** `_template.md` досі описував розбіжні назви relation через два дні після уніфікації бази. Новий проєкт з такого шаблону тихо не писав би relation. Шаблон тепер посилається на живу схему як на старшу.
-3. **Двигун не має знати фактів проєкту.** `client-report` мав у тілі дату і розмір команди Acme, `risk-register` писав у неіснуючу властивість `Risk Name`. Обидва виправлені; Skill Health Check ловить цей клас помилок (пункт f).
-4. **Загальна робота лишається загальною.** Коли будується фреймворк, проєктні розбіжності (контракти, години людей) не розбираються попутно: вони йдуть у свій проєктний контекст. Зафіксовано як правило роботи з Bohdan.
+3. **Двигун не має знати фактів проєкту.** `client-report` мав у тілі дату і розмір команди Acme, `risk-register` писав у неіснуючу властивість `Risk Name`. Обидва виправлені; Automation Health Check і локальний лінтер скілів (`07`) ловлять цей клас помилок.
+4. **Загальна робота лишається загальною.** Коли будується фреймворк, проєктні розбіжності (контракти, години людей) не розбираються попутно: вони йдуть у свій проєктний контекст. Зафіксовано як правило роботи з ПМ.
 5. **Бібліотека без проводки мертва.** Toolkit рік жив поруч із системою і не впливав на жоден звіт. Цінність з'явилась, коли стандарт отримав одне машинне місце і правило "двигуни читають його на Step 0".
 
 ## 7. Відомі обмеження
@@ -92,14 +92,14 @@ Bohdan погодив напрям: PM Toolkit з Notion перестає бут
 - Нові скіли ще не обкатані на реальному проєкті. Перший плановий прогін health check 2026-10-02; `change-request` і режими `project-lifecycle` запускаються за запитом.
 - Пороги з позначкою `(калібрувати)` операціоналізовані Claude з якісних формулювань Toolkit. Їх перевіряють на перших реальних звітах.
 - У хмарному прогоні без мосту до Mac недоступні Tempo і локальні Jira-конектори: відповідні області health check стають SKIPPED або ⚪, це видно у звіті.
-- Двигуни підхоплюють наскрізні правила через посилання на `projects/SKILL.md` у Step 0; явне посилання на `_standards.md` у тілі кожного старого двигуна з'явиться під час ревізії бібліотеки (беклог у README).
+- Двигуни підхоплюють наскрізні правила через посилання на `projects/SKILL.md` у Step 0; явне посилання на `_standards.md` у тілі кожного старого двигуна з'явиться під час ревізії бібліотеки (беклог у `13`).
 - PM Profile, колонки стейкхолдерів і `Agenda` у діючих конфігах заповнені частково; поки їх немає, скіли працюють за дефолтом і пишуть `PM Profile: SKIPPED`.
 
 ## 8. Далі
 
 | Хвиля | Що | Закриває |
 |---|---|---|
-| 3 | пороги метрик у `velocity-report` і `jira-board-health` за профілем; `sla_adherence` і `lead_time`; `hours_burn` у місячному звіті; явне читання `_standards.md` у `client-meeting-prep` і `daily-team-prep` (аґенди) | 06 #11, мінімум #21 |
+| 3 | пороги метрик у `velocity-report` і `jira-board-health` за профілем; `sla_adherence` і `lead_time`; `hours_burn` у місячному звіті; явне читання `_standards.md` у `client-meeting-prep` і `daily-team-prep` (аґенди) | домени 11 і 21 матриці `06` |
 | після першого прогону | калібрування порогів за першими health check і risk-register; рішення, чи потрібен `Kind` у зовнішньому звіті ризиків | - |
 
 ## 9. Чого не робимо

@@ -7,15 +7,22 @@ description: "Reads unprocessed threads from the Notion Threads DB, classifies e
 
 Reads new threads, classifies them, fetches context, drafts replies, and logs everything.
 
-## Prerequisites
+## Step 0 - Scope and config
 
-Determine the scope: if the user named a project, process only its threads; otherwise
-process all unprocessed threads, resolving each thread's project from its Project
-relation. For every involved project read `../projects/{slug}.md` relative to this
-skill's folder (fallback: Glob `**/projects/{slug}.md`). Rule Zero: the config wins.
-Take `{config.sentry.*}`, Notion IDs, relation property names and local paths from the
-config of the thread's project - never apply one project's credentials or context to
-another project's thread.
+Documented exception to the Default Project Rule (`projects/SKILL.md`): if the user
+named a project, process only its threads; otherwise process all unprocessed threads,
+resolving each thread's project from its `Project` relation. A thread with no `Project`
+relation is listed in the summary as "unrouted" and not drafted. For every involved
+project read `../projects/{slug}.md` relative to this skill's folder (fallback: Glob
+`**/projects/{slug}.md`) and `projects/SKILL.md` for the cross-cutting rules. Rule Zero:
+the config wins. Take `{config.sentry.*}`, Notion IDs, relation property names, the
+Scope of Responsibility, `{config.client_language}` and local paths from the config of
+the thread's project - never apply one project's credentials or context to another
+project's thread.
+
+Writes allowed without asking (the 5-minute rule): updating the thread's `Category`,
+`Context Sources`, `Draft Response` and `Status`, appending to the Inbox Review page.
+Nothing is ever sent.
 
 **Secrets.** Tokens are not stored in configs. The config gives the variable name and
 the file; read the value at runtime and never print it anywhere:
@@ -39,20 +46,23 @@ List everything skipped in the Step 7 summary so the gap is visible.
 ## Step 1 - Fetch unprocessed threads
 
 Query Threads DB for threads that need processing:
-- Status = "Claude" AND Draft Response is empty (fresh threads - the collectors create pages with Status "Claude")
+- Status = "AI Review" AND Draft Response is empty (fresh threads - the collectors create pages with Status "AI Review")
 - OR Status = "Awaiting Reply" AND Draft Response is empty (manually triaged)
 - OR Status = "Need Follow-up" AND Draft Response is empty
 - Sorted by Reported at DESC
 - Limit: 20 threads max per run
 
-Pipeline: collectors create (Status "Claude") -> this skill classifies + drafts (Status
-stays "Claude") -> the PM sends and manually sets "Replied".
+Pipeline: collectors create (Status "AI Review") -> this skill classifies + drafts (Status
+stays "AI Review") -> the PM sends and manually sets "Replied".
 
-Use Notion MCP:
+Use Notion MCP: fetch the Threads data source (`notion-fetch` on
+`{config.notion.threads_db}`) and filter, or `notion-query-data-sources` when the plan
+allows it:
 ```
-notion-fetch: {config.notion.threads_db}
-notion-query: Status in ("Claude", "Awaiting Reply", "Need Follow-up"), Draft Response empty
+Status in ("AI Review", "Awaiting Reply", "Need Follow-up") AND Draft Response is empty
 ```
+Use the property names the fetched schema reports; if they differ from this skill, use
+the real ones and report the discrepancy.
 
 ## Step 2 - Classify each thread
 
@@ -77,20 +87,21 @@ Set `Category` and determine which context sources to consult.
    GET {config.sentry.url}/api/0/organizations/{config.sentry.org_slug}/issues/
    Authorization: Bearer <token read from the secrets file>
    ?query=<error keywords from thread>
-
-   Scope note: since 2026-08 we monitor ~~service-a only. Read other slugs purely as
-   evidence - MO/CP/mobile errors are the client's to fix, and the draft should route
-   them accordingly ("passed to the client team") rather than promise our fix.
    ```
+   Scope note: search only `{config.sentry.projects_in_scope}`. Components listed as
+   client-owned in the config's Scope of Responsibility (and Sentry
+   `projects_out_of_scope`) are context only: never promise our fix, never create
+   tickets or risks for them; route the draft as "passed to the client team".
 2. **AWS Logs**: `{config.local_paths.aws_logs}` on the Mac - in a cloud session stage the matching date's files via the device bridge (device_list_dir + device_stage_files)
 3. Set Context Sources = ["Sentry", "AWS Logs"] (only those actually consulted)
 
 ### Data Question threads
 1. **Tracker**: if `{config.task_tracker.api_access}` is true, search related tickets
-   (jira-cosmix `search_issues`), always scoped with
-   `project = {config.task_tracker.project_key}`. If false, use the config's
-   `fallback_source`.
-2. Check the project's DB-assistant skill knowledge for relevant table/column context
+   (`search_issues` on the Jira MCP server from `{config.jira.mcp_read}`, default
+   `jira`), always scoped with `project = {config.task_tracker.project_key}`. If false,
+   use the config's `fallback_source`.
+2. If the project has a data adapter skill (`<slug>-db-assistant` or similar) or a KB
+   under `{config.local_paths.kb_root}`, use it for table/column context; otherwise skip
 3. Set Context Sources = ["Jira Board", "Knowledge Base"]
 
 ### Scope Change threads
@@ -122,14 +133,15 @@ Set `Category` and determine which context sources to consult.
 ### For FYI threads
 - No draft needed
 - Set Draft Response = "(FYI - no reply needed)"
-- Set Status = "Claude" (processed)
+- Set Status = "AI Review" (processed)
 - Move to Step 5
 
 ### For all other threads
 
 Compose the draft with this structure:
-1. Detect language of the original message (EN / UA / ES)
-2. Generate response in the SAME language
+1. Detect the language of the original message
+2. Generate the response in the SAME language (for client threads that is normally
+   `{config.client_language}`)
 3. Use the context collected in Step 3
 4. Keep tone appropriate to sender (client = formal/warm, team = direct)
 
@@ -163,7 +175,7 @@ For each thread, update the Notion page with:
 Category: <classified category>
 Context Sources: [<list of sources actually consulted>]
 Draft Response: <generated draft>
-Status: "Claude"
+Status: "AI Review"
 ```
 
 Use Notion MCP: notion-update-page for each thread URL.
@@ -172,7 +184,9 @@ Use Notion MCP: notion-update-page for each thread URL.
 
 ## Step 6 - Append to Inbox Review page
 
-Append a daily section to page `{config.notion.inbox_review_page}`:
+Append a daily section to page `{config.notion.inbox_review_page}`. If the key is `none`
+or missing, skip this step and say `Inbox Review SKIPPED (inbox_review_page: none)` in
+the summary; the drafts still live in each thread's `Draft Response`.
 
 ```markdown
 ---
@@ -211,8 +225,9 @@ Append, do not overwrite - the page accumulates history over time.
 After processing all threads, output a brief summary to the Cowork chat:
 
 ```
+Джерела: Threads OK · Sentry {OK | SKIPPED (url: none)} · AWS Logs {OK | SKIPPED} · Jira {OK | SKIPPED (api_access: false)} · Topics OK · Inbox Review {OK | SKIPPED}
 inbox-responder complete.
-Processed: N threads
+Processed: N threads (unrouted, no Project relation: M)
 - N Error/Bug
 - N Data Question
 - N Scope Change
@@ -236,7 +251,7 @@ Inbox Review updated: <link to the Inbox Review page>
 ## Notes
 
 - This skill runs best AFTER `slack-collector` and `mac-mail-collector` have completed
-- The "Claude" status option in Threads DB is specifically reserved for this skill
+- The "AI Review" status in Threads DB marks items created or updated by automations that a human should confirm
 - Threads already in "Replied", "Closed", or "Spectator Mode" are never touched
-- After you send a draft: manually change Status from "Claude" to "Replied" in Threads DB
+- After you send a draft: manually change Status from "AI Review" to "Replied" in Threads DB
 - Scheduled trigger phrase for Cowork: `inbox-responder`

@@ -21,13 +21,13 @@ This really is an optional layer: the framework is fully workable without it. It
 | File discipline | sole writer of `.ai/tasks/`, `current.md`, QA notes, `archive/` | sole writer of `.ai/investigations/`, `.ai/reports/<id>.md` |
 | QA | checks decisions against the agreements in Notion | challenges outdated agreements via `challenged_constraints` |
 | Arbitration | escalates | escalates |
-| Bohdan | priorities, deadlines, the client, arbitration; the only one who edits CONTRACT.md | |
+| The PM | priorities, deadlines, the client, arbitration; the only one who edits CONTRACT.md | |
 
 The main ownership boundary rule: **Gemini does not explain to Claude how the system works. Claude does not reconstruct what was agreed.**
 
 ## The `.ai/` protocol (CONTRACT v1.0)
 
-The structure in the root of every project:
+`CONTRACT.md` lives in the `.ai/` of each project and is not in this repository: below is an extract of the rules, enough to understand the protocol and reproduce it. The structure in the root of every project:
 
 ```
 <project-root>/.ai/
@@ -64,7 +64,7 @@ Claude's order of actions at the start: read CONTRACT → `current.md` → (if `
 4. Update `current.md` (single-writer).
 Hard prohibition: do not state the status of work as fact; statements from transcripts are quoted as the opinions of speakers `[Speaker, Date]`.
 
-Launch in Gemini Spark: "Prepare a brief for project acme on the topic Transaction Engine" or "acme: the client writes that webhooks on staging are dropping with a timeout. Make a brief."
+Launch in Gemini Spark: "Prepare a brief for project acme on the payment provider migration topic" or "acme: the client writes that webhooks on staging are dropping with a timeout. Make a brief."
 
 ### `project-decision-qa` (Constraint Validator)
 Reads Claude's report, processes `challenged_constraints`, checks it against Notion, writes `.qa-N.md`, sets `qa_passed` + archives, or `qa_failed` with a list of fixes. Launch: "Do QA on PROJ-2362 in project acme".
@@ -85,12 +85,13 @@ Reads Claude's report, processes `challenged_constraints`, checks it against Not
 - The PM is not ready to be the arbiter: two agents without an arbiter go in circles.
 
 ## Current state
-The protocol is rolled out in three projects (`acme`, `Delta`, `Gamma`). The root of `acme` has been cleaned up: the old files are in `.ai/archive/pre-protocol/` by category (code-reviews, investigations, specs, qa, deploys, docs, reports) with an INDEX.md. The first real tasks through the protocol are still ahead; the rule "make the first task a small one" stands.
+
+Status of the layer: beta, frozen until a successful pilot. The protocol is rolled out in three projects (`acme`, `Delta`, `Gamma`). The root of `acme` has been cleaned up: the old files are in `.ai/archive/pre-protocol/` by category (code-reviews, investigations, specs, qa, deploys, docs, reports) with an INDEX.md. The first real tasks through the protocol are still ahead; the rule "make the first task a small one" stands.
 
 A review called the protocol "paper" and that is a fair assessment. The criterion for a successful pilot (accepted): **3 consecutive engineering tasks of different types** (1 bugfix, 1 refactoring, 1 new feature) pass the full cycle of a Gemini brief → Claude execution → Gemini QA → `qa_passed` without manual fixing of the protocol syntax. Until the pilot closes, this layer is not offered to colleagues.
 
-Two discrepancies between CONTRACT.md and reality that have to be closed before the pilot:
-- The Decisions DB has no `Rationale`, `Alternatives rejected` or `Stated by` fields and no `Disputed` status, and `Superseded By` is text, not a relation (section 9 of CONTRACT describes the desired schema, not the actual one).
+What has to be closed before the pilot:
+- The Decisions DB schema is aligned with section 9 of CONTRACT with two deliberate deviations (`Rationale` was not added, `Context` plays its role; there is no `Disputed` status, a disagreement is recorded as a comment): it has `Alternatives rejected`, `Stated by`, the `Superseded By` / `Supersedes` relation, `Trade-off`, `Review trigger`, `Door` (`02`). What remains is to update CONTRACT for these two deviations and check that `notion-project-brief` writes into exactly these fields.
 - The one-off migration of a year of decision history has not been done. The review's recommendation: have Gemini do it in a single batch run (the context window), with the result as a structured list to be loaded into Decisions through the Notion API; Claude would lose coherence at that volume.
 
 An extension that the review supported: `notion-project-brief` for non-engineering tasks (SOW negotiations, escalation letters) via the subtype `type: negotiation_brief | commercial_brief`.

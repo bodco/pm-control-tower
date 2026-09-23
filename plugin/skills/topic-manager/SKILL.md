@@ -1,11 +1,11 @@
 ---
 name: topic-manager
-description: "Analyzes Notion Meetings, Threads and (when configured) Gmail for a project and period, and creates/updates Topics DB pages - covers both on-demand analysis and the weekly cross-source sync."
+description: "Analyzes Notion Meetings, Threads and (when the config sets gmail.client_search_filter) Gmail for a registered project and period, and creates/updates Topics DB pages - covers both on-demand analysis and the weekly cross-source sync. Never defaults to a project. Use when the user mentions \"проаналізуй теми\", \"онови topics\", \"які теми за період\", \"topics sync\", \"topic analysis\", \"weekly topics update\", \"наскрізні теми\", \"topic-manager\", or when it runs as the weekly scheduled task. When triggered, execute immediately."
 ---
 
 # Topic Manager
 
-Analyzes Meetings, Threads and (when the project has Gmail configured) email for a given period, extracts coherent topics, and creates/updates structured topic pages in the Topics DB.
+Analyzes Meetings, Threads and (when the config sets `gmail.client_search_filter`) email for a given period, extracts coherent topics, and creates/updates structured topic pages in the Topics DB.
 
 ## CRITICAL: Execution Rules
 
@@ -25,27 +25,28 @@ The ONLY questions allowed:
 
 1. Determine the project from the user's request. If the project is NOT explicitly named, do not guess and do not default: ask the user which project (list the configs in `projects/`). See the Default Project Rule in projects/SKILL.md.
 2. Read the project config `../projects/{project_slug}.md` relative to this skill's folder; if that fails, Glob `**/projects/{project_slug}.md` under the skills directory.
-3. Take `notion.project_page_id`, `notion.workspace_page_id`, `notion.topics_db`, `notion.meetings_db`, `notion.threads_db`, and `project_name` from that config. The Notion DB IDs and relation values below are Acme examples for illustration only - always use the values from the config of the project actually being analyzed.
-4. Take `email_routing` from the config, if present. This determines whether Step 1c (Gmail) runs at all, and which mailboxes/senders are in scope for this project - never a fixed, hardcoded list of Notion IDs or search terms baked into this skill's body. If a project has no `email_routing` section, skip Step 1c entirely (graceful degradation, not an error) and note it was skipped in the final Output.
+3. Take `notion.project_page_id`, `notion.workspace_page_id`, `notion.topics_db`, `notion.meetings_db`, `notion.threads_db`, and `project_name` from that config. All Notion DB IDs and relation values below come from the config of the project actually being analyzed.
+4. Take `{config.gmail.client_search_filter}` from the config. It determines whether Step 1c (Gmail) runs at all and which senders are in scope - never a fixed, hardcoded search term baked into this skill's body. When it is `none`, email is already in the Threads DB (Type = Email, collected by `mac-mail-collector`) and Step 1c is skipped with one header line (graceful degradation, not an error).
+5. Read `projects/SKILL.md` for the cross-cutting rules. Writes allowed without asking (the 5-minute rule): creating and updating Topics DB pages. Nothing else.
 
 ---
 
-## Notion DB IDs (Acme example - always confirm from the project config, see Step 0)
+## Notion DB IDs (from the project config, see Step 0)
 
 | DB | Collection ID |
 |---|---|
-| **Topics DB** | `collection://~~notion-topics-db` |
-| **Meetings DB** | `collection://~~notion-meetings-db` |
-| **Threads DB** | `collection://~~notion-threads-db` |
+| **Topics DB** | `{config.notion.topics_db}` |
+| **Meetings DB** | `{config.notion.meetings_db}` |
+| **Threads DB** | `{config.notion.threads_db}` |
 
 ## Fixed Relations (JSON-encoded array strings)
 
 | Relation | Value (copy as-is into properties) |
 |---|---|
-| **Projects (Acme)** | `"[\"https://www.notion.so/~~notion-project-page-id\"]"` |
-| **Workspace** | `"[\"https://www.notion.so/~~notion-workspace-page-id\"]"` |
+| **Project** | `"[\"https://app.notion.com/p/{config.notion.project_page_id}\"]"` |
+| **Workspace** | `"[\"https://app.notion.com/p/{config.notion.workspace_page_id}\"]"` |
 
-> Relations are PER PROJECT: take `project_page_id` and `workspace_page_id` from `../projects/{slug}.md` of the project the topics belong to. The Acme IDs above are examples, not constants - using them for another project's topics would mix the projects.
+> Relations are PER PROJECT: take `project_page_id` and `workspace_page_id` from `../projects/{slug}.md` of the project the topics belong to. Using another project's IDs would mix the projects.
 
 ---
 
@@ -53,7 +54,7 @@ The ONLY questions allowed:
 
 Before writing anything, fetch the Topics data source itself (`notion-fetch` on its collection URL) and read the actual property names and types it reports.
 
-This skill's own property table below has previously listed the relation properties as plain `Meetings` and `Threads`, while the code samples further down use `💬 Meetings` and `📨 Threads` (with emoji prefixes). That mismatch is a likely, concrete cause of relation writes silently doing nothing: a write to a property name that doesn't exist can succeed as a no-op instead of erroring. Do not trust the property names in this document blindly. Confirm them against the live schema every run and use exactly what the schema reports. If a name here turns out to be wrong, use the real one - do not keep going with a name you have reason to doubt.
+The relation properties are `Meetings`, `Threads`, `Project`, `Workspace` (no emoji, singular), per the config's "Notion relation property names" paragraph. Emoji-prefixed names used to exist and silently broke relation writes: a write to a property name that does not exist can succeed as a no-op instead of erroring. Confirm the names against the live schema every run and use exactly what the schema reports; if a name differs, use the real one, report the discrepancy, and do not keep going with a name you have reason to doubt.
 
 ---
 
@@ -62,14 +63,14 @@ This skill's own property table below has previously listed the relation propert
 | Property | Type | Notes |
 |---|---|---|
 | Topic Name | title | English |
-| Status | select | `Claude`, `Open`, `Under Discussion`, `Resolved` |
-| Status 2 | status | `Not started`, `Planned`, `In progress`, `Under Review`, `Done`, `On Hold`, `Won't Do` |
+| Status | select | `AI Review`, `Open`, `Under Discussion`, `Resolved` |
+| Progress | status | `Not started`, `Planned`, `In progress`, `Under Review`, `Done`, `On Hold`, `Won't Do` |
 | Priority | select | `High`, `Medium`, `Low` |
 | Summary | text | **DO NOT USE THIS FIELD TO STORE INFORMATION.** See "Summary Property" section below. |
 | Date | date range | earliest mention -> latest mention |
-| 💬 Meetings | relation | array of meeting page URLs (confirm exact property name in Step 0b) |
-| 📨 Threads | relation | array of thread page URLs (confirm exact property name in Step 0b) |
-| Projects | relation | see Fixed Relations |
+| Meetings | relation | array of meeting page URLs (confirm exact property name in Step 0b) |
+| Threads | relation | array of thread page URLs (confirm exact property name in Step 0b) |
+| Project | relation | see Fixed Relations |
 | Workspace | relation | see Fixed Relations |
 
 ### Summary Property
@@ -88,9 +89,9 @@ The `Summary` property must be left **empty**. It is not a place to store inform
 Determine the period first:
 - **Live request with an explicit period** ("за березень", "останні два тижні") - use it, parsed into a list of months (or a single partial-month range for sub-month periods; the Month Section Format below still applies per calendar month touched).
 - **Live request with no period** - ask for it (see Execution Rules above).
-- **Scheduled weekly run** (invoked by the Monday routine, no live user to ask) - default period is the past 7 days, expressed as a partial-month range if it crosses a month boundary. Never ask in this mode.
+- **Scheduled weekly run** (the weekly scheduled run, no live user to ask) - default period is the past 7 days, expressed as a partial-month range if it crosses a month boundary. Never ask in this mode.
 
-Process each month from **newest to oldest**. For each month, execute Steps 1-5 (Step 1c only when `email_routing` is configured for the project).
+Process each month from **newest to oldest**. For each month, execute Steps 1-5 (Step 1c only when `gmail.client_search_filter` is set for the project).
 
 ### Ukrainian month names
 
@@ -117,7 +118,7 @@ For each found page, call `notion-fetch` to get the full content (summary + tran
 
 ## Step 2 - Collect Threads
 
-The keyword list for this search must NOT be a fixed, static list. A fixed list guarantees blind spots: any active topic whose name never happens to match one of the hardcoded words is invisible to this step forever, silently, and no error tells you it happened. This has already happened in practice on Acme: "Transaction Engine" was never in the old fixed list, so its threads were never found even though the topic had two months of documented activity in Meetings.
+The keyword list for this search must NOT be a fixed, static list. A fixed list guarantees blind spots: any active topic whose name never happens to match one of the hardcoded words is invisible to this step forever, silently, and no error tells you it happened. This has happened in practice: a topic that was never in an old fixed list was invisible for two months even though Meetings documented its activity.
 
 Build the keyword list fresh, every run, from three sources:
 
@@ -139,22 +140,22 @@ Filter threads to only include those relevant to the target month (by checking c
 
 ---
 
-## Step 1c - Collect Gmail (only when the project config has `email_routing`)
+## Step 1c - Collect Gmail (only when `{config.gmail.client_search_filter}` is not `none`)
 
-Skip this step entirely, without error, for a project whose config has no `email_routing` section (graceful degradation). Note the skip once in the final Output rather than repeating it per month.
+Skip this step entirely, without error, for a project whose `gmail.client_search_filter` is `none` (graceful degradation). Note the skip once in the final Output rather than repeating it per month.
 
-Search Gmail for messages in the target period using the project's own mailboxes/senders from `email_routing` (never a hardcoded address list). Use `gmail_search_messages` with a date-bounded query for the period being processed.
+Search Gmail for messages in the target period using `{config.gmail.client_search_filter}` (never a hardcoded address list). Use `gmail_search_messages` with that filter plus a date bound for the period being processed, `gmail_read_thread` for content.
 
 **Two-level clustering** (do this instead of treating each email as its own topic candidate):
 
 **Level 1: Subject similarity.** Group emails with the same or similar subject lines (RE:/FWD: chains, minor wording differences).
 
-**Level 2: Context & content similarity.** Read 2-3 representative emails from each initial group with `gmail_read_message`, then re-cluster based on actual content/context, not just subject:
-- Emails about the same business problem -> same cluster (e.g. "AWS costs alert" + "Infrastructure budget review" + "Redshift scaling" -> "Infrastructure & Cloud Costs")
+**Level 2: Context & content similarity.** Read 2-3 representative emails from each initial group with `gmail_read_thread`, then re-cluster based on actual content/context, not just subject:
+- Emails about the same business problem -> same cluster (e.g. "AWS costs alert" + "Infrastructure budget review" + "warehouse scaling" -> "Infrastructure & Cloud Costs")
 - Emails involving the same stakeholders on related decisions -> same cluster
 - Emails referencing the same project/feature even with completely different subjects -> same cluster
-- Automated alerts from the same service about the same domain -> same cluster (e.g. multiple Snyk alerts about different vulnerabilities -> "Snyk Vulnerability Management")
-- Emails that are steps in the same business process -> same cluster (e.g. "beneficiary doc request" + "KYC verification pending" + "onboarding status" -> "Client Onboarding Process")
+- Automated alerts from the same service about the same domain -> same cluster (e.g. multiple scanner alerts about different vulnerabilities -> "Vulnerability Management")
+- Emails that are steps in the same business process -> same cluster (e.g. "document request" + "verification pending" + "onboarding status" -> "Client Onboarding Process")
 
 For each cluster, note: number of emails, key senders, date range, contextual summary, and WHY these emails belong together. Feed each cluster into Step 3 as a candidate topic (or as new evidence for an existing one) exactly like a Meetings or Threads source - a cluster of 2+ related emails satisfies the "mentioned in 2+ sources" bar in Step 3 on its own, since it is itself multiple independent mentions.
 
@@ -172,7 +173,7 @@ A **topic** is:
 For each identified topic, prepare:
 - `topic_name` (English, concise, descriptive)
 - `priority` (High / Medium / Low - based on frequency and impact)
-- `status_2` (see "Determining Status 2" below - derive from the latest concrete signal, do not guess loosely)
+- `progress` (see "Determining Progress" below - derive from the latest concrete signal, do not guess loosely)
 - `date_start` / `date_end` (earliest and latest mention dates)
 - `meeting_urls` (list of related meeting page URLs)
 - `thread_urls` (list of related thread page URLs)
@@ -180,7 +181,7 @@ For each identified topic, prepare:
 
 Do not prepare a `summary` field for the property. See Summary Property section above - that information belongs in `month_section`, not in a separate property.
 
-### Determining Status 2
+### Determining Progress
 
 Re-derive this from the newest information every run, on both create and update. Never leave a stale value from a previous run untouched just because nothing forced a fresh look at it.
 
@@ -204,9 +205,9 @@ notion-search(
 ```
 
 **Semantic comparison, NOT exact match.** Examples:
-- "Invoice Integration" matches existing "ERP Invoice Integration & Dispersion Flow" -> UPDATE existing
-- "KYB Self-Service" matches existing "KYB Onboarding" -> UPDATE existing
-- "New the card processor Card Design" has no semantic match -> CREATE new
+- "Invoice Integration" matches existing "Invoice Integration & Payout Flow" -> UPDATE existing
+- "Merchant Self-Service" matches existing "Merchant Onboarding" -> UPDATE existing
+- "New Card Design" has no semantic match -> CREATE new
 
 When in doubt, prefer updating an existing topic over creating a duplicate. Use the full current Topic Name list already gathered in Step 2 (source 1) as your primary reference for this comparison, not just a fresh one-off search, since a fresh search can miss a semantically related but differently-worded existing topic.
 
@@ -225,16 +226,16 @@ notion-create-pages(
     {
       properties: {
         "Topic Name": topic_name,
-        "Status": "Claude",
-        "Status 2": status_2,
+        "Status": "AI Review",
+        "Progress": progress,
         "Priority": priority,
         "date:Date:start": "2026-03-01",
         "date:Date:end": "2026-03-28",
         "date:Date:is_datetime": 0,
-        "Projects": "[\"https://www.notion.so/{config.notion.project_page_id}\"]",
-        "Workspace": "[\"https://www.notion.so/{config.notion.workspace_page_id}\"]",
-        "💬 Meetings": "[\"https://www.notion.so/abc123...\", \"https://www.notion.so/def456...\"]",
-        "📨 Threads": "[\"https://www.notion.so/ghi789...\"]"
+        "Project": "[\"https://app.notion.com/p/{config.notion.project_page_id}\"]",
+        "Workspace": "[\"https://app.notion.com/p/{config.notion.workspace_page_id}\"]",
+        "Meetings": "[\"https://app.notion.com/p/abc123...\", \"https://app.notion.com/p/def456...\"]",
+        "Threads": "[\"https://app.notion.com/p/ghi789...\"]"
       },
       content: month_section
     }
@@ -245,11 +246,11 @@ notion-create-pages(
 
 There is no `Summary` key in this payload. That is intentional - see Summary Property above.
 
-**⚠️ Relation format: JSON-encoded array string.** All relation properties (Projects, Workspace, 💬 Meetings, 📨 Threads) must be passed as a **string** containing a JSON array of URL strings - NOT as a native array. Example: `"[\"https://www.notion.so/abc123\"]"` (string), not `["https://www.notion.so/abc123"]` (array).
+**⚠️ Relation format: JSON-encoded array string.** All relation properties (Project, Workspace, Meetings, Threads) must be passed as a **string** containing a JSON array of URL strings - NOT as a native array. Example: `"[\"https://app.notion.com/p/abc123\"]"` (string), not `["https://app.notion.com/p/abc123"]` (array).
 
 **⚠️ Date format: expanded properties.** Use `"date:Date:start"`, `"date:Date:end"`, `"date:Date:is_datetime"` - NOT `"Date": { start, end }`.
 
-**After creating, verify.** `notion-fetch` the newly created page and confirm the `💬 Meetings` and `📨 Threads` properties actually contain the URLs sent. A successful page-creation response does not by itself prove the relations landed - the property-name mismatch described in Step 0b has silently dropped relations before while the page itself was created fine.
+**After creating, verify.** `notion-fetch` the newly created page and confirm the `Meetings` and `Threads` properties actually contain the URLs sent. A successful page-creation response does not by itself prove the relations landed - the property-name mismatch described in Step 0b has silently dropped relations before while the page itself was created fine.
 
 ### 5B - Update Existing Topics (Prepend)
 
@@ -265,7 +266,7 @@ This prepends the new month above existing content.
 
 4. **Clear legacy `Summary` content if present.** If the fetch in step 1 shows the `Summary` property is non-empty, include clearing it (set to `""`) in the same update. Do not leave it populated going forward.
 
-5. **Recompute `Status 2`** per "Determining Status 2" above, using the newest month's content, and update it even if a value is already set - do not skip this just because the field isn't empty.
+5. **Recompute `Progress`** per "Determining Progress" above, using the newest month's content, and update it even if a value is already set - do not skip this just because the field isn't empty.
 
 6. **Update relations, and verify - this is no longer best-effort:**
    - Fetch current meeting/thread relation URLs from page properties, using the exact property name confirmed in Step 0b
@@ -273,8 +274,8 @@ This prepends the new month above existing content.
    - Update via `notion-update-page` with `update_properties`:
      ```
      properties: {
-       "💬 Meetings": "[\"url1\", \"url2\", \"url3_new\"]",
-       "📨 Threads": "[\"url4\", \"url5_new\"]"
+       "Meetings": "[\"url1\", \"url2\", \"url3_new\"]",
+       "Threads": "[\"url4\", \"url5_new\"]"
      }
      ```
    - Remember: value is a **JSON-encoded array string**, not a native array
@@ -310,7 +311,7 @@ This prepends the new month above existing content.
 - {Питання 2}
 
 ### Статус
-{1-2 речення про поточний стан теми на кінець місяця. Якщо Status 2 = On Hold, вкажи причину паузи тут же одним реченням.}
+{1-2 речення про поточний стан теми на кінець місяця. Якщо Progress = On Hold, вкажи причину паузи тут же одним реченням.}
 ```
 
 **Rules:**
@@ -326,9 +327,9 @@ This prepends the new month above existing content.
 ## Relation URL Format
 
 Convert page ID to relation URL:
-- Page ID: `~~notion-page-id`
-- Remove dashes: `~~notion-page-id`
-- URL: `https://www.notion.so/~~notion-page-id`
+- Page ID: `12345678-abcd-1234-abcd-1234567890ab`
+- Remove dashes: `12345678abcd1234abcd1234567890ab`
+- URL: `https://app.notion.com/p/12345678abcd1234abcd1234567890ab`
 
 When updating relations, always include ALL existing URLs + new URLs. Remove any spaces from URLs.
 
@@ -338,10 +339,10 @@ When passing relation values to `notion-create-pages` or `notion-update-page`, t
 
 ```
 // CORRECT - JSON-encoded array string:
-"💬 Meetings": "[\"https://www.notion.so/abc123\", \"https://www.notion.so/def456\"]"
+"Meetings": "[\"https://app.notion.com/p/abc123\", \"https://app.notion.com/p/def456\"]"
 
 // WRONG - native array (will fail or be ignored):
-"💬 Meetings": ["https://www.notion.so/abc123", "https://www.notion.so/def456"]
+"Meetings": ["https://app.notion.com/p/abc123", "https://app.notion.com/p/def456"]
 ```
 
 To build the value in practice:
@@ -357,7 +358,7 @@ To build the value in practice:
 
 2. **Build the threads keyword list fresh every run from existing Topic Names plus this run's meeting content (Step 2), not from a fixed list, and not by date.** A hardcoded list will silently miss any topic whose name isn't on it, forever. `created_date_range` often returns empty results because Notion dates don't match real dates.
 
-3. **Never hardcode Gmail search terms or a fixed sender list for Step 1c.** Read scope from the project's `email_routing` config, the same way Steps 1-2 read Notion DB IDs from config instead of baking in Acme's. A project without `email_routing` skips Step 1c entirely rather than falling back to guessed addresses.
+3. **Never hardcode Gmail search terms or a fixed sender list for Step 1c.** Read scope from `{config.gmail.client_search_filter}`, the same way Steps 1-2 read Notion DB IDs from config. A project with `none` skips Step 1c entirely rather than falling back to guessed addresses.
 
 4. **Relation updates are verified, not best-effort.** Confirm the property name against the live schema (Step 0b), confirm the write landed by re-fetching (Steps 5A/5B), and if it still fails after one retry, report it explicitly in the output instead of treating the failure as acceptable.
 
@@ -369,13 +370,13 @@ To build the value in practice:
 
 8. **Batch creation** - `notion-create-pages` accepts multiple pages (up to 5+). Use batch instead of one-by-one creation.
 
-9. **Deduplication** - before creating a new topic, verify no semantically similar topic exists, using the full current Topic Name list from Step 2, not just a fresh one-off search. "Invoice Integration" should update existing "ERP Invoice Integration & Dispersion Flow", not create a duplicate.
+9. **Deduplication** - before creating a new topic, verify no semantically similar topic exists, using the full current Topic Name list from Step 2, not just a fresh one-off search. "Invoice Integration" should update existing "Invoice Integration & Payout Flow", not create a duplicate.
 
 10. **Multi-month ranges** - process from newest to oldest. Each month is a separate section in the topic page.
 
 11. **No raw HTML, ever** - not in content, not in properties. Markdown only.
 
-12. **Never default the project**, except when a scheduled/automatic invocation already states it. This skill has no project-specific facts baked in; every ID and name in the examples above is illustrative (Acme) and must be re-read from the actual project's config every run.
+12. **Never default the project**, except when a scheduled/automatic invocation already states it. This skill has no project-specific facts baked in; every ID and name in the examples above is illustrative and must be re-read from the actual project's config every run.
 
 ---
 
@@ -386,7 +387,7 @@ After processing all months, print a summary:
 ```
 ✅ Topic analysis complete for {PROJECT_NAME} ({period}):
 
-Sources: Meetings + Threads{ + Gmail, if Step 1c ran / (Gmail skipped: no email_routing in config), if it did not}
+Джерела: Meetings OK · Threads OK · Gmail {OK | SKIPPED (client_search_filter: none)} · Topics OK   (the Data Completeness header from projects/SKILL.md, first line)
 
 Created ({N}):
 - [Topic Name 1]
@@ -397,7 +398,7 @@ Updated ({M}):
 - [Topic Name 4] (added {Month} section)
 
 ⚠️ Needs manual attention ({K}):
-- [Topic Name X]: relation update to 💬 Meetings failed after retry, URLs not added: [url1, url2]
+- [Topic Name X]: relation update to Meetings failed after retry, URLs not added: [url1, url2]
 - [Topic Name Y]: Summary property had legacy content, cleared
 
 Total: {N} created, {M} updated, {K} flagged for manual attention

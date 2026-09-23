@@ -1,6 +1,6 @@
 ---
 name: sentry-assistant
-description: "Query and manage issues in a project's self-hosted Sentry via REST API. URL, org and the monitored scope come from the project config; the token is read at runtime from the project's secrets file, never from the config. If the project is not explicitly named and more than one config exists, ask. Use this skill whenever the user mentions Sentry, errors, issues, exceptions, crashes, or wants to look up problems in the application. Triggers on: sentry, помилки, errors, issues, exceptions, краші, crashes, event, sentry issue, подивись помилки, що в sentry, or any combination of a project name with words like error, bug, crash, exception, stack trace. When triggered, execute immediately using the REST API - do not ask for confirmation."
+description: "Query and manage issues in a project's self-hosted Sentry via REST API. URL, org and the monitored scope come from the project config; the token is read at runtime from the project's secrets file, never from the config. If the project is not explicitly named, ask (Default Project Rule), even when only one config exists. Use this skill whenever the user mentions Sentry, errors, issues, exceptions, crashes, or wants to look up problems in the application. Triggers on: sentry, помилки, errors, issues, exceptions, краші, crashes, event, sentry issue, подивись помилки, що в sentry, or any combination of a project name with words like error, bug, crash, exception, stack trace. When triggered, execute immediately using the REST API - do not ask for confirmation."
 ---
 
 # Sentry Assistant
@@ -9,11 +9,14 @@ description: "Query and manage issues in a project's self-hosted Sentry via REST
 
 ## Step 0 - Project config, scope and token (always run first)
 
-1. Determine the project from the user's request. If not explicitly named and more than
-   one config exists, ask. See the Default Project Rule in `projects/SKILL.md`.
+1. Determine the project from the user's request. If not explicitly named, ask which
+   project, listing the configs in `projects/`: never guess, not even when only one
+   config is active (Default Project Rule in `projects/SKILL.md`).
 2. Read `../projects/{project_slug}.md` relative to this skill's folder (fallback:
-   Glob `**/projects/{project_slug}.md`).
-3. If `{config.sentry.url}` is `none`, tell the user this project has no Sentry and stop.
+   Glob `**/projects/{project_slug}.md`) and `projects/SKILL.md` for the cross-cutting
+   rules.
+3. If `{config.sentry.url}` is `none`, tell the user this project has no Sentry and stop
+   (`Джерела: Sentry SKIPPED (url: none)`).
 4. **Token.** It is NOT in the config. Read it at runtime and never print it:
 
 ```bash
@@ -68,8 +71,9 @@ GET /api/0/projects/{org_slug}/{project_slug}/issues/
 - `?sort=date` або `?sort=freq`
 - `?statsPeriod=24h`
 
-Відоме обмеження self-hosted: не всі інстанси приймають `statsPeriod=7d`. Якщо `7d`
-повертає помилку, перейти на `14d` або `24h`.
+Відоме обмеження self-hosted: не всі інстанси приймають `statsPeriod`. Спершу пробувати
+`statsPeriod`, якщо помилка - перейти на явні `start` / `end` у форматі ISO (той самий
+підхід у всіх скілах, що читають Sentry).
 
 ### 3. Деталі issue
 
@@ -98,7 +102,9 @@ Body: {"status": "resolved"}  або "ignored"
 ```
 
 Це єдина записуюча операція скіла. Робити тільки на явне прохання користувача і ніколи
-на проєктах поза скоупом: там моніторинг веде клієнт.
+на проєктах поза скоупом: там моніторинг веде клієнт. Правило 5 хвилин з
+`projects/SKILL.md`: `resolved`/`ignored` легко відкотити, тому дозволено на прохання;
+жодних інших змін у Sentry скіл не робить.
 
 ### 7. Статистика проєкту
 
@@ -129,12 +135,16 @@ GET /api/0/projects/{org_slug}/{project_slug}/stats/?stat=received&resolution=1h
 
 ### Якщо slug невідомий
 
-Спочатку дивитись у конфіг (`projects_in_scope`, `projects_out_of_scope`, повний
-список `projects`). Тільки якщо там його немає - `GET /api/0/organizations/{org_slug}/teams/`.
+Спочатку дивитись у конфіг (`projects_in_scope`, `projects_out_of_scope`). Тільки якщо
+там його немає - `GET /api/0/organizations/{org_slug}/teams/`.
 
 ---
 
 ## Формат відповіді
+
+Перший рядок будь-якої відповіді зі зведенням - Data Completeness header з
+`projects/SKILL.md` (напр. `Джерела: Sentry OK (2 проєкти у скоупі)` або
+`Джерела: Sentry FAILED (401)`).
 
 Для списку issues завжди таблиця:
 | ID | Помилка | Events | Перший раз | Останній раз | Рівень |

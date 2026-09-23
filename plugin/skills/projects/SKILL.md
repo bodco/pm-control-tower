@@ -37,25 +37,25 @@ A project is **active** unless its config contains `status: archived`.
 
 ## Naming Convention for skills
 
-- `{project}-...` prefix (e.g. `acme-debug`, `acme-beneficiary-audit`) = the
-  skill is hard-bound to that single project. It must never trigger for other
-  projects. This is a normal adapter pattern, not a design flaw: every project
-  ends up with a few of its own.
+- `{project}-...` prefix (e.g. `acme-debug`, `acme-data-audit`) = the skill is
+  hard-bound to that single project. It must never trigger for other projects.
+  This is a normal adapter pattern, not a design flaw: every project ends up
+  with a few of its own (a parser for the client's CSV export, a browser skill
+  for a portal without an API, a code-review skill with a codebase KB).
 - No project prefix (e.g. `slack-collector`, `jira-management`,
   `weekly-overview`) = a project-agnostic engine. It MUST read this registry
   (Step 0), obey the Default Project Rule, and keep every project-specific fact
   in the config, not in its own body.
-- Non-PM personal/other-domain skills (t2-*, marken-order, ukr-dissertation-format,
-  signal-desktop, calyx-export, signant-export, dila-lab-order) live outside this
-  system and do not read the registry.
+- Personal or other-domain skills (anything that is not PM work on a registered
+  project) live outside this system and do not read the registry.
 
 ## How skills use this
 
-Every project-agnostic PM skill (slack-collector, mac-mail-collector,
-weekly-overview, daily-team-prep, client-meeting-prep, stability-scan,
-jira-board-health, velocity-report, client-report, risk-register,
-client-satisfaction-tracker, deploy-analysis, inbox-responder, topic-manager,
-jira-management, sentry-assistant, thread-ticket-sync) starts with:
+Every project-agnostic PM skill (slack-collector, daily-team-prep,
+client-meeting-prep, weekly-overview, client-report, velocity-report,
+deploy-analysis, stability-scan, notion-meeting-topics, topic-manager,
+risk-register, change-request, project-lifecycle, client-satisfaction-tracker,
+thread-ticket-sync, jira-management, jira-board-health, sentry-assistant) starts with:
 
 1. Determine the project from the user's request. If not explicitly named - ASK
    (Default Project Rule above)
@@ -76,6 +76,11 @@ jira-management, sentry-assistant, thread-ticket-sync) starts with:
 
 If the config file doesn't exist, tell the user: "Project config not found.
 Available projects: [list files in projects/]"
+
+Two documented exceptions to step 1: `mac-mail-collector` reads ALL active configs
+(it routes mail to projects by `email_routing`), and `inbox-responder` takes the
+project from the `Project` relation of each thread it processes. Both still read
+the config before writing anything.
 
 ## Task tracker access and graceful degradation - MANDATORY
 
@@ -115,13 +120,22 @@ Rules for every skill that reads tickets:
    in the report, generate the rest.
 
 Some skills have no meaning without a tracker API (`jira-board-health`,
-`acme-jira-estimate-setter`). Those decline politely and explain why, rather
-than degrading.
+`jira-management`). Those decline politely and explain why, rather than degrading.
 
 A separate `client_tracker` block describes the client's own board when they
-keep one (e.g. Acme: client Notion DEV Board, `api_access: false`,
+keep one (e.g. a client Notion board with `api_access: false` and
 `sync_method: csv_import`). Flow is one-way, our tracker → their board; never
 claim to know statuses from a `client_tracker` with `api_access: false`.
+
+## Tracker MCP server names come from the config
+
+The plugin ships one Jira MCP server named `jira` (`.mcp.json`). Skills never
+hardcode a server name: writes go to the server in `{config.jira.mcp_write}`,
+reads to `{config.jira.mcp_read}` (both default to `jira`). Operation names used
+by the skills (`search_issues`, `get_issue`, `create_issue`, `update_issue`,
+`get_transitions`, `transition_issue`, `add_comment`, `add_attachment`,
+`get_epic_children`) are those of the shipped server; if you run a different
+server, map the operations by meaning and note it in `known_bug`.
 
 ## Secrets - never in this directory
 
@@ -144,11 +158,9 @@ Never print a secret into a report, a Notion page or a chat message.
 ## Email routing - one place only
 
 The routing registry (which client addresses belong to which project) lives ONLY
-in the `Email Routing` section of each config. It used to be duplicated in three
-places (config, `gmail-collector`, `mac-mail-collector`); `gmail-collector` was
-deleted 2026-09-07 (project mail arrives through Mail.app), and
-`mac-mail-collector` now reads all active configs and builds the registry in
-memory.
+in the `Email Routing` section of each config. `mac-mail-collector` reads all
+active configs and builds the registry in memory; no collector keeps its own
+address table.
 
 Derived, never maintained by hand: an address is **shared** when it appears in
 `client_emails` of two or more active configs. A thread belongs to a project only
@@ -159,12 +171,21 @@ calendar filters are engine logic and stay in `mac-mail-collector`.
 
 All shared Control Tower databases use the same names: `Project` and
 `Workspace` (singular, no emoji). Cross-relations have no emoji either:
-`Meetings`, `Threads`, `Topics`, `Knowledge Base`. Values are always a JSON
-array of page URLs. The old per-database table (`Projects`, `Workspaces`,
-`🏛️ Workspaces`, emoji-prefixed names) is gone; a skill body that still uses
-those names is stale. If a live schema ever diverges from this paragraph, the
-live schema wins: fetch the data source, write with the real name, and report
-the discrepancy so this file is fixed the same day.
+`Meetings`, `Threads`, `Topics`, `Knowledge Base`, `Tasks Tracker`, `Inbox`.
+Values are always a JSON array of page URLs in the form
+`["https://app.notion.com/p/<id-without-dashes>"]`. The old per-database table
+(`Projects`, `Workspaces`, `🏛️ Workspaces`, emoji-prefixed names) is gone; a
+skill body that still uses those names is stale.
+
+Status values written by automations: `AI Review` (Threads, Topics, Risks: the
+item was created or updated by a skill and a human should confirm it; the
+template's "AI Review Queue" view filters on it). Topics progress is the status
+property `Progress`. Reports `Type` and `Skill`, Tasks Tracker `Source`: the
+skill creates a missing select option on first write (Notion allows it).
+
+If a live schema ever diverges from this paragraph, the live schema wins: fetch
+the data source before the first write of a run, write with the real name, and
+report the discrepancy so this file is fixed the same day.
 
 ## JQL Isolation Validator - MANDATORY (all modes, including debugging)
 
@@ -187,12 +208,24 @@ was supposed to use:
 
 `Джерела: Jira OK · Slack EMPTY (0 повідомлень за період) · Sentry SKIPPED (url: none) · Tempo STALE (експорт від 2026-08-31) · Notion FAILED (401)`
 
+(in English when `default_language` is English: `Sources: Jira OK · Slack EMPTY (0 messages in period) · ...`)
+
 States: `OK`, `EMPTY` (source reachable, nothing in the period), `STALE`
 (data older than the freshness rule), `SKIPPED` (not configured / not in
 scope), `FAILED` (source unreachable or errored). `EMPTY` and `FAILED` are
 never merged into one: that merge once hid a broken Slack collector for
 months. The line is present even when everything is OK, so that its absence
 is itself a visible defect. Also list `PM Profile` when the skill uses it.
+
+## Agent write permissions: the 5-minute rule
+
+A skill may write to an external system without asking only when the effect can
+be undone within five minutes by the PM: a new Notion page or row, a Jira ticket
+in the backlog, a comment in a thread the PM asked for, a draft. Everything else
+requires explicit human approval in the same session: any message to the client,
+any change in a production system, ticket transitions to Done, deletions, edits
+of the client's own board. Sending stays manual in every skill. When in doubt,
+draft and ask.
 
 ## PM standards and PM Profile
 
@@ -247,8 +280,9 @@ Rules every engine applies:
 
 ## Adding a new project
 
-Full runbook: `08-new-project-flow.md` in the Control Tower docs; ready-made
-prompt: `prompts/new-project-onboarding.md` there.
+Full runbook: document 08 ("New project flow") in the Control Tower docs
+(`docs/en/08-new-project-flow.md` in the repository); the `project-lifecycle`
+skill (mode `kickoff`) walks through it interactively.
 
 1. Copy `_template.md` to `{new_project_slug}.md`
 2. Fill in: status, Access Matrix, **Task Tracker access mode** (`api_access`,
@@ -269,11 +303,18 @@ prompt: `prompts/new-project-onboarding.md` there.
 5. Secrets: put any tokens into `~~home-folder/work/Secrets/secrets.env`,
    reference them from the config by variable name only
 6. Add a first row to the Decisions DB: "project started, scope = ..." (Area = Scope)
-7. Adding a new config file means re-uploading the whole `projects` skill
-   (Settings → Skills → Upload of a rebuilt `projects.skill`); a skill card
-   replaces only SKILL.md and cannot add a file
+7. Where the file lives depends on how the library was installed:
+   - **plugin** (the shipped `pm-control-tower.plugin`): the config is a file
+     inside the installed plugin's `skills/projects/` folder. Ask Claude
+     "customize the pm-control-tower plugin: add project {slug}" - the
+     plugin-customization flow edits the plugin and repackages it. Do NOT
+     upload a separate skill named `projects`: the plugin version would shadow
+     it and the skills would read the wrong folder.
+   - **standalone skills** (uploaded one by one via Settings → Skills): a skill
+     card replaces only SKILL.md and cannot add a file, so rebuild the
+     `projects` folder as a `.skill` zip with the new config inside and upload it
 8. Skills pick the project up automatically when the user mentions it by name;
-   the monthly digest and skill health check iterate over all active configs
+   the monthly digest and automation health check iterate over all active configs
 
 ## Maintaining a config (the memory discipline)
 
@@ -282,9 +323,9 @@ prompt: `prompts/new-project-onboarding.md` there.
   config + one line in its Changelog + one row in the Decisions DB. Skills pick
   the change up automatically; do NOT copy the fact into skills.
 - Never delete facts: move them to a "historical" marking with an end date
-  (see the Former Members table and the external-dev label in `acme.md` for the
-  pattern).
+  (the Former Members table and the `HISTORICAL since <date>` marker in the
+  Labels Taxonomy are the patterns).
 - Archiving a finished project: add `status: archived` to its General section
   (skills stop offering it as a choice; its data and history stay readable).
-- The monthly skill health check compares every skill against the configs and
+- The monthly automation health check compares every skill against the configs and
   reports drift.

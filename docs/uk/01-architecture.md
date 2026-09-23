@@ -6,8 +6,8 @@
  ШАР 1. ДЖЕРЕЛА (периферія, MCP-конектори і локальні файли)
  ┌────────┬────────┬────────┬──────────┬────────┬────────────┬─────────────┬──────────┐
  │  Jira  │ Slack  │ Gmail  │ Mail.app │ Sentry │ CloudWatch │ Confluence  │ Calendar │
- │ cosmix │        │        │ буфер    │  REST  │ експорти   │ sooperset   │          │
- │ rixbeck│        │        │ на диску │        │ на диску   │             │          │
+ │ локал. │        │        │ буфер    │  REST  │ експорти   │ локальний   │          │
+ │  MCP   │        │        │ на диску │        │ на диску   │    MCP      │          │
  └───┬────┴───┬────┴───┬────┴────┬─────┴───┬────┴─────┬──────┴──────┬──────┴────┬─────┘
      │        │        │         │         │          │             │           │
      ▼        ▼        ▼         ▼         ▼          ▼             ▼           ▼
@@ -35,7 +35,7 @@
  │ протокол .ai/ у корені проєкту: tasks/ current.md reports/ investigations/       │
  └──────────────────────────────────────────────────────────────────────────────────┘
                  ▲
- ЛЮДИНА: Bohdan. Пріоритети, рішення, клієнт, арбітраж між агентами.
+ ЛЮДИНА: ПМ. Пріоритети, рішення, клієнт, арбітраж між агентами.
 ```
 
 ## Той самий фреймворк як потік даних
@@ -49,7 +49,7 @@
  Mail.app ──┘ (буфер на диску ┤                                                            
                → Threads)    │   prep-скіли ─────────▶ Reports DB ──┐                     
  Календар ─┐                 ├─▶ inbox-responder ────▶ Threads (draft)                    
- Meetings ─┼─▶ Meetings DB ──┤   topic-analyzer ─────▶ Topics DB     ├─▶ CONTROL TOWER ─▶ Людина:
+ Meetings ─┼─▶ Meetings DB ──┤   topic-manager ──────▶ Topics DB     ├─▶ CONTROL TOWER ─▶ Людина:
  (Notion AI)                 │   risk-register ──────▶ Risks DB      │   Today's Reports    відправити,
  Jira ─────────────────────▶ ┤   weekly/monthly ─────▶ Reports DB    │   Awaiting Reply     вирішити,
  Sentry, CloudWatch ───────▶ ┤   stability/deploy ───▶ Reports + Jira│   Open Risks         записати
@@ -70,7 +70,7 @@
 | Що | Notion Control Tower з 11 базами і relation-моделлю; персональний Tasks Tracker; поштовий конвеєр Mail.app + LaunchAgent; операційний ритм; реєстр `projects/`; скіли-двигуни (колектори, prep, звіти, аналітика); автопілот як механізм | Скіли з префіксом проєкту, скрипти парсингу клієнтських експортів, браузерні експорти з порталів без API, KB кодової бази, специфічні бізнес-звірки |
 | Хто змінює | Автор ядра; зміни через версії | ПМ проєкту, коли завгодно |
 | Живе | Спільна папка скілів, шаблон Notion, цей фреймворк | `projects/<slug>.md` + скіли `<slug>-*` + `~/work/<slug>/` |
-| Приклад Acme | `slack-collector`, `daily-team-prep`, `weekly-overview`, `risk-register`, Reports DB | `acme-beneficiary-audit`, `acme-db-assistant`, `acme-debug` з KB, `authorizer-code-review`, `calyx-export` на іншому проєкті |
+| Приклад Acme | `slack-collector`, `daily-team-prep`, `weekly-overview`, `risk-register`, Reports DB | `acme-beneficiary-audit`, `acme-db-assistant`, `acme-debug` з KB, `acme-core-code-review`, `<portal>-export` на іншому проєкті |
 | Що з ним при новому клієнті | Береться як є | Пишеться заново під стек клієнта, часто з ручних експортів |
 
 Наслідок для шару 1: джерела нижче - це те, що є на Acme. На іншому проєкті частина з них відсутня або доступна лише через браузер чи файли. Конфіг проєкту явно каже, що доступно (`task_tracker.api_access`, Access Matrix), і двигуни підлаштовуються.
@@ -84,19 +84,18 @@
 | Конектор | Що дає | Режим |
 |---|---|---|
 | Slack (офіційний конектор Claude) | читання каналів і тредів, пошук, надсилання, canvas | read + write (write під контролем людини) |
-| Slack (`slack-workspace2`, локальний MCP) | власна read-only інтеграція ПМа на воркспейс наша компанія, коли офіційний конектор недоступний або зайнятий іншим воркспейсом; токен читається з `secrets.env` через `sh -c` у `claude_desktop_config.json` | read |
+| Slack (`slack-workspace2`, локальний MCP) | власна read-only інтеграція ПМа на воркспейс нашої компанії, коли офіційний конектор недоступний або зайнятий іншим воркспейсом; токен читається з `secrets.env` через `sh -c` у `claude_desktop_config.json` | read |
 | Notion | пошук, fetch сторінок, створення і оновлення сторінок у базах | read + write, основний вихід системи |
 | Gmail | пошук тредів, читання, чернетки, відповіді | read + draft |
 | Google Calendar | події за день (для щоденного звіту) | read |
-| Jira (`jira-cosmix`, локальний MCP) | create/update/search/transition/comment/attachment | write |
-| Jira (`jira-rixbeck`, локальний MCP) | getTask з повним assignee, статуси, оновлення власника | read |
-| Confluence (`confluence-our-company`, локальний MCP) | CQL-пошук, читання, створення, коментарі, вкладення | read + write; **зараз непрацездатний** - URL не оновлено після міграції домену (`13` #43) |
+| Jira (`jira`, локальний MCP; у плагіні `.mcp.json`) | search/get/create/update/transition/comment/attachment; імʼя сервера у конфігу `jira.mcp_write` / `jira.mcp_read` | read + write |
+| Confluence (`confluence`, локальний MCP) | CQL-пошук, читання, створення, коментарі, вкладення | read + write; працює після міграції домену, токен читається з `secrets.env` (`13` #43) |
 | Control Chrome (локальний MCP) | керування вкладками реального Chrome на Маку (окремо від Claude in Chrome конектора) | read + write під наглядом |
 | Sentry | REST API напряму з токеном з конфігу (не MCP) | read + зміна статусів |
-| Chrome / built-in browser | автоматизація там, де немає API: Calyx, Signant, клієнтський Notion, Jira REST через JS | read + write під наглядом |
+| Chrome / built-in browser | автоматизація там, де немає API: портали клінічних досліджень, клієнтський Notion, Jira REST через JS | read + write під наглядом |
 | Figma, Mermaid, IBKR | допоміжні, поза PM-ядром | |
 
-Секрети всіх локальних MCP-серверів вище (крім `notion` і `Control Chrome`, які не потребують окремого токена) мають переїхати на єдиний патерн: значення в `~/work/Secrets/secrets.env`, `claude_desktop_config.json` лише запускає `sh -c` з `grep`/`cut` (як уже зроблено для `slack-workspace2`). Зараз `jira-cosmix`/`jira-rixbeck`/`confluence-our-company` ще тримають токени прямо в JSON - `13` #43.
+Секрети всіх локальних MCP-серверів вище (крім `notion` і `Control Chrome`, які не потребують окремого токена) живуть за єдиним патерном: значення в `~/work/Secrets/secrets.env`, `claude_desktop_config.json` лише запускає `sh -c` з `grep`/`cut`. У JSON конфігу десктопа немає жодного секрету (`13` #43); той самий патерн у `.mcp.json` плагіна.
 
 **Через файлову систему Mac** (Claude читає папки через bridge):
 
@@ -122,9 +121,9 @@
 
 | База | Хто пише | Хто читає | Роль |
 |---|---|---|---|
-| Threads | колектори (Slack, Gmail, Mail.app) | inbox-responder, topic-analyzer, weekly-overview, client-satisfaction, Current State | вхідні комунікації з класифікацією статусу |
-| Meetings | Notion AI (транскрипт + summary) | notion-meeting-topics, daily-team-prep, topic-analyzer, risk-register, Monthly digest | пам'ять про зустрічі |
-| Topics | topic-analyzer, weekly-topics-db-update, Gemini | всі prep- і звітні скіли, Gemini-бріфи | наскрізні теми, що тягнуться тижнями |
+| Threads | колектори (Slack, Gmail, Mail.app) | inbox-responder, topic-manager, weekly-overview, client-satisfaction, Current State | вхідні комунікації з класифікацією статусу |
+| Meetings | Notion AI (транскрипт + summary) | notion-meeting-topics, daily-team-prep, topic-manager, risk-register, Monthly digest | пам'ять про зустрічі |
+| Topics | topic-manager (on-demand і тижневий режим), Gemini | всі prep- і звітні скіли, Gemini-бріфи | наскрізні теми, що тягнуться тижнями |
 | Decisions | людина, monthly digest, Gemini (notion-project-brief) | Gemini QA, Claude для перевірки констрейнтів | журнал рішень, джерело constraints |
 | Reports | усі звітні та prep-скіли | людина, Monthly digest | архів усього згенерованого |
 | Risks | risk-register | client-meeting-prep, weekly-overview, digest | живий реєстр ризиків з Visibility |
@@ -144,17 +143,17 @@
 - **Реєстр `projects/`**: синхронізований скіл-інфраструктура з файлом на проєкт. Це не "ще один документ", а єдине джерело правди про стан проєкту (`03-project-config.md`). З 0.7.0 поруч лежить `_standards.md`: стандарти PM Toolkit, спільні для всіх проєктів (`14`).
 
 ### 3.2 Бібліотека скілів
-50 записів у синхронізованій папці (серед них нові двигуни `project-lifecycle` і `change-request`), синхронізовані між Claude Desktop і хмарними сесіями. Категорії, каталог і анатомія у `04-skills-library.md`. Ключова властивість: скіл-двигун починає з Step 0 (визначити проєкт, прочитати конфіг) і закінчує секцією Report Storage (куди і з якими властивостями зберегти результат).
+У пакет передачі входить 21 двигун (плагін `pm-control-tower`). Інстанція автора тримає близько 50 записів у синхронізованій папці: ті самі двигуни плюс проєктні адаптери, стокові скіли Anthropic і особисті скіли, які в пакет не входять. Категорії, каталог і анатомія у `04-skills-library.md`. Ключова властивість: скіл-двигун починає з Step 0 (визначити проєкт, прочитати конфіг) і закінчує секцією Report Storage (куди і з якими властивостями зберегти результат).
 
 ### 3.3 Виконавче середовище
-Cowork дає Claude: файлові інструменти, bash-пісочницю, Python/Node, браузер, MCP-конектори, доступ до папок Mac через bridge. Сесії бувають локальні (Claude Desktop) і хмарні (контейнер, який бачить Mac через bridge). Це впливає на скіли: локальні шляхи `/Users/our-company/...` доступні тільки через bridge, тому скіли описують, як знайти дані в обох режимах.
+Cowork дає Claude: файлові інструменти, bash-пісочницю, Python/Node, браузер, MCP-конектори, доступ до папок Mac через bridge. Сесії бувають локальні (Claude Desktop) і хмарні (контейнер, який бачить Mac через bridge). Це впливає на скіли: локальні шляхи `/Users/<user>/...` доступні тільки через bridge, тому скіли описують, як знайти дані в обох режимах.
 
 ## Шар 4. Автопілот
 
 Два планувальники:
 
 1. **Cowork Scheduled Tasks** (Claude Desktop, локально на Mac): 15-20 задач з cron-розкладом, кожна - короткий промпт, який викликає скіл(и) для конкретного проєкту і вимагає зберегти результат у Reports DB. Основний робочий автопілот.
-2. **Хмарні Routines** (Claude Code Remote): задачі, які не потребують Mac. Зараз шість: місячні Skill Health Check (дрейф скілів проти конфігів), Monthly Memory Digest (дайджест стану кожного активного проєкту з дописуванням незанесених рішень у Decisions DB), Client Satisfaction (1-ше число) і Project Health Check (2-ге число, `project-lifecycle`, `14`); щоденні Acme daily Slack sync і Acme threads -> Jira tickets.
+2. **Хмарні Routines** (Claude Code Remote): задачі, які не потребують Mac. Зараз шість: місячні Automation Health Check (дрейф скілів проти конфігів), Monthly Memory Digest (дайджест стану кожного активного проєкту з дописуванням незанесених рішень у Decisions DB), Client Satisfaction (1-ше число) і Project Health Check (2-ге число, `project-lifecycle`, `14`); щоденні Acme daily Slack sync і Acme threads -> Jira tickets.
 
 Повний розклад і шаблон промпта у `05-autopilot.md`.
 
@@ -175,7 +174,7 @@ Cowork дає Claude: файлові інструменти, bash-пісочни
 2. Результат у Reports DB з Type = Client Meeting Prep, нові задачі у Tasks Tracker з Source = client-meeting-prep.
 3. 17:00 мітинг, Notion AI пише транскрипт і summary у Meetings DB.
 4. Після мітингу ПМ кидає посилання у Claude ("міт <url>"), `notion-meeting-topics` дописує двомовний звіт з рішеннями і action items на ту ж сторінку.
-5. У понеділок `weekly-topics-db-update` і `weekly-overview` підхоплюють цей мітинг у теми і тижневий огляд; на 1-ше число Monthly Memory Digest перевіряє, чи рішення з мітингу потрапили у Decisions DB, і дописує пропущені.
+5. У понеділок `topic-manager` (тижневий режим) і `weekly-overview` підхоплюють цей мітинг у теми і тижневий огляд; на 1-ше число Monthly Memory Digest перевіряє, чи рішення з мітингу потрапили у Decisions DB, і дописує пропущені.
 
 ### Приклад В. Прод впав уночі
 1. Четвер 22:10 `stability-scan`: Sentry unresolved по проєктах у скоупі, CloudWatch-логи за тиждень з диска, топ-3 з трейсами, англійський звіт для клієнта, Jira-тікети на нові дефекти, фаза 2 з `acme-debug` для глибокого RCA.

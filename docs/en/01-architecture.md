@@ -6,8 +6,8 @@
  LAYER 1. SOURCES (periphery: MCP connectors and local files)
  ┌────────┬────────┬────────┬──────────┬────────┬────────────┬─────────────┬──────────┐
  │  Jira  │ Slack  │ Gmail  │ Mail.app │ Sentry │ CloudWatch │ Confluence  │ Calendar │
- │ cosmix │        │        │ buffer   │  REST  │ exports    │ sooperset   │          │
- │ rixbeck│        │        │ on disk  │        │ on disk    │             │          │
+ │ local  │        │        │ buffer   │  REST  │ exports    │ local MCP   │          │
+ │  MCP   │        │        │ on disk  │        │ on disk    │             │          │
  └───┬────┴───┬────┴───┬────┴────┬─────┴───┬────┴─────┬──────┴──────┬──────┴────┬─────┘
      │        │        │         │         │          │             │           │
      ▼        ▼        ▼         ▼         ▼          ▼             ▼           ▼
@@ -35,7 +35,7 @@
  │ the .ai/ protocol at the project root: tasks/ current.md reports/ investigations/│
  └──────────────────────────────────────────────────────────────────────────────────┘
                  ▲
- HUMAN: Bohdan. Priorities, decisions, the client, arbitration between agents.
+ HUMAN: the PM. Priorities, decisions, the client, arbitration between agents.
 ```
 
 ## The same framework as a data flow
@@ -49,7 +49,7 @@ The layers above are a static map of components. A new PM finds it easier to und
  Mail.app ──┘ (disk buffer   ┤
                → Threads)    │   prep skills ────────▶ Reports DB ──┐
  Calendar ──┐                ├─▶ inbox-responder ────▶ Threads (draft)
- Meetings ──┼─▶ Meetings DB ─┤   topic-analyzer ─────▶ Topics DB     ├─▶ CONTROL TOWER ─▶ Human:
+ Meetings ──┼─▶ Meetings DB ─┤   topic-manager ──────▶ Topics DB     ├─▶ CONTROL TOWER ─▶ Human:
  (Notion AI)                 │   risk-register ──────▶ Risks DB      │   Today's Reports    send,
  Jira ─────────────────────▶ ┤   weekly/monthly ─────▶ Reports DB    │   Awaiting Reply     decide,
  Sentry, CloudWatch ───────▶ ┤   stability/deploy ───▶ Reports + Jira│   Open Risks         record
@@ -70,7 +70,7 @@ The split that settles the question "is this a framework, or a description of Ac
 | What | Notion Control Tower with 11 databases and a relation model; the personal Tasks Tracker; the Mail.app + LaunchAgent mail pipeline; the operating rhythm; the `projects/` registry; engine skills (collectors, prep, reports, analytics); autopilot as a mechanism | Skills with a project prefix, scripts that parse client exports, browser-driven exports from portals without an API, codebase KBs, project-specific business reconciliations |
 | Who changes it | The core author; changes go through versions | The project PM, at any time |
 | Where it lives | The shared skills folder, the Notion template, this framework | `projects/<slug>.md` + `<slug>-*` skills + `~/work/<slug>/` |
-| Acme example | `slack-collector`, `daily-team-prep`, `weekly-overview`, `risk-register`, Reports DB | `acme-beneficiary-audit`, `acme-db-assistant`, `acme-debug` with its KB, `authorizer-code-review`, `calyx-export` on a different project |
+| Acme example | `slack-collector`, `daily-team-prep`, `weekly-overview`, `risk-register`, Reports DB | `acme-beneficiary-audit`, `acme-db-assistant`, `acme-debug` with its KB, `acme-core-code-review`, `<portal>-export` on a different project |
 | What happens to it with a new client | Taken as is | Written from scratch for the client's stack, often from manual exports |
 
 Consequence for layer 1: the sources below are what exists on Acme. On another project some of them are missing, or available only through a browser or through files. The project config states explicitly what is available (`task_tracker.api_access`, Access Matrix), and the engines adapt.
@@ -84,19 +84,18 @@ Everything that information comes from. Two categories:
 | Connector | What it provides | Mode |
 |---|---|---|
 | Slack (the official Claude connector) | reading channels and threads, search, sending, canvas | read + write (write under human control) |
-| Slack (`slack-workspace2`, local MCP) | the PM's own read-only integration for the our-company workspace, used when the official connector is unavailable or occupied by another workspace; the token is read from `secrets.env` via `sh -c` in `claude_desktop_config.json` | read |
+| Slack (`slack-workspace2`, local MCP) | the PM's own read-only integration for the company workspace, used when the official connector is unavailable or occupied by another workspace; the token is read from `secrets.env` via `sh -c` in `claude_desktop_config.json` | read |
 | Notion | search, fetching pages, creating and updating pages in databases | read + write, the main output of the system |
 | Gmail | thread search, reading, drafts, replies | read + draft |
 | Google Calendar | events for the day (for the daily report) | read |
-| Jira (`jira-cosmix`, local MCP) | create/update/search/transition/comment/attachment | write |
-| Jira (`jira-rixbeck`, local MCP) | getTask with the full assignee, statuses, owner updates | read |
-| Confluence (`confluence-our-company`, local MCP) | CQL search, reading, creating, comments, attachments | read + write; **currently broken**: the URL was not updated after the domain migration (`13` #43) |
+| Jira (`jira`, local MCP; shipped in the plugin's `.mcp.json`) | search/get/create/update/transition/comment/attachment; the server name comes from the config's `jira.mcp_write` / `jira.mcp_read` | read + write |
+| Confluence (`confluence`, local MCP) | CQL search, reading, creating, comments, attachments | read + write; works after the domain migration, the token is read from `secrets.env` (`13` #43) |
 | Control Chrome (local MCP) | controlling tabs in the real Chrome on the Mac (separate from the Claude in Chrome connector) | read + write under supervision |
 | Sentry | REST API directly, with a token from the config (not MCP) | read + status changes |
-| Chrome / built-in browser | automation where there is no API: Calyx, Signant, the client's Notion, Jira REST via JS | read + write under supervision |
+| Chrome / built-in browser | automation where there is no API: clinical-trial portals, the client's Notion, Jira REST via JS | read + write under supervision |
 | Figma, Mermaid, IBKR | auxiliary, outside the PM core | |
 
-The secrets of all the local MCP servers above (except `notion` and `Control Chrome`, which need no separate token) should move to a single pattern: the values live in `~/work/Secrets/secrets.env`, and `claude_desktop_config.json` only runs `sh -c` with `grep`/`cut` (as already done for `slack-workspace2`). Right now `jira-cosmix`/`jira-rixbeck`/`confluence-our-company` still hold their tokens directly in JSON: `13` #43.
+The secrets of all the local MCP servers above (except `notion` and `Control Chrome`, which need no separate token) follow a single pattern: the values live in `~/work/Secrets/secrets.env`, and `claude_desktop_config.json` only runs `sh -c` with `grep`/`cut`. The desktop config JSON holds no secret at all (`13` #43); the plugin's `.mcp.json` uses the same pattern.
 
 **Through the Mac file system** (Claude reads the folders through the bridge):
 
@@ -122,9 +121,9 @@ The roles of the databases in the data flow:
 
 | Database | Who writes | Who reads | Role |
 |---|---|---|---|
-| Threads | collectors (Slack, Gmail, Mail.app) | inbox-responder, topic-analyzer, weekly-overview, client-satisfaction, Current State | incoming communications with status classification |
-| Meetings | Notion AI (transcript + summary) | notion-meeting-topics, daily-team-prep, topic-analyzer, risk-register, Monthly digest | the memory of meetings |
-| Topics | topic-analyzer, weekly-topics-db-update, Gemini | all prep and reporting skills, Gemini briefs | cross-cutting topics that run for weeks |
+| Threads | collectors (Slack, Gmail, Mail.app) | inbox-responder, topic-manager, weekly-overview, client-satisfaction, Current State | incoming communications with status classification |
+| Meetings | Notion AI (transcript + summary) | notion-meeting-topics, daily-team-prep, topic-manager, risk-register, Monthly digest | the memory of meetings |
+| Topics | topic-manager (on-demand and weekly mode), Gemini | all prep and reporting skills, Gemini briefs | cross-cutting topics that run for weeks |
 | Decisions | the human, monthly digest, Gemini (notion-project-brief) | Gemini QA, Claude when checking constraints | the decision log, the source of constraints |
 | Reports | all reporting and prep skills | the human, Monthly digest | an archive of everything generated |
 | Risks | risk-register | client-meeting-prep, weekly-overview, digest | a live risk register with Visibility |
@@ -144,17 +143,17 @@ Three components:
 - **The `projects/` registry**: a synchronized skill infrastructure with one file per project. This is not "one more document", it is the single source of truth about the state of a project (`03-project-config.md`). Since 0.7.0 `_standards.md` sits next to it: the PM Toolkit standards shared by all projects (`14`).
 
 ### 3.2 Skills library
-50 entries in the synchronized folder (among them the new engines `project-lifecycle` and `change-request`), synchronized between Claude Desktop and cloud sessions. Categories, the catalog and the anatomy are in `04-skills-library.md`. The key property: an engine skill starts with Step 0 (identify the project, read the config) and ends with a Report Storage section (where to save the result and with which properties).
+The handover package contains 21 engines (the `pm-control-tower` plugin). The author's instance keeps about 50 entries in the synchronized folder: the same engines plus project adapters, stock Anthropic skills and personal skills, which are not in the package. Categories, the catalog and the anatomy are in `04-skills-library.md`. The key property: an engine skill starts with Step 0 (identify the project, read the config) and ends with a Report Storage section (where to save the result and with which properties).
 
 ### 3.3 Execution environment
-Cowork gives Claude: file tools, a bash sandbox, Python/Node, a browser, MCP connectors, and access to Mac folders through the bridge. Sessions can be local (Claude Desktop) or cloud-based (a container that sees the Mac through the bridge). This affects skills: local paths such as `/Users/our-company/...` are reachable only through the bridge, so skills describe how to find the data in both modes.
+Cowork gives Claude: file tools, a bash sandbox, Python/Node, a browser, MCP connectors, and access to Mac folders through the bridge. Sessions can be local (Claude Desktop) or cloud-based (a container that sees the Mac through the bridge). This affects skills: local paths such as `/Users/<user>/...` are reachable only through the bridge, so skills describe how to find the data in both modes.
 
 ## Layer 4. Autopilot
 
 Two schedulers:
 
 1. **Cowork Scheduled Tasks** (Claude Desktop, locally on the Mac): 15-20 tasks on a cron schedule, each of them a short prompt that invokes the skill(s) for a specific project and requires the result to be saved into the Reports DB. This is the main working autopilot.
-2. **Cloud Routines** (Claude Code Remote): tasks that do not need the Mac. There are six right now: the monthly Skill Health Check (skill drift against the configs), Monthly Memory Digest (a digest of the state of every active project, appending decisions that were never recorded into the Decisions DB), Client Satisfaction (the 1st of the month) and Project Health Check (the 2nd of the month, `project-lifecycle`, `14`); plus the daily Acme daily Slack sync and Acme threads -> Jira tickets.
+2. **Cloud Routines** (Claude Code Remote): tasks that do not need the Mac. There are six right now: the monthly Automation Health Check (skill drift against the configs), Monthly Memory Digest (a digest of the state of every active project, appending decisions that were never recorded into the Decisions DB), Client Satisfaction (the 1st of the month) and Project Health Check (the 2nd of the month, `project-lifecycle`, `14`); plus the daily Acme daily Slack sync and Acme threads -> Jira tickets.
 
 The full schedule and the prompt template are in `05-autopilot.md`.
 
@@ -175,7 +174,7 @@ Needed when Notion accumulates a history that Claude cannot re-read in a single 
 2. The result goes into the Reports DB with Type = Client Meeting Prep, and new tasks into the Tasks Tracker with Source = client-meeting-prep.
 3. 17:00 the meeting; Notion AI writes the transcript and summary into the Meetings DB.
 4. After the meeting the PM drops the link into Claude ("meeting <url>"), and `notion-meeting-topics` appends a bilingual report with decisions and action items to the same page.
-5. On Monday `weekly-topics-db-update` and `weekly-overview` pick this meeting up into topics and into the weekly overview; on the 1st of the month the Monthly Memory Digest checks whether the decisions from the meeting reached the Decisions DB and appends the missing ones.
+5. On Monday `topic-manager` (weekly mode) and `weekly-overview` pick this meeting up into topics and into the weekly overview; on the 1st of the month the Monthly Memory Digest checks whether the decisions from the meeting reached the Decisions DB and appends the missing ones.
 
 ### Example C. Production went down overnight
 1. Thursday 22:10 `stability-scan`: unresolved Sentry issues across the projects in scope, a week of CloudWatch logs from disk, the top 3 with traces, an English report for the client, Jira tickets for the new defects, phase 2 with `acme-debug` for a deep RCA.

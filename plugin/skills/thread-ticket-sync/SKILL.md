@@ -1,6 +1,6 @@
 ---
 name: thread-ticket-sync
-description: 'Executes a two-phase workflow in Cowork to find Slack threads that are missing as tickets in the client Notion, then transform selected threads into developer tasks and create them in the client Notion DB. Use this skill when the user wants to compare Slack threads against client Notion tickets, find gaps, or convert Slack threads into tasks. Triggers on ANY of these patterns: "аналіз тікетів", "аналіз Acme", "які треди не мають тікетів", "знайди відсутні тікети", "перетвори треди в задачі", "sync threads to tickets", "які треди не покриті", "thread ticket sync", "створи тікети", "gap analysis", or any message that combines a project name (Acme) with a date range and implies ticket or thread analysis. When in doubt, trigger this skill.'
+description: 'Executes a two-phase workflow in Cowork to find Slack threads that are missing as tickets in the client Notion, then transform selected threads into developer tasks and create them in the client Notion DB. Use this skill when the user wants to compare Slack threads against client Notion tickets, find gaps, or convert Slack threads into tasks. Reads the client board location from the client_tracker block of the project config. Triggers on ANY of these patterns: "аналіз тікетів", "які треди не мають тікетів", "знайди відсутні тікети", "перетвори треди в задачі", "sync threads to tickets", "які треди не покриті", "thread ticket sync", "gap analysis", "треди без тікетів", or any message that combines a registered project name with a date range and implies thread-to-ticket gap analysis. Never defaults to a project.'
 ---
 
 # Thread → Ticket Sync
@@ -27,8 +27,8 @@ Two-phase workflow with one human checkpoint in between:
 ## Invocation
 
 The user provides:
-- **Project name** - matched against the registry below
-- **Date range** - filters Threads DB by `Reported at` field (e.g., "за березень", "Mar 1–15", "last two weeks")
+- **Project name** - a registered project (Step 0 below); if it is not named, ask
+- **Date range** - filters Threads DB by `Reported at` field (e.g., "за березень", "Mar 1-15", "last two weeks")
 - **Action** - one of:
   - Phase 1 (gap analysis) - default if no thread numbers given
   - Phase 2 individual - create one ticket per thread
@@ -38,44 +38,44 @@ The user provides:
 Parse the date range into `START_DATE` and `END_DATE` (`YYYY-MM-DD`).
 
 Example calls:
-> *"аналіз тікетів Acme за березень"*
-> *"створи тікети для Acme: 2, 4, 7"* - individual tickets
-> *"консолідуй Acme: 1, 3, 5"* - one merged ticket from threads 1, 3, 5
-> *"оновити консолідований тікет Acme: 2, 6"* - append threads 2, 6 to existing consolidated ticket
+> *"аналіз тікетів {Project} за березень"*
+> *"створи тікети для {Project}: 2, 4, 7"* - individual tickets
+> *"консолідуй {Project}: 1, 3, 5"* - one merged ticket from threads 1, 3, 5
+> *"оновити консолідований тікет {Project}: 2, 6"* - append threads 2, 6 to existing consolidated ticket
 
 If the user doesn't specify an action but provides thread numbers → ask: individual or consolidated?
 If Phase 1 is requested without a date range → ask for it first.
 
 ---
 
-## Project Registry
+## Step 0 - Project config (always first)
 
-To add a project: copy the block below and fill in the values.
+1. Determine the project from the request. If it is not explicitly named, ask which
+   project, listing the configs in `projects/` (Default Project Rule in
+   `projects/SKILL.md`). Never guess.
+2. Read `../projects/{project_slug}.md` (fallback: Glob `**/projects/{project_slug}.md`)
+   and `projects/SKILL.md` for the cross-cutting rules.
+3. Take from the config:
 
----
-
-### 🟦 Acme
-
-| Parameter | Value |
+| Placeholder used below | Config key |
 |---|---|
-| **Project name** (Threads DB filter) | `Acme` |
-| **Aliases** | `acme` |
-| **Client Product Roadmap URL** | `~~client-roadmap-url` |
-| **Client Tasks to Work On DB URL** | `~~client-tasks-db-url` |
-| **Target column (Status value)** | `Issue to Work On` |
+| `{PROJECT_NAME}` | `{config.project_name}` |
+| `{PROJECT_PAGE_ID}` | `{config.notion.project_page_id}` (the Threads DB is filtered by the `Project` relation, not by name) |
+| `{THREADS_DB}` | `{config.notion.threads_db}` |
+| `{CLIENT_ROADMAP_URL}` | `{config.client_tracker.roadmap_url}` |
+| `{CLIENT_TASKS_URL}` | `{config.client_tracker.db_id}` (the client's tasks database, as a URL) |
+| `{TARGET_COLUMN}` | `{config.client_tracker.target_status}` |
 
----
-
-<!-- Add new projects here in the same format -->
-
----
-
-## Fixed constants (all projects)
-
-| Parameter | Value |
-|---|---|
-| Threads DB ID | `~~notion-threads-db` |
-| Threads DB filter: Type | `Slack` |
+4. If `{config.client_tracker.type}` is `none`, this project has no client board: say so
+   and stop (Phase 1 can still list threads without tickets in OUR tracker if the user
+   asks, but that is `jira-management`'s job). If `client_tracker.sync_method` is not
+   `browser` (or `browser_access` is false), Phase 2 produces the ticket texts as drafts
+   the PM pastes by hand instead of writing through Chrome.
+5. Writes allowed without asking (the 5-minute rule in `projects/SKILL.md`): Phase 1
+   never writes; Phase 2 creates or appends tickets on the client's board ONLY for the
+   thread numbers the PM selected explicitly in this session. Nothing else.
+6. Every summary opens with the Data Completeness header, e.g.
+   `Джерела: Threads OK · Client board (Chrome) OK` or `Client board SKIPPED (client_tracker: none)`.
 
 ---
 
@@ -85,8 +85,8 @@ Execute the following steps directly in Cowork.
 
 ### Step 1 - Read Slack threads from your Notion (Cowork → Notion MCP)
 
-Зроби query до database "Threads" (~~notion-threads-db):
-- Filter: Projects relation містить "{PROJECT_NAME}" AND Type = "Slack" AND Reported at >= {START_DATE} AND Reported at <= {END_DATE}
+Зроби query до database "Threads" (`{THREADS_DB}`; fetch the data source and filter, or `notion-query-data-sources` when the plan allows):
+- Filter: relation `Project` містить сторінку `{PROJECT_PAGE_ID}` AND Type містить "Slack" AND Reported at >= {START_DATE} AND Reported at <= {END_DATE}
 - Sort: Reported at ASC
 - Fields to retrieve: Thread Name, Slack Link, Reported at, Last Reply Date, page content (повний текст треду)
 
@@ -139,7 +139,7 @@ client_tickets = [
 РЕЗУЛЬТАТ - виведи нумерований список непокритих тредів:
 
 ---
-ТРЕДИ БЕЗ ТІКЕТІВ У КЛІЄНТСЬКОМУ NOTION ({PROJECT_NAME}, {START_DATE} – {END_DATE}):
+ТРЕДИ БЕЗ ТІКЕТІВ У КЛІЄНТСЬКОМУ NOTION ({PROJECT_NAME}, {START_DATE} - {END_DATE}):
 
 [N] {title}
     📎 {slack_link}
@@ -252,8 +252,8 @@ Once found:
 
 *(Used for Mode A only)*
 
-Використай Notion MCP. Зроби query до database "Threads" (~~notion-threads-db):
-- Filter: Projects relation містить "{PROJECT_NAME}" AND Type = "Slack" AND Reported at >= {START_DATE} AND Reported at <= {END_DATE}
+Використай Notion MCP. Зроби query до database "Threads" (`{THREADS_DB}`):
+- Filter: relation `Project` містить сторінку `{PROJECT_PAGE_ID}` AND Type містить "Slack" AND Reported at >= {START_DATE} AND Reported at <= {END_DATE}
 - Sort: Reported at ASC
 - Fields: Thread Name, Slack Link, Reported at, Last Reply Date, page content
 
@@ -320,9 +320,9 @@ Use Chrome automation to navigate to `{CLIENT_TASKS_URL}`.
 
 | Placeholder | Source |
 |---|---|
-| `{PROJECT_NAME}` | From project registry |
+| `{PROJECT_NAME}`, `{PROJECT_PAGE_ID}`, `{THREADS_DB}` | Project config (Step 0) |
 | `{START_DATE}` / `{END_DATE}` | Parsed from user input (`YYYY-MM-DD`) |
-| `{CLIENT_ROADMAP_URL}` | From project registry |
-| `{CLIENT_TASKS_URL}` | From project registry |
-| `{TARGET_COLUMN}` | From project registry |
+| `{CLIENT_ROADMAP_URL}` | `{config.client_tracker.roadmap_url}` |
+| `{CLIENT_TASKS_URL}` | `{config.client_tracker.db_id}` |
+| `{TARGET_COLUMN}` | `{config.client_tracker.target_status}` |
 | `{SELECTED_IDS}` | Provided by user after Phase 1 output |

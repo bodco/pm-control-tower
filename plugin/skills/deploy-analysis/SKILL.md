@@ -12,16 +12,21 @@ description: "Code-based deploy analysis for a registered project: compares stag
    `projects/`). See the Default Project Rule in `projects/SKILL.md`.
 2. Read the project config `../projects/{project_slug}.md` relative to this skill's
    folder (fallback: Glob `**/projects/{project_slug}.md` under the skills directory).
-3. All values marked `{config.xxx}` come from that config.
+3. All values marked `{config.xxx}` come from that config. Also read `projects/SKILL.md`
+   for the cross-cutting rules (Data Completeness header, 5-minute rule).
 4. Read the config's `## Deploy Config` section. It is authoritative (Rule Zero: config
-   wins over anything written here). It must define, per repo, the prod branch and the
-   stage branch, plus `local_paths.repos_root`. If that section is missing, tell the user
-   the project is not configured for deploy-analysis and stop. Do not infer branch names
-   and do not reuse another project's model.
-5. Read the config's `## Scope of Responsibility` section: repos marked client-owned or
-   frozen are out of default scope. Include them ONLY on an explicit request, and then
-   with a loud staleness warning in the report, because a frozen local clone produces a
-   stale and misleading delta.
+   wins over anything written here). It must define, per repo, the local path, the prod
+   branch and the pending (stage) branch, plus `{config.local_paths.repos_root}`, and may
+   carry `deploy_windows`, `promotion_rule` and `hotfix_policy`. If the section is
+   missing or says `none`, tell the user the project is not configured for
+   deploy-analysis and stop. Do not infer branch names and do not reuse another
+   project's model.
+5. Read the "Scope of Responsibility" table under the config's Engagement Status: repos
+   marked client-owned or frozen are out of default scope. Include them ONLY on an
+   explicit request, and then with a loud staleness warning in the report, because a
+   frozen local clone produces a stale and misleading delta.
+6. Writes allowed without asking (the 5-minute rule): the local report file and the
+   Reports DB page. This skill never touches the repositories.
 
 If the config file does not exist: "Project config not found. Available projects:
 [list files in projects/]"
@@ -34,9 +39,9 @@ this file. Read it before running.
 ## Behavior (brief)
 
 **This skill works exclusively against the locally checked-out repositories. NEVER run
-`git fetch`, `git pull`, `git remote update`, or any other network operation.** The corp
-proxy blocks outbound git for most repos anyway; burning round-trips and tokens on calls
-that reliably fail is pure waste. The user is responsible for pulling fresh refs before
+`git fetch`, `git pull`, `git remote update`, or any other network operation.** A corporate
+proxy usually blocks outbound git from an agent session anyway; burning round-trips and
+tokens on calls that reliably fail is pure waste. The user is responsible for pulling fresh refs before
 asking for a fresh analysis. The skill always uses whatever `origin/*` refs exist on disk
 and prints a staleness banner.
 
@@ -74,7 +79,9 @@ and prints a staleness banner.
       such path, next to the repos root) as
       `deploy-analysis-{project_slug}-YYYY-MM-DD.md`
     - the Notion Reports DB (see below)
-11. Print a concise chat summary with counts and links, and, if any local ref is older
+11. The report and the chat summary open with the Data Completeness header
+    (`projects/SKILL.md`), e.g. `Джерела: git (local refs) OK, freshest ref 2 днi · Jira SKIPPED (api_access: false)`.
+12. Print a concise chat summary with counts and links, and, if any local ref is older
     than 24h, one hint line: "Щоб освіжити: у терміналі `cd {repos_root} && for d in */; do (cd \"$d\" && git fetch --all --prune); done`".
 
 ## Branch model notes
@@ -118,8 +125,8 @@ Use `notion-create-pages` with a `data_source_id` parent. Reports uses the relat
 | Type | `Deploy Analysis` (create the option if missing) |
 | Skill | `deploy-analysis` (create the option if missing) |
 | Summary | 2-3 sentence headline: "X tickets on prod, Y still on stage, main delta = {infra\|business\|both}" |
-| Workspace | `["https://www.notion.so/{workspace_page_id_no_dashes}"]` |
-| Project | `["https://www.notion.so/{project_page_id_no_dashes}"]` |
+| Workspace | `["https://app.notion.com/p/{config.notion.workspace_page_id}"]` (ID without dashes) |
+| Project | `["https://app.notion.com/p/{config.notion.project_page_id}"]` (ID without dashes) |
 | Visibility | `Internal` |
 
 Relation properties need full Notion URLs, not bare UUIDs. The full Ukrainian report goes
@@ -138,7 +145,7 @@ as the page body in Notion Markdown. Keep `##` headings and tables.
 ## Known quirks
 
 - **Local-only by design.** No network git calls. This saves tokens on calls that would
-  usually fail (proxy blocks the git host, no creds in the sandbox) and keeps runs cheap.
+  usually fail (a proxy blocks the git host, no credentials in the sandbox) and keeps runs cheap.
 - Repos on an older CI often use `main` for prod and `stage` for stage; repos migrated to
   a newer pipeline may use a differently named prod branch. Verify from the repo's CI
   file, not from the branch name.
@@ -148,14 +155,14 @@ as the page body in Notion Markdown. Keep `##` headings and tables.
 - If a ref is suspiciously old (for example `origin/main` last commit older than 7 days
   while the user says "yesterday's deploy"), do NOT try to fetch. Print a clear staleness
   note and let the user pull manually.
-- Tracker MCP write ops may return "Unexpected end of JSON input" cosmetically. Not
-  relevant here since this skill only reads ticket context, but verify with a follow-up
-  read if a commenting step is ever added.
+- Ticket context (summaries for the keys found in commit messages) comes from the Jira
+  MCP server in `{config.jira.mcp_read}` (default `jira`, `get_issue`) only when
+  `{config.task_tracker.api_access}` is true; otherwise the key is shown without a
+  summary and the header says `Jira SKIPPED`. This skill only reads the tracker.
 
 ## Scheduled task
 
-No server-side scheduled task exists as of 2026-08-17 (the old `deploy-analysis-daily`
-lived in a session-local scheduler and did not survive the session; verified via
-`list_triggers`). If a recurring run is wanted, create a Cowork scheduled task whose
-prompt names the project, the in-scope repos and the period (24 hours for a daily run).
-The old task description in `README.md` is historical.
+There is no default schedule and no default project. If a recurring run is wanted,
+create a Cowork scheduled task whose prompt names the project, the in-scope repos and
+the period (24 hours for a daily run); the report then chains from the previous run's
+target date.

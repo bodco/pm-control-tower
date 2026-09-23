@@ -31,11 +31,11 @@ Notion тут - не вікі і не сховище документів, а с
 
 ## Бази даних
 
-> Схеми нижче зняті з реальних data source через Notion MCP. Назви властивостей дослівні, з емодзі там, де вони є. Це важливо: скіл, який пише у властивість `Title` замість `Thread Name` або `Workspace` замість `🏛️ Workspaces`, падає або мовчки не записує relation.
+> Схеми нижче зняті з реальних data source через Notion MCP. Назви властивостей дослівні, з емодзі там, де вони є. Це важливо: скіл, який пише у властивість `Title` замість `Thread Name` або `Projects` замість `Project`, падає або мовчки не записує relation.
 
 ### Назви relation
 
-У всіх семи базах relation на Projects DB називається `Project`, на Workspaces DB `Workspace` (однина, без емодзі). Крос-relation між базами теж без емодзі: `Meetings`, `Threads`, `Topics`, `Knowledge Base`, `Inbox`, `Tasks Tracker`. Перевірено живими схемами Risks, Decisions і Tasks Tracker. Попередня таблиця з чотирма варіантами назв (`Projects`, `Workspaces`, `🏛️ Workspaces`, назви з емодзі) історична; скіл або шаблон, що досі її використовує, застарів. Із самої Projects DB зворотні relation мають емодзі (`💬 Meetings`, `📨 Threads`, `🧵 Topics`, `📚 Knowledge Base`), але скіли пишуть з боку дочірніх баз.
+У всіх базах relation на Projects DB називається `Project`, на Workspaces DB `Workspace` (однина, без емодзі). Крос-relation між базами теж без емодзі: `Meetings`, `Threads`, `Topics`, `Knowledge Base`, `Inbox`, `Tasks Tracker`. Перевірено живими схемами Risks, Decisions і Tasks Tracker. Попередня таблиця з чотирма варіантами назв (`Projects`, `Workspaces`, `🏛️ Workspaces`, назви з емодзі) історична; скіл або шаблон, що досі її використовує, застарів. Із самої Projects DB зворотні relation мають емодзі (`💬 Meetings`, `📨 Threads`, `🧵 Topics`, `📚 Knowledge Base`), але скіли пишуть з боку дочірніх баз.
 
 ### 📨 Threads
 Вхідні комунікації з усіх каналів. Одна сторінка = один тред.
@@ -46,7 +46,7 @@ Notion тут - не вікі і не сховище документів, а с
 |---|---|---|
 | `Thread Name` | title | тема треду |
 | `Type` | multi_select | Email, Slack, Signal, Zoom, Other |
-| `Status` | select | `Spectator Mode` (нас не стосується, спостерігаємо), `Awaiting Reply` (чекають нас), `Replied`, `Need Follow-up` (ми чекаємо їх, треба нагадати), `Closed`, `Claude` (fallback: неоднозначно, потрібна людина) |
+| `Status` | select | `Spectator Mode` (нас не стосується, спостерігаємо), `Awaiting Reply` (чекають нас), `Replied`, `Need Follow-up` (ми чекаємо їх, треба нагадати), `Closed`, `AI Review` (створено або оновлено автоматикою, людина має підтвердити; у шаблоні є вʼюшка AI Review Queue) |
 | `Category` | select | ставить inbox-responder: Error/Bug, Data Question, Scope Change, Blocker, Status Update, FYI |
 | `Context Sources` | multi_select | Sentry, AWS Logs, Jira Board, Topics DB, Knowledge Base, LLM Only (що використав inbox-responder) |
 | `Draft Response` | text | чернетка відповіді мовою треду |
@@ -54,6 +54,7 @@ Notion тут - не вікі і не сховище документів, а с
 | `Email Link`, `Slack Link` | url | посилання на джерело |
 | `Reported at` | date | перше повідомлення |
 | `Last Reply Date` | date | останній коментар (оновлює 14-денний review pass) |
+| `Jira Key`, `Jira Sync`, `Jira Sync Checked` | text, select, date | звʼязок з тікетом: ключ, стан синхронізації (Created, Matched, Skipped (info), Rejected by PM, Error), дата перевірки; веде `slack-collector` Step 4 або хмарна задача треди → тікети |
 | `Follow-Up Check` | formula | галочка "все ок"; знята галочка = потрібен follow-up |
 | `ID` | auto-increment | |
 | `Project`, `Workspace` | relation | обов'язково |
@@ -61,7 +62,7 @@ Notion тут - не вікі і не сховище документів, а с
 | Іконка сторінки | 🔴 або порожньо | червона крапка, якщо останній автор не з нашої команди (це іконка сторінки, не властивість) |
 | Тіло сторінки | блоки | повний текст треду блоками по 2000 символів |
 
-Правила класифікації статусу живуть у `slack-collector` (Step 3), `Claude` ставиться тільки коли впевненість правила < 70%. Раз на день 14-денний review pass перечитує non-Closed треди, дописує нові коментарі, перекласифіковує статус.
+Правила класифікації статусу живуть у `slack-collector` (Step 3), `AI Review` ставиться тільки коли впевненість правила < 70%. Раз на день 14-денний review pass перечитує non-Closed треди, дописує нові коментарі, перекласифіковує статус.
 
 ### 💬 Meetings
 Пишуться Notion AI Meeting Notes (транскрипт + summary + action items). Далі `notion-meeting-topics` дописує на ту ж сторінку двомовний звіт.
@@ -84,8 +85,8 @@ Notion тут - не вікі і не сховище документів, а с
 | Властивість | Тип | Правило |
 |---|---|---|
 | `Topic Name` | title | |
-| `Status` | select | Claude, Open, Under Discussion, Resolved |
-| `Status 2` | status | Not started, Planned, In progress, Under Review, Done, On Hold, Won't Do; перераховується скілом, не вручну |
+| `Status` | select | AI Review, Open, Under Discussion, Resolved |
+| `Progress` | status | Not started, Planned, In progress, Under Review, Done, On Hold, Won't Do; перераховується скілом, не вручну |
 | `Priority` | select | High, Medium, Low |
 | `Summary` | text | **залишається порожнім**, весь зміст у тілі сторінки |
 | `Date`, `Due date` | date | |
@@ -93,7 +94,7 @@ Notion тут - не вікі і не сховище документів, а с
 | `Project`, `Workspace` | relation | |
 | `Parent item`, `Sub-item` | relation (self) | ієрархія тем |
 
-Наповнюють: `topic-analyzer`, `weekly-topics-db-update`, Gemini `notion-project-brief`. Особлива сторінка у Topics: **Claude Skills & Prompts** (README бібліотеки скілів і розкладу з дочірніми сторінками документації).
+Наповнюють: `topic-manager` (on-demand і тижневий режим), Gemini `notion-project-brief`. Особлива сторінка у Topics: **Claude Skills & Prompts** (README бібліотеки скілів і розкладу з дочірніми сторінками документації).
 
 ### Decisions (журнал рішень)
 
@@ -123,14 +124,14 @@ Notion тут - не вікі і не сховище документів, а с
 |---|---|---|
 | `Report Name` | title | `<Назва> - <дата>` |
 | `Date` | date | |
-| `Type` | select | Weekly Overview, Daily Team Prep, Client Meeting Prep, Stability Scan, Board Health, Velocity Report, Daily Work Report, Client Weekly Report, Client Monthly Report, Risk Register, Client Satisfaction, Company General Report, Deploy Analysis, Monthly Digest, Skill Health Check; з 0.7.x скіли створюють при першому записі: Project Kickoff, Project Handover, Project Health Check, Team Change, Project Closure, Change Request, Steering Update |
-| `Skill` | select | weekly-overview, daily-team-prep, client-meeting-prep, stability-scan, jira-board-health, velocity-report, daily-work-report, client-report, risk-register, client-satisfaction-tracker, company-general-report, deploy-analysis; з 0.7.x: project-lifecycle, change-request |
+| `Type` | select | Weekly Overview, Daily Team Prep, Client Meeting Prep, Stability Scan, Board Health, Velocity Report, Daily Work Report, Client Weekly Report, Client Monthly Report, Risk Register, Client Satisfaction, Company Report, Deploy Analysis, Monthly Digest, Automation Health Check; з 0.7.x скіли створюють при першому записі: Project Kickoff, Project Handover, Project Health Check, Team Change, Project Closure, Change Request, Steering Update |
+| `Skill` | select | weekly-overview, daily-team-prep, client-meeting-prep, stability-scan, jira-board-health, velocity-report, daily-work-report, client-report, risk-register, client-satisfaction-tracker, company-report, deploy-analysis; з 0.7.x: project-lifecycle, change-request |
 | `Visibility` | select | Internal, External |
 | `Summary` | text | 2-3 речення |
 | `Project`, `Workspace` | relation | |
 | `ID` | auto-increment | |
 
-Опції `Monthly Digest` і `Skill Health Check` створились автоматично при першому записі хмарних routines: Notion створює нову опцію select сам, тому нові типи звітів не треба заводити вручну.
+Опції `Monthly Digest` і `Automation Health Check` створились автоматично при першому записі хмарних routines: Notion створює нову опцію select сам, тому нові типи звітів не треба заводити вручну.
 
 ### Risks
 Живий реєстр, який веде `risk-register`.
@@ -138,7 +139,7 @@ Notion тут - не вікі і не сховище документів, а с
 | Властивість | Тип | Опції |
 |---|---|---|
 | `Name` | title | |
-| `Status` | select | Claude, Open, Monitoring, Mitigated, Closed, Realized |
+| `Status` | select | AI Review, Open, Monitoring, Mitigated, Closed, Realized |
 | `Severity` | select | Critical, High, Medium, Low |
 | `Likelihood` | select | Almost Certain, Likely, Possible, Unlikely |
 | `Category` | select | Technical, Resource, Scope, Client, Dependency, Security, Timeline, External |
@@ -164,7 +165,7 @@ Notion тут - не вікі і не сховище документів, а с
 
 Три наслідки:
 1. Скіли (`daily-team-prep`, `risk-register`, `jira-board-health`) кладуть свої рекомендації ("перевірити гілку", "нагадати про інвойс") саме сюди з полем `Source`, а не у Jira.
-2. Зв'язок з Jira тільки референтний: опційне текстове поле `Jira Issue Key` (рішення за ПМ, п. 3 у `13`), без синхронізації. ПМ керує своїм днем у Notion, команда деліверить у Jira.
+2. Зв'язок з Jira тільки референтний: опційне текстове поле `Jira Issue Key` (рішення ПМ), без синхронізації. ПМ керує своїм днем у Notion, команда деліверить у Jira.
 3. На проєкті без API до трекера клієнта Tasks Tracker стає єдиним місцем, де ПМ бачить свої зобов'язання по цьому проєкту.
 
 | Властивість | Тип | Опції |
@@ -189,10 +190,10 @@ Notion тут - не вікі і не сховище документів, а с
 Quick capture (Inbox DB, data source `~~inbox-db`). Обробляється щодня: Route (стає задачею, Inbox Status = Routed) або видалити. Це думки і ідеї самого ПМа; зовнішні вхідні живуть у Threads. Дві різні сутності, об'єднувати не варто.
 
 ### 📚 Knowledge Base
-Документація: Acme Documentation (THE AUTHORIZER, Scheduled Jobs), Project Management (PM Toolkit: метрики, шаблони, мітинги, senior-практики, KT/Handover Checklist), CV, навчання. Людська частина; скіли сюди майже не пишуть. Виняток: PM Toolkit має машинну версію `projects/_standards.md`, за якою працюють скіли (див. `14`); на сторінках Toolkit стоять callout-и з посиланнями на неї і на бази, що замінюють шаблони.
+Документація: Acme Documentation (документація компонентів, Scheduled Jobs), Project Management (PM Toolkit: метрики, шаблони, мітинги, senior-практики, KT/Handover Checklist), CV, навчання. Людська частина; скіли сюди майже не пишуть. Виняток: PM Toolkit має машинну версію `projects/_standards.md`, за якою працюють скіли (див. `14`); на сторінках Toolkit стоять callout-и з посиланнями на неї і на бази, що замінюють шаблони.
 
 ### Projects і Workspaces
-Якірні сторінки. Projects DB: одна сторінка на проєкт. Workspaces DB: одна на клієнта/компанію (Acme, Beta, ...). ID записуються у конфіг і використовуються як relation в усіх інших базах.
+Якірні сторінки. Projects DB: одна сторінка на проєкт. Workspaces DB: одна на клієнта/компанію (клієнт Acme, наша компанія, ...). ID записуються у конфіг і використовуються як relation в усіх інших базах.
 
 ### Сторінка Current State (на проєкт)
 Дистилят "що зараз відбувається": відкриті питання, заплановані деплої, невирішені треди, останні рішення. Оновлюється щодня інкрементально (`daily-current-state-distillation`, останні 2 дні). Перше, що читає агент або людина після перерви.

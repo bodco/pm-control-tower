@@ -10,16 +10,20 @@ description: "Monday morning comprehensive weekly overview: full review of last 
 1. **Scope.** If the user named a project, cover only that one. If the user explicitly
    asked for a cross-project overview, or this is the scheduled Monday run, cover EVERY
    active config in `projects/` (no `status: archived`) and produce one section per
-   project. Do not silently pick a single project.
+   project. Do not silently pick a single project (Default Project Rule in `projects/SKILL.md`).
 2. Read each project's config `../projects/{project_slug}.md` relative to this skill's
    folder (fallback: Glob `**/projects/{project_slug}.md`).
-3. All values marked `{config.xxx}` come from that project's config.
+3. All values marked `{config.xxx}` come from that project's config. Also read
+   `projects/SKILL.md` (cross-cutting rules) and `../projects/_standards.md` section 2:
+   the metrics shown come from `{config.pm_profile.metrics_profile}`; without a PM
+   Profile derive it from `{config.board_type}` and write `PM Profile: SKIPPED` in
+   the header. Writes allowed without asking (the 5-minute rule): the report page.
 4. **Check which sources each project has.** Never fail on a missing source:
 
 | Config value | If present | If absent |
 |---|---|---|
 | `task_tracker.api_access: true` | query the tracker | use `task_tracker.fallback_source` and state the source and its date in that project's section |
-| `slack.channels_all` non-empty | scan Slack | skip with one line |
+| `slack.slack_access` not `none` and `slack.channels_all` non-empty | scan Slack | skip with one line |
 | `sentry.url` not `none` | error trend | skip with one line |
 | Threads DB | always available | the mail and Slack picture comes from here |
 
@@ -50,7 +54,7 @@ into this report.
 
 **Completed last week:**
 ```
-project = {config.task_tracker.project_key} AND status = Done AND resolved >= startOfWeek(-1) AND resolved < startOfWeek() ORDER BY resolved DESC
+project = {config.task_tracker.project_key} AND status = "{done status}" AND resolved >= startOfWeek(-1) AND resolved < startOfWeek() ORDER BY resolved DESC
 ```
 
 **Created last week:**
@@ -60,17 +64,18 @@ project = {config.task_tracker.project_key} AND created >= startOfWeek(-1) AND c
 
 **Current board state (pipeline snapshot):**
 ```
-project = {config.task_tracker.project_key} AND status != Done AND status != Backlog ORDER BY status ASC
+project = {config.task_tracker.project_key} AND status != "{done status}" AND status != "{backlog status}" ORDER BY status ASC
 ```
 
 **Blocked tickets:**
 ```
-project = {config.task_tracker.project_key} AND status = "On Hold / Blocked" ORDER BY updated ASC
+project = {config.task_tracker.project_key} AND status = "{blocked status}" ORDER BY updated ASC
 ```
 
-Exact status names come from the config's Workflow table (watch the spaces around the
-slash in `"On Hold / Blocked"`). For completed tickets use the read connector from
-`{config.task_tracker}` to get assignee details. Group by label and assignee.
+Exact status names come from the config's Workflow table (quote them exactly as spelled
+there: a name like `"On Hold / Blocked"` needs the spaces around the slash). For completed
+tickets use `get_issue` on the Jira MCP server from `{config.jira.mcp_read}` (default
+`jira`) to get assignee details. Group by label and assignee.
 
 **When `api_access` is false:** build the same picture from
 `{config.task_tracker.fallback_source}`. Usually that means: what shipped comes from
@@ -110,7 +115,9 @@ Only the slugs in `{config.sentry.projects_in_scope}`:
 ```
 GET {config.sentry.url}/api/0/projects/{config.sentry.org_slug}/{slug}/issues/?query=is:unresolved&statsPeriod=7d&sort=freq&limit=5
 ```
-with `Authorization: Bearer <token read from the secrets file>`.
+with `Authorization: Bearer <token read from the secrets file>`. If the instance rejects
+`statsPeriod`, fall back to explicit `start` / `end` ISO dates (same approach as the
+other Sentry-reading skills).
 
 ## Report Format
 
@@ -118,6 +125,7 @@ Generate in Ukrainian. With several projects, repeat the block per project under
 project heading.
 
 ```
+Джерела: {per project: Jira OK · Slack EMPTY · Threads OK · Meetings OK · Decisions OK · Sentry SKIPPED (url: none) · PM Profile SKIPPED}
 ## Тижневий Огляд - [week date range]
 
 ### {Project}
@@ -162,9 +170,6 @@ project heading.
 | Проєкт | Нові unresolved | Top issue |
 |--------|----------------|-----------|
 
-#### Джерела, яких немає на цьому проєкті
-[список, або рядок опускається]
-
 #### Outlook на цей тиждень
 - Очікуємо Done: [tickets likely to complete]
 - Потребує уваги: [what needs PM action]
@@ -174,6 +179,8 @@ project heading.
 ## Behavior
 
 1. This is the most comprehensive report: take the time to collect all available sources.
+   The FIRST line of the report is the Data Completeness header (`projects/SKILL.md`);
+   with several projects, one header line per project section.
 2. Run data collection in parallel.
 3. Cross-reference: if a meeting decision relates to a ticket, mention the ticket.
 4. "Відкриті питання" is the critical section: this is where the PM sees what needs
@@ -200,7 +207,8 @@ Use `notion-create-pages` with these properties (Reports uses relations `Project
 | Type | `Weekly Overview` |
 | Skill | `weekly-overview` |
 | Summary | 2-3 sentence summary of key findings |
-| Workspace | `["{config.notion.workspace_page_id}"]` |
-| Project | one relation value per covered project |
+| Visibility | `Internal` |
+| Workspace | one relation value per covered workspace: `["https://app.notion.com/p/{workspace_page_id}", ...]` (IDs without dashes) |
+| Project | one relation value per covered project: `["https://app.notion.com/p/{project_page_id}", ...]` |
 
 The **full report content** goes as the page body (Notion Markdown).

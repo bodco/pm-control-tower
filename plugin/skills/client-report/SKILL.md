@@ -1,6 +1,6 @@
 ---
 name: client-report
-description: "Generates professional client-facing weekly, monthly or steering (executive) reports in English for any project registered in the project registry (per-project details come from the project config). Covers completed work, team time allocation, progress metrics, blockers, and outlook, without exposing internal team discussions. Includes Tempo time report data from local files. Use this skill whenever the user mentions \"client report\", \"звіт клієнту\", \"monthly report for client\", \"weekly client report\", \"report for Client PM\", \"звіт для Хуана\", \"тайм репорт\", \"tempo report\", \"що показати клієнту за місяць\", \"місячний звіт клієнту\", \"тижневий звіт клієнту\", \"steering update\", \"exec update\", \"MBR\", \"звіт для керівництва клієнта\", or any request to produce a deliverable report for the client team. When triggered, execute immediately."
+description: "Generates professional client-facing weekly, monthly or steering (executive) reports in English for any project registered in the project registry (per-project details come from the project config). Covers completed work, team time allocation, progress metrics, blockers, and outlook, without exposing internal team discussions. Includes Tempo time report data from local files. Use this skill whenever the user mentions \"client report\", \"звіт клієнту\", \"monthly report for client\", \"weekly client report\", \"report for the client PM\", \"звіт для клієнта\", \"тайм репорт\", \"tempo report\", \"що показати клієнту за місяць\", \"місячний звіт клієнту\", \"тижневий звіт клієнту\", \"steering update\", \"exec update\", \"MBR\", \"звіт для керівництва клієнта\", or any request to produce a deliverable report for the client team. When triggered, execute immediately."
 ---
 
 # Client Report
@@ -22,8 +22,10 @@ description: "Generates professional client-facing weekly, monthly or steering (
 
 5. **Standards.** Read `../projects/_standards.md` (section 1, the reader rule; section 2,
    `hours_burn`) and `../projects/SKILL.md` (JQL Isolation Validator, Data Completeness
-   header). From the config read `PM Profile` (`contract`, `milestones`,
-   `decision_rights`) and any report distribution line in `Team - Client`.
+   header, the 5-minute rule: writes allowed without asking are the report file and the
+   Reports DB page; sending is always manual). From the config read `PM Profile`
+   (`contract`, `milestones`, `decision_rights`, `reporting.locked_template_page_id`)
+   and any report distribution line in `Team - Client`.
 6. **Secrets.** Not in the config. Read at runtime, never print, never include in the
    report:
 
@@ -59,20 +61,21 @@ client's tickets into this client's report. That is the worst possible failure h
 
 Monthly:
 ```
-project = {KEY} AND status = Done AND resolved >= "YYYY-MM-01" AND resolved < "YYYY-MM-01" ORDER BY resolved DESC
+project = {KEY} AND status = "{done status}" AND resolved >= "YYYY-MM-01" AND resolved < "YYYY-(MM+1)-01" ORDER BY resolved DESC
 ```
 Weekly:
 ```
-project = {KEY} AND status = Done AND resolved >= "YYYY-MM-DD" AND resolved < "YYYY-MM-DD" ORDER BY resolved DESC
+project = {KEY} AND status = "{done status}" AND resolved >= "YYYY-MM-DD" AND resolved < "YYYY-MM-DD+7" ORDER BY resolved DESC
 ```
 
-For each ticket fetch key, summary, labels, assignee, resolved date, fixVersion via the
-config's read connector. Group by the config's Labels Taxonomy.
+For each ticket fetch key, summary, labels, assignee, resolved date, fixVersion via
+`get_issue` on the Jira MCP server from `{config.jira.mcp_read}` (default `jira`). Group
+by the config's Labels Taxonomy.
 
 ### 2. Current pipeline
 
 ```
-project = {KEY} AND status != Done AND status != Backlog ORDER BY status ASC
+project = {KEY} AND status != "{done status}" AND status != "{backlog status}" ORDER BY status ASC
 ```
 Group by status using the config's Workflow table.
 
@@ -143,8 +146,8 @@ who (from `decision_rights` / Team - Client), by when, what happens without it.
 
 ## Locked template (wins over the formats below)
 
-If the config (a `reporting` block) or the PM names a previous report as the locked
-template for a report type, that report's sections, order and visual language win over
+If the config (`{config.pm_profile.reporting.locked_template_page_id}`) or the PM names a
+previous report as the locked template for a report type, that report's sections, order and visual language win over
 the formats in this skill: only the content changes. Reader-rule elements the locked
 template lacks (status line, "Decisions Needed From You", capacity line, beyond-scope
 block) are NOT inserted silently; list them in chat as a proposal for the PM.
@@ -336,8 +339,8 @@ Use `notion-create-pages` with these properties (Reports uses relations `Project
 | Skill | `client-report` |
 | Visibility | `External` |
 | Summary | 2-3 sentence summary of key deliverables and metrics |
-| Workspace | `["{config.notion.workspace_page_id}"]` |
-| Project | `["{config.notion.project_page_id}"]` |
+| Workspace | `["https://app.notion.com/p/{config.notion.workspace_page_id}"]` (ID without dashes) |
+| Project | `["https://app.notion.com/p/{config.notion.project_page_id}"]` (ID without dashes) |
 
 The **full report content** goes as the page body (Notion Markdown).
 
@@ -346,7 +349,7 @@ The **full report content** goes as the page body (Notion Markdown).
 - Report only on components the config's Scope of Responsibility marks as ours.
   Client-owned components are not our delivery and must not appear as our work.
 - Platform Stability uses `{config.sentry.projects_in_scope}` only.
-- **Metric continuity:** if the config carries a Metric Continuity warning and the
+- **Metric continuity:** if `{config.engagement.metric_continuity}` is set and the
   comparison crosses that date, annotate it with the wording from the config as a planned
   engagement change, not a performance drop. The dates and the reason live only in the
   config, never in this skill.

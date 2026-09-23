@@ -23,7 +23,8 @@
 | **Cultural Profile** | Позиції культур за Erin Meyer (Culture Map) і індивідуальна калібровка учасників клієнта |
 | **Downgrader multiplier** | Коефіцієнт серйозності для непрямих формулювань клієнта |
 | **Threads** | База вхідних комунікацій (Slack, Email, Other) зі статусами |
-| **Awaiting Reply / Need Follow-up / Spectator Mode / Replied / Closed / Claude** | Статуси тредів |
+| **Awaiting Reply / Need Follow-up / Spectator Mode / Replied / Closed / AI Review** | Статуси тредів |
+| **AI Review** | Статус у Threads, Tasks Tracker, Inbox і Risks: запис потребує ревʼю агентом (у старій схемі називався `Claude`) |
 | **Червона крапка (🔴)** | Іконка треду, де останній автор не з нашої команди |
 | **Topics** | База наскрізних тем через мітинги і треди |
 | **Decisions DB / Decision Log** | Журнал рішень; джерело constraints для брифів |
@@ -41,7 +42,7 @@
 | **Routine** | Хмарна scheduled task (Claude Code Remote), без Mac |
 | **Автопілот** | Сукупність scheduled tasks і routines |
 | **Prep** | Підготовчий документ до мітингу, згенерований скілом |
-| **Skill Health Check** | Місячний хмарний аудит скілів проти конфігів |
+| **Automation Health Check** | Місячний хмарний аудит скілів проти конфігів (стара назва Skill Health Check) |
 | **Monthly Memory Digest** | Місячний хмарний дайджест стану кожного проєкту з дописуванням рішень у Decisions |
 | **Knowledge Base (KB) для коду** | `SYSTEM.md`, `SDLC.md`, KB компонентів, `LESSONS.md` для code review і RCA |
 | **RCA** | Root cause analysis; на Acme - `acme-debug` |
@@ -65,12 +66,12 @@
 | **Kind (Risks DB)** | Тип запису RAID: Risk, Assumption, Issue, Dependency; порожнє = Risk |
 | **Door (Decisions DB)** | One-way (дорого переграти) або Two-way (дешево) рішення |
 | **`project-lifecycle`** | Двигун рідкісних моментів проєкту: kickoff, handover-in, health-check, team-onboarding / offboarding, closure (`14`) |
-| **Project Health Check** | Місячний аудит стану проєкту за 8 областями з доказами (2-ге число, хмара). Не плутати зі Skill Health Check, який аудитує скіли проти конфігів |
+| **Project Health Check** | Місячний аудит стану проєкту за 8 областями з доказами (2-ге число, хмара). Не плутати з Automation Health Check, який аудитує скіли проти конфігів |
 | **`change-request`** | Двигун змін скоупу: відра A / B / C, Extras Log, чернетка CR, рішення в Decisions |
 | **Відра A / B / C** | A: дрібниця, лише облік; B: реальні години; C: торкається даних, грошей, безпеки, публічних контрактів, завжди CR незалежно від розміру |
 | **Extras Log** | Сторінка під сторінкою проєкту з усіма проханнями клієнта, включно з безкоштовними; основа для goodwill-бюджету і прозорості в місячному звіті |
 | **Goodwill-бюджет** | Частка капу годин на безкоштовні дрібниці (`goodwill_budget_pct`, дефолт 10%, калібрувати); перевищення = сигнал scope creep |
 | **Locked template** | Еталонний звіт, чия структура перемагає формати `client-report`; нові блоки лише пропонуються ПМу |
-| **[EXT-QA]** | Історичний префікс тікетів на QA клієнтських PR (Acme, до 2026-07-31) |
+| **Правило 5 хвилин** | Межа автономності агента: без підтвердження пише лише туди, де наслідок можна відкотити за 5 хвилин; решта чекає людини (`projects/SKILL.md`) |
 | **Tempo** | Тайм-трекінг у Jira; експорти для звітів клієнту та естімейтів |
 | **PROJ** | Ключ Jira-проєкту Acme |

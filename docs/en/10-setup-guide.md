@@ -6,14 +6,14 @@ For a PM who wants to reproduce the framework. Time estimate: the basic loop in 
 
 | Layer | What is included | How to adapt it |
 |---|---|---|
-| **1. Core** | The principles (`00`, `03`, `11`), `projects/SKILL.md` with the registry rules, `projects/_template.md`, the template for the Cowork global instructions, the structure of the Notion Control Tower (a duplicate of the template with empty databases), this setup guide | Used as is. Only the values in your own config change |
-| **2. Generic skills (engines)** | `slack-collector`, `mac-mail-collector`, `daily-team-prep`, `client-meeting-prep`, `jira-board-health`, `weekly-overview`, `client-report`, `velocity-report`, `risk-register`, `client-satisfaction-tracker`, `notion-meeting-topics`, `topic-analyzer`, `inbox-responder`, `jira-management`, `sentry-assistant`, `deploy-analysis`, `stability-scan`, `thread-ticket-sync`, the scheduled task prompts | They work unchanged if the stack is the same (Jira, Slack, Notion, Gmail, Sentry). For a different stack, see the adaptation matrix below |
-| **3. Project adapters (examples)** | `acme-debug`, `acme-db-assistant`, `acme-env-audit`, `authorizer-code-review`, `acme-beneficiary-audit`, `calyx-export` and so on, the KB structure (SYSTEM.md, SDLC.md, LESSONS.md) | Not transferable. These are samples of what an adapter for a specific stack looks like; for your own project you write your own to the same pattern. Layers 1-2 = the core (~80%), layer 3 = your 20% |
+| **1. Core** | The principles (`00`, `03`, `11`), `projects/SKILL.md` with the registry rules, `projects/_template.md`, the template for the Cowork global instructions, the public Notion Control Tower template (11 empty databases), this setup guide | Used as is. Only the values in your own config change |
+| **2. Generic skills (engines)** | `slack-collector`, `mac-mail-collector`, `daily-team-prep`, `client-meeting-prep`, `jira-board-health`, `weekly-overview`, `client-report`, `velocity-report`, `risk-register`, `client-satisfaction-tracker`, `notion-meeting-topics`, `topic-manager`, `inbox-responder`, `jira-management`, `sentry-assistant`, `deploy-analysis`, `stability-scan`, `thread-ticket-sync`, `change-request`, `project-lifecycle`, the scheduled task prompt template | They work unchanged if the stack is the same (Jira, Slack, Notion, Gmail, Sentry). For a different stack, see the adaptation matrix below |
+| **3. Project adapters (examples)** | `acme-debug`, `acme-db-assistant`, `acme-env-audit`, `acme-core-code-review`, `acme-beneficiary-audit`, `<portal>-export` and so on, the KB structure (SYSTEM.md, SDLC.md, LESSONS.md) | Not transferable. These are samples of what an adapter for a specific stack looks like; for your own project you write your own to the same pattern. Layers 1-2 = the core (~80%), layer 3 = your 20% |
 
 ## Step 1. Tools
 
 1. **Claude Max** (not tested on Pro $20: fewer tokens, autopilot may not fit). Enable **Cowork mode** in Claude Desktop (macOS).
-2. **Notion** with AI Meeting Notes enabled (meeting transcription). Plan: Plus/Business; SQL queries against databases via MCP require Enterprise, the framework does not use them.
+2. **Notion** with AI Meeting Notes (meeting transcription). A Plus/Business plan plus Notion AI as a paid add-on: without it there are no transcripts, and therefore no Meetings → Topics. SQL queries against databases via MCP require Enterprise, the framework does not use them.
 3. Optional: **Gemini Desktop** (Spark) for layer 5.
 
 ## Step 2. MCP connectors
@@ -22,8 +22,8 @@ For a PM who wants to reproduce the framework. Time estimate: the basic loop in 
 |---|---|---|
 | Slack, Notion, Gmail, Google Calendar, Google Drive | the official connectors in Claude (Settings → Connectors) | they work both locally and in cloud sessions |
 | Slack (additional workspace) | a local MCP server (`slack-workspace2`), configured in Claude Desktop | for when the official connector is taken by another workspace; the token is read from `Secrets/secrets.env` via `sh -c`, there is no secret in the JSON |
-| Jira Server / Data Center | a local MCP server (two options used: `jira-cosmix` for writing, `jira-rixbeck` for reading), configured in Claude Desktop | on Jira Server 7.x a write returns a cosmetic JSON error, the updates do go through; Jira Cloud is the official Atlassian MCP; tokens are read from `Secrets/secrets.env` via `sh -c`. Two connectors were kept deliberately: one is a backup |
-| Confluence Server | a local MCP server (`confluence-our-company`), configured in Claude Desktop | works; the URL is `wiki.your-company.com` after the domain migration; the token is read from `Secrets/secrets.env` via `sh -c` |
+| Jira Server / Data Center | a local MCP server: in the plugin's `.mcp.json` it is called `jira`, in the project config the names go into `jira.mcp_write` / `jira.mcp_read` (the author keeps two servers: one for writing, one for reading) | on Jira Server 7.x a write returns a cosmetic JSON error, the updates do go through; Jira Cloud is the official Atlassian MCP; tokens are read from `Secrets/secrets.env` via `sh -c`. Two connectors were kept deliberately: one is a backup |
+| Confluence Server | a local MCP server (`confluence` in the plugin's `.mcp.json`), configured in Claude Desktop | works; the URL is `wiki.your-company.com` after the domain migration; the token is read from `Secrets/secrets.env` via `sh -c` |
 | Control Chrome | a local MCP server, separate from the Claude in Chrome connector | controls tabs in the real Chrome on the Mac, no token |
 | Sentry | not MCP: the REST API with a token in the config (project:read, event:read, team:read) | self-hosted and SaaS behave the same |
 | CloudWatch / other logs | export into a folder on disk; Claude reads the files | without direct AWS access from Cowork |
@@ -37,13 +37,13 @@ Tip: connect them one at a time and check each with a simple request ("show the 
 1. Duplicate the CONTROL TOWER page template with its 11 databases (Inbox, Tasks Tracker, Meetings, Threads, Topics, Knowledge Base, Risks, Reports, Projects, Workspaces, Decisions), or build it from the description in `02-notion-control-tower.md`.
 2. Write down the data source ID of each database (from the URL or via Notion MCP fetch) into the future config.
 3. Create the client page in Workspaces and the project page in Projects.
-4. Check the names of the relation properties in Topics (`💬 Meetings`, `📨 Threads`), or bring the `topic-analyzer` skill in line with your own names.
+4. Check that the relations in every database are called `Project`, `Workspace`, `Meetings`, `Threads`, `Knowledge Base`, `Tasks Tracker`, `Inbox` (no emoji), that the AI review status is `AI Review` and the Topics progress is `Progress`: these exact names are baked into the engines. If your schema differs, fix the schema, not twenty skills.
 
 ## Step 4. Claude's memory
 
 1. **Cowork global instructions** (Settings → Cowork): a "PM Workspace" block with a table of projects (name, slug, tracker key) and 2-3 rules (report language, forbidden characters, defaults). Keep it short: everything project-specific lives in the config.
 2. **Claude's memory**: 3-5 facts about you and your style (role, company, the language of internal and client-facing documents).
-3. **The `projects/` registry**: upload the folder with `SKILL.md`, `_template.md`, `<slug>.md` as a skill (Step 5).
+3. **The `projects/` registry**: in the plugin it is already there (`plugin/skills/projects/`), the `<slug>.md` config goes next to `_template.md` before installing. In the standalone variant the folder with `SKILL.md`, `_template.md`, `<slug>.md` is uploaded as a skill (Step 5).
 
 ## Step 5. The project config
 
@@ -51,10 +51,9 @@ Tip: connect them one at a time and check each with a simple request ("show the 
 
 ## Step 6. Skills
 
-The starting set for day one: `daily-team-prep`, `weekly-overview`, `mac-mail-collector`. The logic: immediate effect without setting up Sentry, logs and deploys. If mail is not in Mail.app, `slack-collector` is third instead.
+The starting set for day one: `daily-team-prep`, `weekly-overview`, `mac-mail-collector` (or `slack-collector` if mail is not in Mail.app and Slack is the main channel). The logic: immediate effect without setting up Sentry, logs and deploys. Plus Notion AI Meeting Notes: not a skill, but without transcripts the meeting preps are empty.
 
-
-1. Upload the generic skills (Settings → Cowork → Skills → Upload). Each one is a folder or a `.skill` zip.
+1. Install the `dist/pm-control-tower.plugin` (see "Portability" below). In the standalone variant the skills are uploaded one by one (Settings → Cowork → Skills → Upload, a folder or a `.skill` zip).
 2. Read the description of each one and add your own trigger words if needed (language, team slang).
 3. Test one skill by hand: "collect slack <Project> for last week". Look at the Threads DB: relations, statuses, icons.
 4. Then one at a time: meeting prep, weekly-overview. For every failure, check the config first, then the skill.
@@ -71,36 +70,36 @@ The first two weeks: 10 minutes every morning in the CONTROL TOWER, following th
 
 | A colleague's stack | Approach | Status (2026-04, updated 09) | Difficulty |
 |---|---|---|---|
-| Confluence Server (documentation) | the `confluence-our-company` connector; use cases: meeting-notes-to-confluence, weekly-status-to-confluence, confluence-search-context, decision-log-to-confluence, release-notes-to-confluence | the connector works, the skills are not written yet | easy |
+| Confluence Server (documentation) | the local `confluence` MCP (a block in the plugin's `.mcp.json`); use cases: meeting-notes-to-confluence, weekly-status-to-confluence, confluence-search-context, decision-log-to-confluence, release-notes-to-confluence | the connector works, the skills are not written yet | easy |
 | A folder of `.md` / Obsidian instead of Notion | Cowork reads the files directly; databases are replaced by folders with frontmatter; relations and views are lost | conceptually ready | easy, but poorer |
-| Jira Server (tasks) | `jira-cosmix` / `jira-rixbeck` | ready | easy |
+| Jira Server (tasks) | the local `jira` MCP (the author runs two servers: write and read) | ready | easy |
 | Jira Cloud | the official Atlassian MCP | not tested | easy |
 | Slack + Gmail (communications) | the official connectors | ready | easy |
 | Microsoft Teams / Outlook | no ready path; options: export to files, browser | not done | medium |
 | Azure DevOps / Linear / ClickUp with an API | needs an MCP or REST through a skill; the engines stay, the "Data Sources" step changes | not done | medium |
-| Any client tracker **without an API** (Jira Cloud, Linear, Trello, Asana, Monday, a client Notion behind SSO/MDM) | `task_tracker.api_access: false` in the config; sources: manual CSV export into `~/work/<slug>/exports/`, the browser (a Chrome skill modeled on `calyx-export`), action items from Meeting Notes, email. The engines work in degraded mode | the concept is settled, the skills are not adapted yet | medium; this is the most common case in outsourcing |
+| Any client tracker **without an API** (Jira Cloud, Linear, Trello, Asana, Monday, a client Notion behind SSO/MDM) | `task_tracker.api_access: false` in the config; sources: manual CSV export into `~/work/<slug>/exports/`, the browser (a Chrome skill modeled on `<portal>-export`), action items from Meeting Notes, email. The engines work in degraded mode | the keys are in `_template.md` and the `api_access` check is in 14 engines; the `false` branch has not been run live yet | medium; this is the most common case in outsourcing |
 | Sentry SaaS / Datadog | Sentry is REST in the same way; Datadog is REST with its own token, `stability-scan` needs adapting | partly | medium |
-| GitHub / GitLab instead of Bitbucket | local clones work the same; PR review through the API or a local diff | ready for local mode | easy |
+| GitHub / GitLab / Bitbucket | local clones work the same; PR review through the API or a local diff | ready for local mode | easy |
 | Google Docs instead of docx | `client-report` generates docx; for Docs, go through the Drive connector | not done | easy |
 
 ## Common mistakes during rollout
 
 1. Starting with the skills instead of the config and Notion. Skills without a config lie, and without Notion they have nowhere to write.
-0. Expecting "everything like on Acme" from the framework on a project with no API. First determine `task_tracker.api_access` and `fallback_source`, then set expectations.
-2. Hardcoding project facts into a skill "temporarily". A month later nobody remembers where they are.
-3. Turning on 10 scheduled tasks on day one. The result: 10 incomprehensible reports and no trust in the system. One at a time.
-4. Not walking into the Control Tower in the morning. Then everything it generates is of no use to anyone.
-5. Sending to the client automatically. Never. Drafts yes, sending is a human.
-6. Forgetting about privacy: client context in `.ai/` and in the skills must not end up in repositories the client has access to.
+2. Expecting "everything like on Acme" from the framework on a project with no API. First determine `task_tracker.api_access` and `fallback_source`, then set expectations.
+3. Hardcoding project facts into a skill "temporarily". A month later nobody remembers where they are.
+4. Turning on 10 scheduled tasks on day one. The result: 10 incomprehensible reports and no trust in the system. One at a time.
+5. Not walking into the Control Tower in the morning. Then everything it generates is of no use to anyone.
+6. Sending to the client automatically. Never. Drafts yes, sending is a human.
+7. Forgetting about privacy: client context in `.ai/` and in the skills must not end up in repositories the client has access to.
 
 ## What you take with you (the artifacts)
 
-- This Control Tower folder (documents 00-13).
+- This Control Tower folder (documents 00-14).
 - `projects/SKILL.md`, `projects/_template.md`.
 - The set of generic skills (layer 2).
 - The template for the Cowork global instructions.
-- The scheduled task prompts (from `~/Documents/Claude/Scheduled/`, anonymized).
-- The workshop presentation (AI_PM_Framework_Workshop, April 2026) as an introduction.
+- The scheduled task prompt template from `05` (the colleague creates the tasks themselves for their own schedule).
+- The presentation for colleagues (`speaker-notes/`, internal, not part of the public package) as an introduction.
 - Notion: the "Claude Skills & Prompts" page as a sample library README; the PM Toolkit (metrics, templates, meetings) in the Knowledge Base.
 
 ## Portability: how a colleague stands the system up on their side
@@ -122,12 +121,14 @@ assemble by hand. It is obsolete: the skills now travel as one bundle.
    presses the install button. Inside are 21 anonymized skills, an `.mcp.json` with
    the Jira and Confluence blocks (without secret values), `SETUP.md`, `CONNECTORS.md`.
 2. **A link to the public Notion template.** The colleague duplicates it for themselves.
-3. **`templates/secrets.env.example`** (also included inside the plugin): where to put
+3. **`plugin/templates/secrets.env.example`** (travels inside the plugin): where to put
    the secrets file and which variables to fill in.
 
-Then the colleague tells Claude "set up the pm-control-tower plugin for me". The built-in
-wizard finds every spot marked with `~~` and walks through them with questions: the IDs of
-their Notion databases, the home folder, the path to the local Jira server.
+Then the colleague tells Claude "set up the pm-control-tower plugin for me". This is the
+standard plugin customization flow in Cowork: Claude finds every spot marked with `~~` and
+walks through them with questions (the IDs of their Notion databases, the home folder, the
+path to the local Jira server). The values land in the colleague's copy of the plugin, the
+source is unchanged.
 
 ### What does NOT transfer
 

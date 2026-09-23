@@ -11,7 +11,11 @@ description: "Monthly team velocity and performance metrics for any registered p
    configs in `projects/`). See the Default Project Rule in `projects/SKILL.md`.
 2. Read `../projects/{project_slug}.md` relative to this skill's folder (fallback:
    Glob `**/projects/{project_slug}.md`).
-3. All values marked `{config.xxx}` come from that config.
+3. All values marked `{config.xxx}` come from that config. Also read `projects/SKILL.md`
+   (cross-cutting rules) and `../projects/_standards.md` section 2: the metric set
+   comes from `{config.pm_profile.metrics_profile}` and the 🚩 thresholds from the
+   catalog; without a PM Profile derive the profile from `{config.board_type}` and
+   write `PM Profile: SKIPPED` in the Data Completeness header.
 4. **Tracker access.**
    - `{config.task_tracker.api_access}` true: normal path.
    - false: metrics are still possible if `{config.task_tracker.fallback_source}` is a
@@ -43,15 +47,16 @@ company tracker is shared across clients.
 
 **Completed in period:**
 ```
-project = {KEY} AND status = Done AND resolved >= "YYYY-MM-01" AND resolved < "YYYY-MM-01" ORDER BY resolved DESC
+project = {KEY} AND status = "{done status from the Workflow table}" AND resolved >= "YYYY-MM-01" AND resolved < "YYYY-(MM+1)-01" ORDER BY resolved DESC
 ```
 
 **Created in period:**
 ```
-project = {KEY} AND created >= "YYYY-MM-01" AND created < "YYYY-MM-01" ORDER BY created DESC
+project = {KEY} AND created >= "YYYY-MM-01" AND created < "YYYY-(MM+1)-01" ORDER BY created DESC
 ```
 
-For each ticket fetch via the config's read connector: key, summary, issue type, labels,
+For each ticket fetch via the Jira MCP server from `{config.jira.mcp_read}` (default
+`jira`, operations `search_issues` / `get_issue`): key, summary, issue type, labels,
 assignee, created and resolved dates, time spent, original estimate.
 
 **Previous period:** run the same queries for the month before, for deltas.
@@ -68,14 +73,17 @@ assignee, created and resolved dates, time spent, original estimate.
 - calendar days from creation to Done
 - median, average, P90
 - breakdown by label
-- exclude the operational-support label from cycle time stats: those are quick tasks that
+- exclude the operational-support label (the one whose Purpose in the Labels Taxonomy
+  describes quick operational requests) from cycle time stats: those are quick tasks that
   skew the distribution
 
 ### 3. Throughput by assignee
 - tickets completed per person, hours logged per person if worklog data exists
 - **This is capacity visibility, not individual performance evaluation.** Never rank
   people or imply someone underperformed; a low number usually means part-time
-  availability or a different kind of work. Availability is in the config's Team table
+  availability or a different kind of work. Availability is the `Availability` column of
+  the config's Team - Internal table; people in Former Members appear only for the
+  months they were on the project
 
 ### 4. Backlog health
 - open tickets at period end
@@ -92,6 +100,7 @@ assignee, created and resolved dates, time spent, original estimate.
 Generate in Ukrainian:
 
 ```
+Джерела: Jira OK · Tempo {OK | SKIPPED (time_reports: none)} · PM Profile {OK | SKIPPED}
 ## Velocity Report - {config.project_name} - [month year]
 
 ### Throughput
@@ -102,7 +111,7 @@ Generate in Ukrainian:
 |-------|------------|------------|-------|
 (лейбли з конфігу)
 
-### Cycle Time (без ops-лейбла)
+### Cycle Time (без операційного лейбла)
 | Метрика | Цей місяць | Попередній |
 |---------|------------|------------|
 | Медіана | X днів | Y днів |
@@ -138,27 +147,25 @@ Generate in Ukrainian:
 
 ## Behavior
 
-1. Collect both periods for comparison.
-2. Calculate every metric programmatically. Never estimate a number.
-3. Cycle time uses calendar days (resolved minus created), not business days.
-4. If worklog data is sparse, say so and drop the hours column rather than showing
+1. The report opens with the Data Completeness header (`projects/SKILL.md`), listing
+   Jira, Tempo (`{config.local_paths.time_reports}`) and PM Profile.
+2. Collect both periods for comparison.
+3. Calculate every metric programmatically. Never estimate a number.
+4. Cycle time uses calendar days (resolved minus created), not business days.
+5. If worklog data is sparse, say so and drop the hours column rather than showing
    misleading partial totals.
-5. "Тренди та висновки" is the most valuable section: interpret, do not restate.
-6. If running as a scheduled task, save to the outputs folder and to the Notion Reports
+6. "Тренди та висновки" is the most valuable section: interpret, do not restate.
+7. If running as a scheduled task, save to the outputs folder and to the Notion Reports
    DB. If running manually, present in chat and offer specific deep-dives.
 
 ## Metric continuity - MANDATORY GUARD
 
-Read the config's Metric Continuity warning before writing any comparison. If the period
-comparison crosses a date the config marks as an engagement change, every table, delta
-and trend sentence crossing it MUST carry an explicit annotation, and the report must
-never present the drop as a performance problem.
-
-On acme: periods before 2026-08-01 are not comparable with later ones (team 9 -> 3,
-scope narrowed to the Authorizer; mobile left scope in 2026-06). Example wording:
-"Зниження показників відображає планове звуження команди (9 -> 3) і скоупу до
-авторайзера з 2026-08-01, а не падіння продуктивності". Assignee tables legitimately
-show only two or three people from August on.
+Read `{config.engagement.metric_continuity}` before writing any comparison. If it is
+set and the period comparison crosses the date it names, every table, delta and trend
+sentence crossing it MUST carry its text as an explicit annotation, and the report must
+never present the drop as a performance problem. Example wording: "Зниження показників
+відображає планове звуження команди і скоупу з <дата>, а не падіння продуктивності".
+Assignee tables legitimately show fewer people after such a date.
 
 ## Report Storage
 
@@ -175,7 +182,9 @@ Use `notion-create-pages` with these properties (Reports uses relations `Project
 | Skill | `velocity-report` |
 | Visibility | `Internal` |
 | Summary | 2-3 sentence summary of key findings |
-| Workspace | `["{config.notion.workspace_page_id}"]` |
-| Project | `["{config.notion.project_page_id}"]` |
+| Workspace | `["https://app.notion.com/p/{config.notion.workspace_page_id}"]` (ID without dashes) |
+| Project | `["https://app.notion.com/p/{config.notion.project_page_id}"]` (ID without dashes) |
+
+Writes allowed without asking (the 5-minute rule in `projects/SKILL.md`): the report page. Nothing else.
 
 The **full report content** goes as the page body (Notion Markdown).

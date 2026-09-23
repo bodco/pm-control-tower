@@ -11,6 +11,7 @@ secrets.*
 .git-credentials
 # ...except the template with fake values
 !templates/secrets.env.example
+!plugin/templates/secrets.env.example
 
 # Local editor / scratch
 .idea/
@@ -27,9 +28,5 @@ prompts/
 scripts/
 Claude outputs/
 _to_delete/
-10b-continuity.md
 *.zip
 
-# Ukrainian originals live in docs/uk, the working copies at root stay local
-/0*.md
-/1*.md

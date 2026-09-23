@@ -20,7 +20,6 @@ Questions worth asking before you start:
 3. Which systems have an API or MCP, and what is available only through a browser or files? Separately and honestly: will the client's security team give an API token to an agent? In outsourcing the answer is often "no" (SSO, Okta, MDM). In that case plan for `task_tracker.api_access: false` from day one, plus a fallback: manual CSV export into `~/work/<slug>/exports/`, action items from Meeting Notes, email. This is not a blocker for the framework, it is a different mode.
 4. Is there engineering responsibility (repos, deploys, monitoring)? If not, the whole block of 7-8 functions drops out.
 5. Will this project run alongside others in the same Control Tower? (Yes by default: shared databases, separate relations.)
-
 6. The Pre-start Checklist from the PM Toolkit (the human part, before decisions on scope and team): contract type, budget and margin are clear; the SOW / contract has been read word for word; all accesses have been requested; stakeholders on both sides are known; team roster with allocations and PTO; delivery approach chosen (Scrum / Kanban / hybrid). Case A: presale estimates checked for realism (the number comes from the person doing the work, not from AI). Case B: KT sessions scheduled, an inventory of artifacts collected.
 
 Result: a list of the sources you are plugging in, a list of the functions from `06-pm-functions-coverage.md` that you need, and the Pre-start answers, which go into the PM Profile.
@@ -53,9 +52,9 @@ For case B: the Access Matrix and Engagement Status are filled in with particula
 3. **Decisions DB**: the first line "Project <name> started, scope =..., team =..., model =...", Area = Scope, Source = the kickoff meeting or the SOW.
 4. **Current State**: a page under the project page with the first manual distillation (5-10 lines: what is happening, open questions, the nearest dates). Add its ID to the `daily-current-state-distillation` prompt.
 5. **Knowledge Base**: a project folder (even an empty one) for documentation, the SOW, contacts.
-5a. **Project Charter**: a copy of the PM Toolkit template under the project page, filled in from the config (contract, scope, milestones, team, stakeholders, risks, communication). The ID goes into `pm_profile.documents.charter_page_id`. The Decision Log, RAID, Stakeholder Register and RACI are NOT duplicated as separate pages: they are the Decisions DB, the Risks DB (Kind) and the config.
-5b. **Relation**: `Project` and `Workspace` in every database, cross-relation without emoji. If the live schema differs, Notion is right and the template gets fixed the same day.
-6. **Meetings**: make sure Notion AI Meeting Notes is enabled for the project's calendar events and that the meeting name contains a recognizable suffix (e.g. "<Client> Weekly Sync").
+6. **Project Charter**: a copy of the PM Toolkit template under the project page, filled in from the config (contract, scope, milestones, team, stakeholders, risks, communication). The ID goes into `pm_profile.documents.charter_page_id`. The Decision Log, RAID, Stakeholder Register and RACI are NOT duplicated as separate pages: they are the Decisions DB, the Risks DB (Kind) and the config.
+7. **Relation**: `Project` and `Workspace` in every database, cross-relation without emoji. If the live schema differs, Notion is right and the template gets fixed the same day.
+8. **Meetings**: make sure Notion AI Meeting Notes is enabled for the project's calendar events and that the meeting name contains a recognizable suffix (e.g. "<Client> Weekly Sync").
 
 For case B, a one-off migration of history (the most expensive operation, done once):
 - Old transcripts/notes → Meetings DB (import or links) with a relation to the project.
@@ -64,12 +63,12 @@ For case B, a one-off migration of history (the most expensive operation, done o
 
 ## Phase 3. Registration in Claude's brain (day 1, 30 min)
 
-1. Register the config in the `projects` skill. A new file inside a skill cannot be added as a card (a card replaces only SKILL.md), so Claude assembles `projects.skill` from the current synced copy + the new config + a row in the Files table in SKILL.md, and the PM uploads it via Settings → Skills → Upload. Check that a new session sees `projects/<slug>.md` (Glob) and that the other configs did not get lost.
-2. Add a row to the "Projects" table in the Cowork global instructions ("PM Workspace"): name, slug, path to the config. This is the single place for the project list; a duplicate of that table in Claude's personal preferences goes stale first (it only has Acme there), so it is better to remove it.
-2a. Optional: a Project on claude.ai for chat and mobile. The instructions hold only the name, the slug, "source of truth = `projects/<slug>.md` and the Notion Control Tower" and the language rules; the knowledge holds only static documents (SOW, contract, specifications). Nothing about state (team, meetings, accesses, statuses): otherwise it becomes a fourth place that will go stale (principle 13).
-3. Fill in the `email_routing` section in the new project's config: `client_emails`, `team_emails`, ignore rules. Nothing else needs updating, the collector reads the configs and works out the shared addresses itself.
-4. Claude's memory: one sentence about the new project and its specifics (the client's language, cultural specifics), if it changes behavior.
-5. Default Project Rule check: ask Claude "prep me for the daily" without naming a project, it should list both projects and ask.
+1. Register the config in the `projects` skill. In the plugin: put `<slug>.md` into `plugin/skills/projects/` next to `_template.md`, add a row to the Files table in SKILL.md and reinstall the plugin. In the standalone variant a new file inside a skill cannot be added as a card (a card replaces only SKILL.md), so Claude assembles `projects.skill` from the current synced copy + the new config + a row in the Files table, and the PM uploads it via Settings → Skills → Upload. In both cases check that a new session sees `projects/<slug>.md` (Glob) and that the other configs did not get lost.
+2. Add a row to the "Projects" table in the Cowork global instructions ("PM Workspace"): name, slug, path to the config. This is the single place for the project list; a duplicate of that table in Claude's personal preferences goes stale first, so it is better to remove it.
+3. Optional: a Project on claude.ai for chat and mobile. The instructions hold only the name, the slug, "source of truth = `projects/<slug>.md` and the Notion Control Tower" and the language rules; the knowledge holds only static documents (SOW, contract, specifications). Nothing about state (team, meetings, accesses, statuses): otherwise it becomes a fourth place that will go stale (principle 13).
+4. Fill in the `email_routing` section in the new project's config: `client_emails`, `team_emails`, ignore rules. Nothing else needs updating, the collector reads the configs and works out the shared addresses itself.
+5. Claude's memory: one sentence about the new project and its specifics (the client's language, cultural specifics), if it changes behavior.
+6. Default Project Rule check: ask Claude "prep me for the daily" without naming a project, it should list all active projects and ask.
 
 ## Phase 4. Local data and knowledge bases (days 2-5, depending on engineering scope)
 
@@ -80,11 +79,11 @@ Only if there is engineering responsibility:
 4. Set up log export into `AWS Logs/` (manual or a script) and Tempo into `Time Reports/`.
 5. A Sentry token with project:read, event:read rights.
 
-For case C: instead of a KB, a folder of documents (SOW, regulations, contacts) and, if needed, browser skills for external portals (modeled on `calyx-export`).
+For case C: instead of a KB, a folder of documents (SOW, regulations, contacts) and, if needed, browser skills for external portals (modeled on `<portal>-export`).
 
 ## Phase 4b. Project adapters (when routine appears, usually weeks 2-4)
 
-By the 80/20 principle, every project will grow its own 20%: a parser for a manual CSV from the client's tracker, a browser skill for a portal with no API (modeled on `calyx-export`), a reconciliation of specific data (modeled on `acme-beneficiary-audit`), a codebase KB. The rules: the `<slug>-` prefix, project facts in the config, a README in Notion under Claude Skills & Prompts. Do not try to turn an adapter into an engine until the same scenario has shown up on a second project.
+By the 80/20 principle, every project will grow its own 20%: a parser for a manual CSV from the client's tracker, a browser skill for a portal with no API (modeled on `<portal>-export`), a reconciliation of specific data (modeled on `acme-beneficiary-audit`), a codebase KB. The rules: the `<slug>-` prefix, project facts in the config, a README in Notion under Claude Skills & Prompts. Do not try to turn an adapter into an engine until the same scenario has shown up on a second project.
 
 ## Phase 5. The first skill by hand (day 2)
 
@@ -108,7 +107,7 @@ Create scheduled tasks with IDs taken from the config (Meetings Schedule → ID 
 
 The second wave (week 2), if there is engineering scope: `stability-scan` (once a week in the evening), `deploy-analysis-daily`, `friday-review-prep` with board health, `<slug>-branch-review` if needed. The third wave (month 1): `risk-register` before the review, `client-satisfaction` on the 1st/15th, `monthly-velocity`.
 
-The cloud audits (Skill Health Check, Monthly Memory Digest) pick up the project automatically, because they iterate over all active configs.
+The cloud audits (Automation Health Check, Monthly Memory Digest) pick up the project automatically, because they iterate over all active configs.
 
 ## Phase 7. Calibration (weeks 2-4)
 
@@ -116,13 +115,13 @@ The cloud audits (Skill Health Check, Monthly Memory Digest) pick up the project
 - The Transcript Alias Map fills up from the first transcripts.
 - The Cultural Profile gets individual observations added after 3-4 meetings.
 - The first project skills come out of real routine (for example a weekly data reconciliation, a specific client report).
-- After the first Skill Health Check: close every finding on the new project.
+- After the first Automation Health Check: close every finding on the new project.
 - Project Health Check: for case B on day 10 after the handover, then monthly and automatically (the 2nd of the month, a cloud task).
-- For case B, `PM_Playbook_Prep_First_Month.md` runs in parallel (the human part of taking over a project: stakeholders, trust, a technical start with the team).
+- For case B, the PM Toolkit page on the first month on a project runs in parallel (the human part of taking over: stakeholders, trust, a technical start with the team).
 
 ## Phase 8. Optional: a second agent (once history has accumulated)
 
-Plugging in Gemini and the `.ai/` protocol makes sense when: a) Notion holds more than a few months of meetings and threads that Claude cannot re-read in one go; b) the project has regular engineering tasks with briefs; c) you need an independent QA of decisions against what was agreed. The launch checklist is in `09-gemini-optional-layer.md` (CONTRACT section 13): the `.ai/` structure, gitignore, Decisions DB, a first small task.
+Plugging in Gemini and the `.ai/` protocol makes sense when: a) Notion holds more than a few months of meetings and threads that Claude cannot re-read in one go; b) the project has regular engineering tasks with briefs; c) you need an independent QA of decisions against what was agreed. The launch checklist is in `09-gemini-optional-layer.md`: the `.ai/` structure, gitignore, Decisions DB, a first small task.
 
 ## Phase 9. Steady life and closure
 
@@ -137,7 +136,7 @@ Plugging in Gemini and the `.ai/` protocol makes sense when: a) Notion holds mor
 [ ] Phase 1: projects/<slug>.md filled in (General, Access, Team with stakeholders, Meetings with Agenda, task_tracker with api_access, tracker, channels, monitoring, paths, deploy, email routing, engagement, culture, PM Profile, changelog)
 [ ] Phase 2: Projects page (New project template), Workspace page, first Decision, Current State, Charter, KB folder, Meeting Notes enabled
 [ ] Phase 2B (handover): history migration (meetings, threads, decisions)
-[ ] Phase 3: projects.skill uploaded, row in the global instructions, email routing, (optional) Claude Project, Default Project Rule check
+[ ] Phase 3: config registered (plugin or projects.skill), row in the global instructions, email routing, (optional) Claude Project, Default Project Rule check
 [ ] Phase 4: ~/work/<slug>/ structure, repos, KB (SYSTEM, SDLC, components, LESSONS), DB schema, logs, Tempo
 [ ] Phase 4b: first project adapters as needed (<slug>- prefix, README in Notion)
 [ ] Phase 5: three skills run by hand with no errors (in no-API mode: with a fallback and the export date)

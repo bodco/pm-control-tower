@@ -20,5 +20,5 @@ Read in this order. Documents 00 to 02 explain what the framework is, 10 is the 
 | 10a | [Mail collector setup](10a-mail-collector-setup.md) | Collecting mail from Mail.app (optional) |
 | 11 | [Lessons, antipatterns, security](11-principles-lessons-antipatterns.md) | What worked, what did not, what to never do |
 | 12 | [Glossary](12-glossary.md) | Terms used across the documents |
-| 13 | [Open questions](13-open-questions.md) | What is still undecided, and what was decided and why |
+| 13 | [Open questions and backlog](13-open-questions.md) | What is still undecided, what was decided and why, the technical backlog |
 | 14 | [PM Toolkit integration](14-pm-toolkit-integration.md) | PM standards wired into the skills, from pre-start to closure |

@@ -10,9 +10,9 @@ and maintains a structured RAID register in the Notion Risks DB. The goal is to 
 risks **before they become incidents**, to keep assumptions and dependencies visible
 until they are resolved, and to keep every entry's status fresh automatically.
 
-Since 2026-09-10 the Risks DB is the project's RAID log (PM Toolkit, `_standards.md`
-section 8): the `Kind` property says what an entry is. Standards for thresholds, signals
-and reports come from `projects/_standards.md`.
+The Risks DB is the project's RAID log (PM Toolkit, `_standards.md` section 8): the
+`Kind` property says what an entry is. Standards for thresholds, signals and reports come
+from `projects/_standards.md`.
 
 ## CRITICAL: Execution Rules
 
@@ -23,6 +23,11 @@ The ONLY questions allowed:
 - If the project is not explicitly named - ask which project (never default silently;
   Default Project Rule in `projects/SKILL.md`)
 - If the time window is ambiguous - ask (default: last 7 days)
+
+Writes follow the 5-minute rule in `projects/SKILL.md` ("Agent write permissions").
+Writes allowed without asking: new or updated Risks DB entries with Status `AI Review`,
+auto-close status changes, the two Reports DB pages; everything else (any message to the
+client, tracker changes) is a draft for the PM.
 
 ---
 
@@ -37,9 +42,15 @@ The ONLY questions allowed:
    There is no separate CLAUDE.md - do not look for one.
 4. All `{config.xxx}` placeholders below come from that file.
 5. Read `../projects/_standards.md` (sections 1, 7, 8) and `../projects/SKILL.md`
-   (JQL Isolation Validator, Data Completeness header, PM standards). Read the config's
+   (cross-cutting rules: Default Project Rule, JQL Isolation Validator, Data
+   Completeness header, 5-minute rule, PM standards). Read the config's
    `Team - Client` table including `Notes`: some people's silence is normal by design
    and must not be flagged.
+6. Right after this step check `{config.task_tracker.api_access}` and follow the
+   fallback rules of `projects/SKILL.md` (see the Source availability table below).
+7. Components listed as client-owned in the config's Scope of Responsibility (and the
+   Sentry `projects_out_of_scope` slugs) are context only: never promise our fix, never
+   create tickets or risks for them; route any such draft as "passed to the client team".
 
 **There is no hardcoded fallback.** If the config cannot be read, say "Project config not
 found. Available projects: [list files in projects/]" and stop. Writing risks into a
@@ -50,9 +61,10 @@ client's risks into another client's register.
 
 | Config value | If present | If absent or false |
 |---|---|---|
-| `task_tracker.api_access: true` | run the JQL scans below via the config's read connector | skip the tracker scans; if `task_tracker.fallback_source` is a `manual_export` with status and updated dates, derive stuck-ticket signals from it and state the export date in the report; if the fallback is `meeting_action_items` or `email_summaries`, say the tracker produced no signals this run |
-| `slack_access: mcp` or `mcp_local` | read channels with the configured Slack MCP tools (Claude's connector for `mcp`, or the project's own local server for `mcp_local` - see `slack-collector`'s access table) | if `chrome`, say Slack signals need a `slack-collector` run first and scan the Threads DB instead of Slack directly; if `none`, skip with one line |
-| `sentry.url` not `none` | Sentry signal section | skip with one line |
+| `{config.task_tracker.api_access}: true` | run the JQL scans below through the Jira MCP server from `{config.jira.mcp_read}` (default `jira`, operation `search_issues`) | skip the tracker scans; if `{config.task_tracker.fallback_source}` is `manual_export` with status and updated dates, derive stuck-ticket signals from the newest file in `{config.task_tracker.export_path}` and state the export date in the report; if the fallback is `meeting_action_items` or `email_summaries`, say the tracker produced no signals this run |
+| `{config.slack.slack_access}` (values are exactly `mcp | mcp_local | chrome | none`): `mcp` or `mcp_local` | read channels with the Slack tools (see Signal Source 2) | if `chrome`, say Slack signals need a `slack-collector` run first and scan the Threads DB instead of Slack directly; if `none` or missing, skip Slack with one header line |
+| `{config.sentry.url}` not `none` | Sentry signal section | skip with one line |
+| `{config.notion.risks_db}` set | write the register | stop and ask for the shared Risks DB ID: this skill has no meaning without it |
 
 Never emit a silent empty section. A source that did not run is named in the report.
 
@@ -66,18 +78,19 @@ SENTRY_TOKEN=$(grep '^{config.sentry.token_env}=' {config.sentry.secrets_file} |
 
 ---
 
-## Notion Risks DB - Setup (one-time per project)
+## Notion Risks DB - the shared register
 
-On first run for a project, if `{config.notion.risks_db}` is not set, check whether a
-Risks DB exists:
+`{config.notion.risks_db}` is ONE Control Tower database shared by all projects; entries
+are separated only by their `Project` and `Workspace` relations. Never create a separate
+Risks DB per project. If the key is `none` or missing, stop and ask the user for the
+shared Risks DB ID (it is the same value in every active config).
 
-1. Search Notion: `notion-search(query: "Risks {config.project_name}")`
-2. If no Risks DB is found, create one via `notion-create-database` with these properties:
+Expected schema:
 
 | Property | Type | Options |
 |---|---|---|
 | Name | title | - (the live title property is `Name`, not `Risk Name`) |
-| Status | select | `Claude`, `Open`, `Monitoring`, `Mitigated`, `Closed`, `Realized` |
+| Status | select | `AI Review`, `Open`, `Monitoring`, `Mitigated`, `Closed`, `Realized` |
 | Severity | select | `Critical`, `High`, `Medium`, `Low` |
 | Likelihood | select | `Almost Certain`, `Likely`, `Possible`, `Unlikely` |
 | Category | select | `Technical`, `Resource`, `Scope`, `Client`, `Dependency`, `Security`, `Timeline`, `External` |
@@ -92,26 +105,35 @@ Risks DB exists:
 | Project | relation | link to the project page |
 | Workspace | relation | link to the workspace page |
 | Related Jira | text | comma-separated ticket keys |
+| Topics | relation | related Topics pages, when known |
 
-Save the Risks DB collection ID into `{config.notion.risks_db}` in the project config
-(ask the user to paste it after creation).
+The `AI Review` status is reserved for items created or updated by automations; the PM
+changes it after confirming.
 
-**Relation names are uniform across all Control Tower databases since 2026-09-08:**
-every database uses `Project` and `Workspace` (singular, no emoji prefixes). The Risks DB
-previously used `Projects` and `🏛️ Workspaces`; both were renamed in Notion on that date.
-If a write ever fails on an unknown property, read the actual schema before guessing.
+### Step 0b - verify the live schema
+
+Fetch the Risks DB data source once per run (`notion-fetch` on `{config.notion.risks_db}`)
+before the first write and use the real property names. If `Kind` (or any property this
+skill writes) is missing in the live schema, create the property (`Kind` = select
+Risk / Assumption / Issue / Dependency) or, if that is impossible, write the value into
+the page body and report the discrepancy so the config and this file are fixed the same
+day. Do the same for the Reports DB before saving the reports.
+
+Relation names are `Project` and `Workspace` (singular, no emoji) in every Control Tower
+database. If a write ever fails on an unknown property, read the actual schema before
+guessing.
 
 ---
 
 ## Kind Classification (RAID)
 
-Every entry MUST have `Kind` set when created or updated. Entries created before
-2026-09-10 have an empty `Kind`: read them as `Risk`, and set `Kind` the first time you
-update them.
+Every entry MUST have `Kind` set when created or updated. Entries created before the
+`Kind` property existed have an empty `Kind`: read them as `Risk`, and set `Kind` the
+first time you update them.
 
 | Kind | Means | Typical signal | Status use | Body adds |
 |---|---|---|---|---|
-| `Risk` | may happen | trend, weak signal, pattern | `Claude` / `Open` / `Monitoring` / `Mitigated` / `Closed`; `Realized` when it happens (then create a linked `Issue`) | standard dossier |
+| `Risk` | may happen | trend, weak signal, pattern | `AI Review` / `Open` / `Monitoring` / `Mitigated` / `Closed`; `Realized` when it happens (then create a linked `Issue`) | standard dossier |
 | `Assumption` | we are assuming it; wrong = consequence | "we assume", "припускаємо", NFR unknowns from a kickoff, plans built on unconfirmed input | `Open` until validated; `Closed` when confirmed; proven wrong → `Realized` and create the `Issue` | "Якщо невірне → наслідок", "Перевірити до {date}" |
 | `Issue` | already happening, needs a plan | production incident, blocker in effect, missed date | `Open` while unresolved, `Closed` when resolved | "Вплив зараз", "План і owner", "Наступне оновлення" |
 | `Dependency` | we depend on someone | "waiting on", "чекаємо на", pending client decision, vendor, access request | `Open` until delivered; `Closed` when received | "Від кого", "Потрібно до {date}", "Що блокує" |
@@ -145,7 +167,7 @@ include it.
 ### Classification Rules
 
 1. **Source-based heuristic**: if the risk was discussed in a meeting with people listed
-   in the config's Client Team section, it is at least `External` or `Both`. If it was
+   in the config's `Team - Client` table, it is at least `External` or `Both`. If it was
    discussed only in internal meetings or internal channels, it is `Internal`.
 2. **Content-based heuristic**: staffing, salaries, internal process, bus factor,
    workload distribution are `Internal`. Client deliverables, compliance, end-user impact
@@ -174,12 +196,17 @@ Scan each available source for risk signals within the time window (default: las
 
 ### 1. Tracker - stuck or escalating tickets
 
-Only when `{config.task_tracker.api_access}` is true. Run via the read connector named in
-the config. **Every query MUST be scoped with the project key**: the company tracker is
-shared across clients and an unscoped query would pull another client's tickets into this
-register.
+Only when `{config.task_tracker.api_access}` is true. Run `search_issues` on the Jira
+MCP server from `{config.jira.mcp_read}` (default `jira`); if `mcp_read` names a second
+server with different tool names, map the operations by meaning. **Every query MUST be
+scoped with the project key** (JQL Isolation Validator in `projects/SKILL.md`): the
+company tracker is shared across clients and an unscoped query would pull another
+client's tickets into this register. Status names come ONLY from the config's Workflow
+table (quote names with spaces or slashes exactly as written there); labels come from the
+Labels Taxonomy and a label marked HISTORICAL is never queried.
 
-Let `{KEY}` = `{config.task_tracker.project_key}`.
+Let `{KEY}` = `{config.task_tracker.project_key}` (`{config.jira.project_key}` carries the
+same value).
 
 **Long-blocked tickets (>10 days):**
 ```
@@ -187,15 +214,16 @@ project = {KEY} AND status = "{blocked status from the config's Workflow table}"
 ```
 Signal: dependency or decision risk.
 
-**Reopened tickets:**
+**Reopened tickets** (only if the Workflow table has a status meaning "reopened";
+otherwise skip this scan with one line):
 ```
-project = {KEY} AND status was "Reopened" ORDER BY updated DESC
+project = {KEY} AND status was "{reopened status from the config's Workflow table}" ORDER BY updated DESC
 ```
 Signal: technical or QA risk.
 
 **Critical bugs open >14 days:**
 ```
-project = {KEY} AND labels = "{bug label from the config's Labels Taxonomy}" AND priority in (Highest, Critical) AND status != Done AND created <= -14d
+project = {KEY} AND labels = "{bug label from the config's Labels Taxonomy}" AND priority in (Highest, Critical) AND status != "{done status from the config's Workflow table}" AND created <= -14d
 ```
 Signal: quality risk.
 
@@ -205,23 +233,26 @@ project = {KEY} AND status in ({in-progress statuses from the config's Workflow 
 ```
 Signal: resource or scope risk.
 
-**Client-dev tickets awaiting our QA for >7 days** (only if the config defines an
-external-dev label that is still active - check the config, some projects have retired
-this label historically):
+**Tickets waiting for review or QA for >7 days** (the status the Workflow table marks as
+"waiting for review or QA"; skip with one line if there is none):
 ```
-project = {KEY} AND labels = "external-dev" AND status = "Ready for QA" AND updated <= -7d
+project = {KEY} AND status = "{review/QA status from the config's Workflow table}" AND updated <= -7d
 ```
-Signal: client-dependency risk.
+Signal: QA capacity risk. If the Labels Taxonomy has an active label for tickets
+developed by the client's own team, add `AND labels = "{that label}"` and read the
+result as a client-dependency risk instead.
 
 ### 2. Slack - concerning keywords
 
-If `slack_access` is `mcp` or `mcp_local`: for each channel in `{config.slack.channels_all}`
-use the configured Slack MCP tools for the time window (Claude's connector for `mcp`; the
-project's own local server, e.g. `mcp__remote-devices__{server}__conversations_history`,
-for `mcp_local` - see `slack-collector`'s access table for the exact tool names).
-If `slack_access` is `chrome`: do not scrape here. Scan the Threads DB
-(`{config.notion.threads_db}`) for this project in the window instead, and say in the
-report that Slack signals come from the last collector run and name its date.
+If `{config.slack.slack_access}` is `mcp`: for each channel in `{config.slack.channels_all}`
+read the time window with the Slack connector tools (`slack_read_channel`,
+`slack_read_thread`, `slack_search_public_and_private`, `slack_list_user_channels`).
+If it is `mcp_local`: use the local server named in `{config.slack.mcp_local_server}`
+(typically `conversations_history`, `conversations_replies`, `channels_list`, with the
+IDs from `{config.slack.channel_ids}`). If `chrome`: do not scrape here. Scan the Threads
+DB (`{config.notion.threads_db}`) for this project in the window instead, and say in the
+report that Slack signals come from the last collector run and name its date. If `none`
+or `{config.slack.channels_all}` is empty: skip with one header line.
 
 Flag messages containing (case-insensitive) Ukrainian and English keywords:
 - `blocker`, `заблоковано`, `блокер`, `stuck`, `не можемо`, `can't proceed`
@@ -251,10 +282,13 @@ Extract each risk mention with meeting page URL, date, quoted text.
 
 ### 4. Sentry (optional) - production signal
 
-If `{config.sentry.url}` is not `none`, check the slugs in
-`{config.sentry.projects_in_scope}` for new unresolved critical issues in the window. A
-high error count is a stability risk. Slugs listed as out of scope belong to the client:
-do not scan them.
+If `{config.sentry.url}` is not `none`, query the REST API with curl (token read at
+runtime as in Secrets above, never printed) for the slugs in
+`{config.sentry.projects_in_scope}`: new unresolved critical issues in the window. Try
+`statsPeriod` first and fall back to explicit `start`/`end` ISO dates if the server
+rejects it. A high error count is a stability risk. Slugs in
+`{config.sentry.projects_out_of_scope}` belong to the client: do not scan them and never
+create risks for them.
 
 ### 5. Early warning signals and bus factor (`_standards.md` section 7)
 
@@ -307,7 +341,8 @@ External.
 **Visibility**: per the classification rules above.
 
 **Owner**: infer from the ticket assignee, mentions, meeting attendees, or default to the
-PM. Names come from the config's Team and Client Team sections; never invent one.
+PM. Names come from the config's `Team - Internal` and `Team - Client` tables; never
+invent one.
 
 ---
 
@@ -334,7 +369,7 @@ Use `notion-create-pages`:
     properties: {
       "Name": "Short descriptive title",
       "Kind": "Risk",
-      "Status": "Claude",
+      "Status": "AI Review",
       "Severity": "High",
       "Likelihood": "Likely",
       "Category": "Dependency",
@@ -345,14 +380,18 @@ Use `notion-create-pages`:
       "Source": "Jira, Slack",
       "Summary": "1-2 sentence summary of the risk and its potential impact.",
       "Mitigation": "Proposed mitigation plan or current action.",
-      "Project": "[\"https://www.notion.so/{config.notion.project_page_id}\"]",
-      "Workspace": "[\"https://www.notion.so/{config.notion.workspace_page_id}\"]",
+      "Project": "[\"https://app.notion.com/p/{config.notion.project_page_id without dashes}\"]",
+      "Workspace": "[\"https://app.notion.com/p/{config.notion.workspace_page_id without dashes}\"]",
       "Related Jira": "{KEY}-1234, {KEY}-1250"
     },
     content: "[formatted risk dossier - see Risk Dossier Format below]"
   }]
 }
 ```
+
+Relation properties need full page URLs, not bare UUIDs: always the
+`["https://app.notion.com/p/<id-without-dashes>"]` form, for `Project`, `Workspace` and
+`Topics` alike.
 
 ### B. Update an existing risk
 
@@ -431,7 +470,7 @@ All risks (Internal + External + Both). Full detail, Notion links, real names.
 ```
 ## Risk Register Update (Internal) - {project_name} - {date}
 
-Джерела: {Data Completeness header: tracker / Slack / Threads / Meetings / Sentry, each OK / EMPTY / STALE / SKIPPED / FAILED}
+Джерела: {Data Completeness header per projects/SKILL.md: tracker / Slack / Threads / Meetings / Sentry / PM Profile, each OK / EMPTY / STALE / SKIPPED / FAILED; in English when default_language is English}
 Статус: {🟢/🟡/🔴} - {one-line reason}
 
 ### RAID коротко
@@ -562,7 +601,7 @@ Body: the external summary (client language, sanitized, no internal links).
 
 ## Scheduled Execution
 
-Designed to run weekly (Friday afternoon, before the weekly review). Register it as a
+Designed to run weekly (e.g. before the weekly review with the client). Register it as a
 Cowork scheduled task via the app's scheduled-tasks feature - there is no `schedule`
 skill. The task prompt names the project and the period; it does not restate this skill.
 

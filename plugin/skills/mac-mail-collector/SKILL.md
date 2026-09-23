@@ -21,7 +21,7 @@ Mail.app --[AppleScript, every 15min]--> ~~home-folder/work/Mail/{account}/incom
 ```
 
 The AppleScript half lives in `~~home-folder/work/Mail/scripts/`
-(`mail_export.applescript`, `mail_collector.sh`, `com.our-company.mail-collector.plist`,
+(`mail_export.applescript`, `mail_collector.sh`, `com.~~org.mail-collector.plist`,
 `mail_backfill.sh`). It exports EVERY new message per account and does no project
 routing. All routing happens in this skill.
 
@@ -36,20 +36,25 @@ routing. All routing happens in this skill.
    - `notion.project_page_id`, `notion.workspace_page_id`, `notion.threads_db`
    - the `email_routing` block: `mac_mail_accounts`, `client_emails`,
      `unique_emails`, `unique_domains`, `team_emails`, `knowledge_base`
-   - the exact Notion relation property names from the config's "Notion relation
-     property names" table (Threads uses `Projects` and `Workspace`). Do not
-     guess: a wrong property name silently fails to write the relation.
+   - the Notion relation property names: `Project` and `Workspace` (singular, no
+     emoji) per the config's "Notion relation property names" paragraph. Before the
+     first write of a run, fetch the Threads data source (`notion-fetch` on
+     `notion.threads_db`) and confirm the names it reports; a wrong property name
+     silently fails to write the relation. If the live schema differs, use the real
+     names and report the discrepancy.
 4. Derive shared addresses: an address present in `client_emails` of TWO OR MORE
    active configs is shared. Never maintain a shared list by hand.
 5. If the user named a project, process only its mail. Otherwise process all
-   projects (the normal scheduled behavior).
+   projects (the normal scheduled behavior). This is the documented exception to
+   the Default Project Rule in `projects/SKILL.md`: the collector routes mail to
+   projects by the configs, so it reads all of them. Read `projects/SKILL.md` for
+   the other cross-cutting rules.
+6. Writes allowed without asking (the 5-minute rule): new or updated Threads DB
+   pages and moving processed files inside the mail buffer. Nothing is ever sent.
 
 Rule Zero: the config wins. If anything in this skill contradicts a config, the
-config is right and this text is stale - say so to the user.
-
-Historical note: until 2026-09-07 the registry was duplicated in three places
-(config, `gmail-collector`, this skill). `gmail-collector` was deleted because
-project mail now arrives through Mail.app, and the registry lives only in configs.
+config is right and this text is stale - say so to the user. The routing registry
+lives ONLY in the configs; no collector keeps its own address table.
 
 ---
 
@@ -80,7 +85,7 @@ project mail now arrives through Mail.app, and the registry lives only in config
 ```json
 {
   "id": "message-id@domain.com",
-  "subject": "Re: KYB flow updates",
+  "subject": "Re: Invoice flow update",
   "from": "client.pm@example-client.com",
   "to": "you@our-company.com, teammate@our-company.com",
   "cc": "client.ops@example-client.com",
@@ -105,7 +110,7 @@ An email belongs to a project if ANY participant (from, to, cc):
 - has a domain (substring after `@`) matching an entry in `unique_domains`.
 
 Domain matching is for projects where the entire client organization shares one
-corporate domain (e.g. `other-client.com` for Beta). Address matching is for
+corporate domain (e.g. `client.com`). Address matching is for
 projects where only certain people on a shared domain count.
 
 **Shared-address rule:** a thread belongs to a project ONLY if at least one
@@ -145,8 +150,8 @@ Skip emails where from address matches any of these patterns:
 - `calendar-notification@google.com`
 - `@github.com` (notifications)
 - `@atlassian.com`, `@jira.`, `@confluence.`
-- `jira@` followed by anything ending in `.atlassian.net` (e.g. `jira@other-client.atlassian.net`)
-- `MicrosoftExchange` prefix (Outlook bounce / NDR / auto-replies, e.g. `MicrosoftExchange329e...@other-client.onmicrosoft.com`)
+- `jira@` followed by anything ending in `.atlassian.net` (e.g. `jira@client.atlassian.net`)
+- `MicrosoftExchange` prefix (Outlook bounce / NDR / auto-replies, e.g. `MicrosoftExchange329e...@client.onmicrosoft.com`)
 - `executiveassistant@e.read.ai`, `@read.ai`, `gemini-notes@google.com` (AI meeting summarizers)
 - `<your HR system>` (HR system notifications)
 - `@stripe.com` payment notifications when subject starts with `Payment of`
@@ -158,7 +163,7 @@ These are informational - the user can still review them in Mail.app,
 but they don't need to be processed into Notion.
 
 > **Rule:** Apply Noise filter BEFORE Project matching. A noisy email that
-> happens to be on a project domain (e.g. `jira@other-client.atlassian.net`)
+> happens to be on a project domain (e.g. `jira@client.atlassian.net`)
 > must still be skipped.
 
 ---
@@ -227,11 +232,11 @@ If multiple emails share the same normalized subject, treat as one thread
 - `Type` = `["Email"]`
 - `Reported at` = date of the FIRST message; `Last Reply Date` = date of the
   LATEST message (set `:is_datetime` = 1)
-- `Projects` = `["https://app.notion.com/p/<project_page_id-without-dashes>"]`
+- `Project` = `["https://app.notion.com/p/<project_page_id-without-dashes>"]`
 - `Workspace` = `["https://app.notion.com/p/<workspace_page_id-without-dashes>"]`
-  (property names come from the config's relation table, not from memory)
-- `Status` = `"Claude"`
-- `📚 Knowledge Base` = KB relation (optional, name from `{config.email_routing.knowledge_base}`)
+  (names confirmed against the live schema in Step 0)
+- `Status` = `"AI Review"` (created by an automation; the PM confirms)
+- `Knowledge Base` = KB relation (optional, the page named in `{config.email_routing.knowledge_base}`, or none)
 - Icon = 🔴 if the last author is NOT in that project's `team_emails`, otherwise none
 - `Description` = SHORT preview ONLY, e.g.
   `\[N msgs\] from <latest sender>: <first ~200 chars of latest body>`.
@@ -314,6 +319,7 @@ touch ~~home-folder/work/Mail/.last_cowork_scan
 ### Step 7 - Print summary
 
 ```
+Джерела: Mail buffer OK ({N} accounts) · Notion OK · configs OK ({M} active)
 Done. Processed X emails from Mac Mail buffer:
 - {Project}: A (created: B, updated: C, skipped: D)
 - Unmatched: I (moved to processed)

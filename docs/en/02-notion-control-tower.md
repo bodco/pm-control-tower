@@ -31,11 +31,11 @@ Quick action buttons (Quick Add into Inbox, Tasks) are placed in two columns at 
 
 ## Databases
 
-> The schemas below were taken from the real data sources through Notion MCP. Property names are verbatim, with the emoji where they exist. This matters: a skill that writes into a `Title` property instead of `Thread Name`, or into `Workspace` instead of `🏛️ Workspaces`, fails or silently does not write the relation.
+> The schemas below were taken from the real data sources through Notion MCP. Property names are verbatim, with the emoji where they exist. This matters: a skill that writes into a `Title` property instead of `Thread Name`, or into `Projects` instead of `Project`, fails or silently does not write the relation.
 
 ### Relation names
 
-In all seven databases the relation to Projects DB is called `Project`, and the one to Workspaces DB is `Workspace` (singular, no emoji). Cross-relations between databases also carry no emoji: `Meetings`, `Threads`, `Topics`, `Knowledge Base`, `Inbox`, `Tasks Tracker`. Verified against the live schemas of Risks, Decisions and Tasks Tracker. The earlier table with four naming variants (`Projects`, `Workspaces`, `🏛️ Workspaces`, names with emoji) is historical; a skill or template that still uses it is out of date. From Projects DB itself the back-relations do carry emoji (`💬 Meetings`, `📨 Threads`, `🧵 Topics`, `📚 Knowledge Base`), but skills write from the side of the child databases.
+In all databases the relation to Projects DB is called `Project`, and the one to Workspaces DB is `Workspace` (singular, no emoji). Cross-relations between databases also carry no emoji: `Meetings`, `Threads`, `Topics`, `Knowledge Base`, `Inbox`, `Tasks Tracker`. Verified against the live schemas of Risks, Decisions and Tasks Tracker. The earlier table with four naming variants (`Projects`, `Workspaces`, `🏛️ Workspaces`, names with emoji) is historical; a skill or template that still uses it is out of date. From Projects DB itself the back-relations do carry emoji (`💬 Meetings`, `📨 Threads`, `🧵 Topics`, `📚 Knowledge Base`), but skills write from the side of the child databases.
 
 ### 📨 Threads
 Inbound communications from every channel. One page = one thread.
@@ -46,7 +46,7 @@ Inbound communications from every channel. One page = one thread.
 |---|---|---|
 | `Thread Name` | title | the thread subject |
 | `Type` | multi_select | Email, Slack, Signal, Zoom, Other |
-| `Status` | select | `Spectator Mode` (does not concern us, we watch), `Awaiting Reply` (they are waiting for us), `Replied`, `Need Follow-up` (we are waiting for them, a reminder is due), `Closed`, `Claude` (fallback: ambiguous, a human is needed) |
+| `Status` | select | `Spectator Mode` (does not concern us, we watch), `Awaiting Reply` (they are waiting for us), `Replied`, `Need Follow-up` (we are waiting for them, a reminder is due), `Closed`, `AI Review` (created or updated by an automation, a human should confirm; the template has an AI Review Queue view) |
 | `Category` | select | set by inbox-responder: Error/Bug, Data Question, Scope Change, Blocker, Status Update, FYI |
 | `Context Sources` | multi_select | Sentry, AWS Logs, Jira Board, Topics DB, Knowledge Base, LLM Only (what inbox-responder used) |
 | `Draft Response` | text | a draft reply in the language of the thread |
@@ -54,6 +54,7 @@ Inbound communications from every channel. One page = one thread.
 | `Email Link`, `Slack Link` | url | links to the source |
 | `Reported at` | date | the first message |
 | `Last Reply Date` | date | the last comment (updated by the 14-day review pass) |
+| `Jira Key`, `Jira Sync`, `Jira Sync Checked` | text, select, date | the link to a ticket: key, sync state (Created, Matched, Skipped (info), Rejected by PM, Error), check date; maintained by `slack-collector` Step 4 or a cloud threads-to-tickets task |
 | `Follow-Up Check` | formula | an "all good" checkbox; unchecked = a follow-up is needed |
 | `ID` | auto-increment | |
 | `Project`, `Workspace` | relation | mandatory |
@@ -61,7 +62,7 @@ Inbound communications from every channel. One page = one thread.
 | Page icon | 🔴 or empty | a red dot if the last author is not from our team (this is the page icon, not a property) |
 | Page body | blocks | the full thread text in 2000-character blocks |
 
-The status classification rules live in `slack-collector` (Step 3), `Claude` is set only when the confidence of the rule is < 70%. Once a day the 14-day review pass re-reads non-Closed threads, appends new comments and reclassifies the status.
+The status classification rules live in `slack-collector` (Step 3), `AI Review` is set only when the confidence of the rule is < 70%. Once a day the 14-day review pass re-reads non-Closed threads, appends new comments and reclassifies the status.
 
 ### 💬 Meetings
 Written by Notion AI Meeting Notes (transcript + summary + action items). Then `notion-meeting-topics` appends a bilingual report to the same page.
@@ -84,8 +85,8 @@ Cross-cutting themes that run through several meetings and threads.
 | Property | Type | Rule |
 |---|---|---|
 | `Topic Name` | title | |
-| `Status` | select | Claude, Open, Under Discussion, Resolved |
-| `Status 2` | status | Not started, Planned, In progress, Under Review, Done, On Hold, Won't Do; recalculated by a skill, not by hand |
+| `Status` | select | AI Review, Open, Under Discussion, Resolved |
+| `Progress` | status | Not started, Planned, In progress, Under Review, Done, On Hold, Won't Do; recalculated by a skill, not by hand |
 | `Priority` | select | High, Medium, Low |
 | `Summary` | text | **stays empty**, all of the content is in the page body |
 | `Date`, `Due date` | date | |
@@ -93,7 +94,7 @@ Cross-cutting themes that run through several meetings and threads.
 | `Project`, `Workspace` | relation | |
 | `Parent item`, `Sub-item` | relation (self) | topic hierarchy |
 
-Filled by: `topic-analyzer`, `weekly-topics-db-update`, Gemini `notion-project-brief`. A special page in Topics: **Claude Skills & Prompts** (the README of the skills library and the schedule, with child documentation pages).
+Filled by: `topic-manager` (on-demand and weekly mode), Gemini `notion-project-brief`. A special page in Topics: **Claude Skills & Prompts** (the README of the skills library and the schedule, with child documentation pages).
 
 ### Decisions (the decision log)
 
@@ -123,14 +124,14 @@ The archive of everything generated.
 |---|---|---|
 | `Report Name` | title | `<Name> - <date>` |
 | `Date` | date | |
-| `Type` | select | Weekly Overview, Daily Team Prep, Client Meeting Prep, Stability Scan, Board Health, Velocity Report, Daily Work Report, Client Weekly Report, Client Monthly Report, Risk Register, Client Satisfaction, Company General Report, Deploy Analysis, Monthly Digest, Skill Health Check; since 0.7.x skills create these on the first write: Project Kickoff, Project Handover, Project Health Check, Team Change, Project Closure, Change Request, Steering Update |
-| `Skill` | select | weekly-overview, daily-team-prep, client-meeting-prep, stability-scan, jira-board-health, velocity-report, daily-work-report, client-report, risk-register, client-satisfaction-tracker, company-general-report, deploy-analysis; since 0.7.x: project-lifecycle, change-request |
+| `Type` | select | Weekly Overview, Daily Team Prep, Client Meeting Prep, Stability Scan, Board Health, Velocity Report, Daily Work Report, Client Weekly Report, Client Monthly Report, Risk Register, Client Satisfaction, Company Report, Deploy Analysis, Monthly Digest, Automation Health Check; since 0.7.x skills create these on the first write: Project Kickoff, Project Handover, Project Health Check, Team Change, Project Closure, Change Request, Steering Update |
+| `Skill` | select | weekly-overview, daily-team-prep, client-meeting-prep, stability-scan, jira-board-health, velocity-report, daily-work-report, client-report, risk-register, client-satisfaction-tracker, company-report, deploy-analysis; since 0.7.x: project-lifecycle, change-request |
 | `Visibility` | select | Internal, External |
 | `Summary` | text | 2-3 sentences |
 | `Project`, `Workspace` | relation | |
 | `ID` | auto-increment | |
 
-The `Monthly Digest` and `Skill Health Check` options were created automatically on the first write from the cloud routines: Notion creates a new select option by itself, so new report types do not have to be set up by hand.
+The `Monthly Digest` and `Automation Health Check` options were created automatically on the first write from the cloud routines: Notion creates a new select option by itself, so new report types do not have to be set up by hand.
 
 ### Risks
 A live register maintained by `risk-register`.
@@ -138,7 +139,7 @@ A live register maintained by `risk-register`.
 | Property | Type | Options |
 |---|---|---|
 | `Name` | title | |
-| `Status` | select | Claude, Open, Monitoring, Mitigated, Closed, Realized |
+| `Status` | select | AI Review, Open, Monitoring, Mitigated, Closed, Realized |
 | `Severity` | select | Critical, High, Medium, Low |
 | `Likelihood` | select | Almost Certain, Likely, Possible, Unlikely |
 | `Category` | select | Technical, Resource, Scope, Client, Dependency, Security, Timeline, External |
@@ -164,7 +165,7 @@ This is not "one more task tracker" and not a duplicate of Jira. The axiom:
 
 Three consequences:
 1. Skills (`daily-team-prep`, `risk-register`, `jira-board-health`) put their recommendations ("check the branch", "remind about the invoice") exactly here with the `Source` field, not into Jira.
-2. The link to Jira is reference only: an optional text field `Jira Issue Key` (the PM's call, item 3 in `13`), with no synchronization. The PM runs their day in Notion, the team delivers in Jira.
+2. The link to Jira is reference only: an optional text field `Jira Issue Key` (the PM's call), with no synchronization. The PM runs their day in Notion, the team delivers in Jira.
 3. On a project with no API to the client's tracker, Tasks Tracker becomes the only place where the PM sees their commitments on that project.
 
 | Property | Type | Options |
@@ -189,10 +190,10 @@ Three consequences:
 Quick capture (Inbox DB, data source `~~inbox-db`). Processed every day: Route (it becomes a task, Inbox Status = Routed) or delete. These are the PM's own thoughts and ideas; external inbound lives in Threads. Two different entities, not worth merging.
 
 ### 📚 Knowledge Base
-Documentation: Acme Documentation (THE AUTHORIZER, Scheduled Jobs), Project Management (PM Toolkit: metrics, templates, meetings, senior practices, KT/Handover Checklist), CV, learning. The human part; skills almost never write here. The exception: the PM Toolkit has a machine-readable version in `projects/_standards.md` that the skills work from (see `14`); the Toolkit pages carry callouts linking to it and to the databases that replace the templates.
+Documentation: Acme Documentation (component documentation, Scheduled Jobs), Project Management (PM Toolkit: metrics, templates, meetings, senior practices, KT/Handover Checklist), CV, learning. The human part; skills almost never write here. The exception: the PM Toolkit has a machine-readable version in `projects/_standards.md` that the skills work from (see `14`); the Toolkit pages carry callouts linking to it and to the databases that replace the templates.
 
 ### Projects and Workspaces
-Anchor pages. Projects DB: one page per project. Workspaces DB: one per client/company (Acme, Beta, ...). The IDs are written into the config and used as relations in all the other databases.
+Anchor pages. Projects DB: one page per project. Workspaces DB: one per client/company (client Acme, our company, ...). The IDs are written into the config and used as relations in all the other databases.
 
 ### The Current State page (per project)
 A distillation of "what is happening right now": open questions, planned deploys, unresolved threads, recent decisions. Updated every day incrementally (`daily-current-state-distillation`, the last 2 days). The first thing an agent or a human reads after a break.

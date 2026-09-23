@@ -14,7 +14,7 @@ The human playbooks live in the Notion PM Toolkit; the machine standards live in
 
 | Mode | Trigger examples | Output |
 |---|---|---|
-| `kickoff` | "новий проєкт X", "заведи проєкт", "kickoff" | draft config, Notion anchor pages, Charter, first Decision, local folders, rebuilt `projects.skill`, autopilot proposal |
+| `kickoff` | "новий проєкт X", "заведи проєкт", "kickoff" | draft config, Notion anchor pages, Charter, first Decision, local folders, config registered (plugin or `.skill`), autopilot proposal |
 | `handover-in` | "приймаю проєкт від ...", "KT", "handover" | KT page filled from evidence, written baseline, undocumented commitments list, health check scheduled |
 | `health-check` | "project health check X", "аудит стану", monthly task (2nd of the month) | 8-area RAG report with evidence and top-3 |
 | `team-onboarding` / `team-offboarding` | "новий розробник на X", "Y іде з проєкту" | onboarding page, access request list, config patch, Decision row |
@@ -30,10 +30,18 @@ If the mode is unclear from the request, ask which one (one question, list the m
 - **Never invent a fact.** Unknown = "уточнити" in the config and in documents.
   Estimates and numbers come from people, not from this skill (`_standards.md` section 10).
 - **Nothing goes to the client.** Drafts only. No emails, no Slack messages.
-- **Config files cannot be edited in place**: they are resources inside the synced
-  `projects` skill. Every config change is produced as (a) an exact patch block for the
-  PM and, when a file is added or the change is large, (b) a rebuilt `projects.skill`
-  for Settings → Skills → Upload. Never claim the config was updated.
+- **Config files are not edited silently.** Every config change is produced as an exact
+  patch block for the PM. Where the file lives depends on the installation
+  (`projects/SKILL.md`, "Adding a new project", step 7): with the plugin, a new config
+  is added inside the installed plugin through Cowork's plugin customization flow
+  ("customize the pm-control-tower plugin: add project {slug}"); with standalone
+  skills, the `projects` folder is rebuilt as a `.skill` zip and uploaded. Never upload
+  a separate skill named `projects` next to the plugin. Never claim the config was
+  updated until the PM confirms it.
+- **Writes allowed without asking** (the 5-minute rule in `projects/SKILL.md`): Notion
+  pages under the project page, rows in Decisions / Risks / Tasks Tracker / Reports,
+  local folders. Config changes, scheduled tasks and anything on the client's side are
+  proposals.
 - **Scheduled tasks are proposed, not created**, unless the user says yes explicitly
   in this conversation. Then use the scheduled-task tools (cloud for anything that does
   not need the Mac, the Mac for Mail.app and local files).
@@ -71,7 +79,8 @@ If the mode is unclear from the request, ask which one (one question, list the m
 
 ## Mode `kickoff`
 
-Implements `08-new-project-flow.md` (Control Tower docs) end to end. Case A = new from
+Implements document 08 of the Control Tower docs ("New project flow",
+`docs/en/08-new-project-flow.md` in the repository) end to end. Case A = new from
 scratch, B = taken over from another PM (run `handover-in` right after kickoff),
 C = not software (no tracker, repos, Sentry).
 
@@ -99,9 +108,11 @@ Relation names are `Project` and `Workspace` in every database.
    template if the tool supports it; otherwise create the page and tell the PM to apply
    the template in Notion). Set Status `In progress`, Start date, Workspace.
 3. Under the project page: **Current State** (5-10 lines: what is happening, open
-   questions, next dates) and **Project Charter** (duplicate the Toolkit template
-   `~~notion-page-id` with `notion-duplicate-page`, move it under
-   the project page, fill it from the config; unknowns stay "уточнити").
+   questions, next dates) and **Project Charter** (duplicate the Toolkit Charter
+   template, the page under `{config.pm_profile.documents.pm_toolkit_page_id}` named
+   "Project Charter", with `notion-duplicate-page`, move it under the project page,
+   fill it from the config; unknowns stay "уточнити"; if the Toolkit page ID is `none`,
+   create a plain Charter page with the Toolkit's sections).
 4. Decisions DB: first row "Project {name} started, scope = ..., team = ..., model = ...",
    Area `Scope`, Source = SOW or kickoff meeting, Stated by = who set the scope.
 5. Do NOT create Decision Log, RAID, Stakeholder Register or RACI pages: those are the
@@ -128,27 +139,31 @@ Via `device_bash` on the Mac (or directly when local): `mkdir -p` for
 `Time Reports/`, `repos/`, KB). Never delete or move existing files.
 
 ### K6. Registration
-1. Build `projects.skill`: copy the current synced `projects` folder (the source of
-   truth), add `{slug}.md`, add a row to the Files table in `projects/SKILL.md`, zip the
-   `projects/` folder as `projects.skill`, deliver it to the user and say: Settings →
-   Skills → Upload, confirm replacement. Check that every existing config is still inside.
-2. Give the exact row for the "Проєкти" table in the Cowork global instructions.
+1. Register the config where the library is installed (`projects/SKILL.md`, "Adding a
+   new project", step 7): **plugin** → add `{slug}.md` inside the installed plugin's
+   `skills/projects/` through Cowork's plugin customization flow and repackage;
+   **standalone skills** → rebuild the `projects` folder as a `.skill` zip with the new
+   file inside and hand it to the user for Settings → Skills → Upload. Either way,
+   check afterwards that every existing config is still present and that a request
+   without a project name lists the new project.
+2. Give the exact row for the projects table in the Cowork global instructions, if the
+   user keeps one.
 3. Optional Claude Project on claude.ai: instructions = name, slug, "source of truth is
    `projects/{slug}.md` and Notion Control Tower", language rules; knowledge = static
    documents only (SOW, contract, specs). Never team, meetings, access or statuses.
 
 ### K7. Autopilot proposal
 Table (not created without a yes): task name, schedule in the user's time zone, where it
-runs (cloud / Mac), prompt. Minimum per `08` Phase 6: Slack sync, team prep, a prep per
-client meeting (with the `Agenda` key), and the shared tasks whose prompt must list the
-new project (`daily-process-mail`, `daily-current-state-distillation`). Second wave
-(stability, deploy, board health) only with engineering scope.
+runs (cloud / Mac), prompt. Minimum per document 08 Phase 6: Slack sync, team prep, a
+prep per client meeting (with the `Agenda` key), and the user's shared scheduled tasks
+whose prompt must list the new project (mail processing, current-state distillation, if
+configured). Second wave (stability, deploy, board health) only with engineering scope.
 
 ### K8. Verification and report
 - No empty config section without `none`; relation names match the live schema;
   a request without a project name must produce a choice of all active projects.
 - Report to the Reports DB: Type `Project Kickoff`, Skill `project-lifecycle`,
-  Visibility `Internal`, body = the `08` checklist with "зроблено / чекає на ПМа" per
+  Visibility `Internal`, body = the document 08 checklist with "зроблено / чекає на ПМа" per
   line, the config patch status, and the list of open "уточнити" items.
 
 ---
@@ -157,8 +172,10 @@ new project (`daily-process-mail`, `daily-current-state-distillation`). Second w
 
 Principle: trust but verify. The main trap is inheriting "all green" on faith.
 
-1. Duplicate the KT template `~~notion-page-id` under the project
-   page; save its ID for `pm_profile.documents.kt_checklist_page_id` (config patch).
+1. Duplicate the Toolkit KT / Handover Checklist template (under
+   `{config.pm_profile.documents.pm_toolkit_page_id}`; if `none`, create a plain page
+   with the checklist sections) under the project page; save its ID for
+   `pm_profile.documents.kt_checklist_page_id` (config patch).
 2. Fill each KT line from evidence, citing sources, and mark what only the previous PM
    can answer:
    - Commercial and budget: `pm_profile.contract`, Tempo totals if available.
@@ -208,10 +225,11 @@ listed separately with quotes (read `Team - Client` Notes before flagging silenc
 
 Output: Reports DB, Type `Project Health Check`, Visibility `Internal`. Config patch line:
 `last_health_check: {date}`. Findings that are new risks → hand them to `risk-register`
-(or create with Status `Claude` if the user asks to record them now).
+(or create with Status `AI Review` if the user asks to record them now; before that,
+fetch the Risks data source and confirm `Kind` exists, creating it if it does not).
 
-**Monthly scheduled run** (cloud task "Project Health Check (monthly)", 2nd of the
-month, after the Monthly Digest and Client Satisfaction of the 1st): the task prompt
+**Monthly scheduled run** (a cloud task such as "Project Health Check (monthly)" early in
+the month, after any monthly digest and client satisfaction runs the user has): the task prompt
 names the projects explicitly (or says "усі активні проєкти", which counts as an
 explicit cross-project scope) and runs one health check per project, one report each.
 In a cloud run without the Mac bridge, Tempo and local Jira connectors are `SKIPPED`,
@@ -222,7 +240,8 @@ never guessed; no new Risks DB entries are created, candidates are listed for th
 ## Modes `team-onboarding` / `team-offboarding`
 
 **Onboarding** (Toolkit Team Member Onboarding):
-1. Duplicate the template `~~notion-page-id` under the project page,
+1. Duplicate the onboarding template (`{config.pm_profile.documents.onboarding_template_page_id}`;
+   if `none`, create a plain page with the sections below) under the project page,
    fill it: access list derived from the Access Matrix (as requests the PM makes, never
    granted by this skill), links to the Charter and KB, `decision_rights` as "хто за що",
    meetings from the Meetings Schedule, a first small task suggestion (owner picks it).
@@ -258,7 +277,8 @@ never guessed; no new Risks DB entries are created, candidates are listed for th
    expectations note for the client (English) about support vs development.
 5. Config patch `status: archived` (full closure only) + Changelog; Decisions row
    "Project closed / moved to support on {date}"; list of scheduled tasks for this
-   project to **disable, not delete** (their prompts stay); `.ai/` folder to archive.
+   project to **disable, not delete** (their prompts stay); any agent working folder
+   (such as `.ai/`) to archive.
 6. Report: Type `Project Closure`, Visibility `Internal`.
 
 ---
@@ -275,7 +295,7 @@ Reports DB `{config.notion.reports_db}` (in `kickoff`, the shared ID from `_temp
 | Skill | `project-lifecycle` (create the option if missing) |
 | Visibility | `Internal` |
 | Summary | 2-3 sentences: overall status and the top item |
-| Project, Workspace | `["{config.notion.project_page_id}"]`, `["{config.notion.workspace_page_id}"]` |
+| Project, Workspace | `["https://app.notion.com/p/{config.notion.project_page_id}"]`, `["https://app.notion.com/p/{config.notion.workspace_page_id}"]` (IDs without dashes) |
 
 Tasks Tracker entries use Source `project-lifecycle` (create the option if missing) and
 the `Project` / `Workspace` relations.

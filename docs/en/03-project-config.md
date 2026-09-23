@@ -28,7 +28,7 @@ A project counts as active if the config has no `status: archived`.
 ### Naming Convention for skills
 - `{project}-...` (for example `acme-debug`, `acme-beneficiary-audit`): the skill is hard-bound to a single project and never fires for others.
 - No prefix (`slack-collector`, `jira-management`, `weekly-overview`): an engine, independent of any project. It must read the registry (Step 0), follow the Default Project Rule and keep all project facts in the config rather than in its own body.
-- Personal or other-domain skills (`t2-*`, `marken-order`, `ukr-dissertation-format`, `signal-desktop`) live outside the system and do not read the registry.
+- Personal or other-domain skills (for example exports from clinical-trial portals, courier orders, document formatting) live outside the system and do not read the registry.
 
 ## How a skill reads the config (Step 0)
 
@@ -50,9 +50,9 @@ If the config is not found: "Project config not found. Available projects: [...]
 A table: resource, access (✅/❌), since which date, notes. Every resource the skills touch: repositories, databases, monitoring, communication tools. On Acme it records that the MO/CP/Mobile repos are client-owned, and that the local clones and knowledge bases are frozen snapshots as of 2026-07-31, read-only institutional memory rather than current code.
 
 ### Internal Infrastructure
-Current URLs of corporate systems. Needed so that skills read old links in tickets as historical and do not rewrite what has not changed (for example the local path `/Users/our-company/` is a username, not a domain).
+Current URLs of corporate systems (Jira, Confluence, git hosting, CI, corporate mail) and the list of what did NOT migrate when the domain changed. Needed so that skills read old links in tickets as historical and do not rewrite what has not changed (for example the local path `/Users/our-company/` is a username, not a domain).
 
-### Task Tracker (access mode; not yet in `_template.md`)
+### Task Tracker (access mode)
 A section that comes before Jira and defines whether skills can read the tracker directly at all:
 
 ```yaml
@@ -111,31 +111,31 @@ Positions of our culture and the client's on 7 scales, individual calibration of
 Case A/B/C, phase, approach, `metrics_profile` (profile key from `_standards.md`), WIP limit, contract (type, `hours_cap_month`, budget, billing, period), SLA, milestones, `decision_rights` (a short RACI), IDs of Toolkit documents (Charter, KT, Extras Log), `goodwill_budget_pct` for `change-request` and the date of the last health check (the Extras fields were added in 0.7.2). Together with the stakeholder columns in `Team - Client` (Influence, Interest, Channel, Cadence) and the `Agenda` column in Meetings Schedule, this is what turned the PM Toolkit into project state. A missing section does not break the skills: the profile is derived from `board_type` and the report says `PM Profile: SKIPPED`.
 
 ### Changelog (append-only, newest on top)
-Date and what changed. This is the "memory of changes" that the Skill Health Check compares against the skills.
+Date and what changed. This is the "memory of changes" that the Automation Health Check compares against the skills.
 
 ## Config maintenance discipline
 
 - Any state change (a person joined or left, access gained or lost, meeting cadence changed, scope changed) = the same day: edit the config + a Changelog line + a line in the Decisions DB. The skills pick it up automatically; the fact is NOT copied into the skills.
 - Facts are not deleted, they are moved to historical with an end date (see Former Members, external-dev).
 - Archiving a project: `status: archived` in General. Skills stop offering the project, while the data and history stay readable.
-- Once a month the cloud Skill Health Check compares every skill against the configs and reports drift (`05-autopilot.md`).
+- Once a month the cloud Automation Health Check compares every skill against the configs and reports drift (`05-autopilot.md`).
 
 ## What is duplicated outside the config (deliberately, and must be kept in sync)
 
-1. **The email registry in the collectors**: ~~`gmail-collector` and `mac-mail-collector` have built-in tables~~.: `gmail-collector` has been removed, and `mac-mail-collector` reads the `email_routing` section from the project configs. Addresses shared between projects are no longer maintained by hand: an address counts as shared if it appears in `client_emails` of two or more active configs. There is one source of truth: the config.
-2. **Global Cowork instructions** ("PM Workspace"): the table of active projects and a short cheat sheet for the default one. Right now they still point at `_projects/`, the old Jira URL and the old team. The review recommendation (accepted as the v0.2 plan): cut it down to the role model and meta-rules (Rule Zero, Default Project Rule, no inventing facts, language/style) plus a "project to slug" table; all facts are read from `projects/`.
+1. **The email registry**: lives only in the `email_routing` section of the configs; `mac-mail-collector` reads all active configs and builds the registry in memory, no collector keeps its own address table. Addresses shared between projects are no longer maintained by hand: an address counts as shared if it appears in `client_emails` of two or more active configs. There is one source of truth: the config.
+2. **Global Cowork instructions** ("PM Workspace"): the table of active projects and a short cheat sheet for the default one. Cut down to the role model and meta-rules (Rule Zero, Default Project Rule, no inventing facts, language/style) plus a "project to slug" table; all facts are read from `projects/` (`13` #11).
 3. **Scheduled tasks**: task prompts name the project explicitly ("for the Acme project"). This is not duplication of facts, it is the correct way to supply the project for the Default Project Rule.
 
 ## Planned extensions to the config schema
 
-These sections will appear in `_template.md` once the PM decides; for now this is a plan and the skills do not read them.
+State as of v1.1: the sections marked **Done** exist in `_template.md` and are read by the skills; the rest is a plan the skills do not read.
 
 | Section | What it contains | What it solves |
 |---|---|---|
-| `task_tracker` | tracker type, `api_access`, `fallback_source`, `export_path`, `browser_access` (described above) | Zero-API Access at clients; graceful degradation of the engines. Priority 1 among the extensions |
+| `task_tracker` | **Done** (template, `projects/SKILL.md`, 14 engines check `api_access`; the `false` branch has not yet been exercised on a real project). Tracker type, `api_access`, `fallback_source`, `export_path`, `browser_access` | Zero-API Access at clients; graceful degradation of the engines |
 | `methodology` | **Partly done** via `pm_profile.delivery_approach` and `metrics_profile`; sprint length and the capacity source are not yet there. `kanban` / `scrum`; for scrum: sprint length, capacity source | Scrum projects get `sprint-planning-prep` instead of Kanban logic |
-| `email_routing` | all client addresses, unique ones, shared ones, team addresses, unique domains | One registry instead of three (config + two collectors); AppleScript exports everything, the skill routes by config |
-| `secrets` | **Done.** The config holds only `token_env` and `secrets_file`; the values live in `/Users/our-company/work/Secrets/secrets.env` (a visible folder, chmod 600, outside sync). The same file is read by the local Slack MCP server through `sh -c` in `claude_desktop_config.json`. Git credentials (the GitHub PAT for `pm-control-tower`) live next to it, in `Secrets/.git-credentials`, a separate file because git does not understand the `KEY=value` format (`13` #47). `jira-cosmix`/`jira-rixbeck`/`confluence-our-company` have not moved to this pattern yet, `13` #43 | Tokens end up neither in synced skills nor in the desktop JSON config |
+| `email_routing` | **Done.** All client addresses, unique ones, team addresses, unique domains; shared ones are derived | One registry instead of three (config + two collectors); AppleScript exports everything, the skill routes by config |
+| `secrets` | **Done.** The config holds only `token_env` and `secrets_file`; the values live in `~/work/Secrets/secrets.env` (a visible folder, chmod 600, outside sync). The same file is read by the local Slack MCP server through `sh -c` in `claude_desktop_config.json`. Git credentials (the GitHub PAT for `pm-control-tower`) live next to it, in `Secrets/.git-credentials` through the `store` credential helper; the repository's remote URL carries no token (`13` #47). All local MCP servers (Jira, Confluence, Slack, Notion) read their tokens with this pattern (`13` #43) | Tokens end up neither in synced skills nor in the desktop JSON config |
 | `languages` | `internal_language`, `client_language` (partly present as default_language/client_language) | All generative prompts take the language strictly from here |
 | `data_policy` | `allow_llm_code_inspection`, `allow_llm_slack_reading`, `anonymize_pii` | Clients who forbid sending code/correspondence to an LLM: the skills switch off the corresponding sources automatically |
 | `notion.relations` | **Not needed:** the databases are unified (`Project` / `Workspace` everywhere). Historical description: the exact relation name for Project and Workspace in each database (`Projects`/`Project`, `Workspace`/`🏛️ Workspaces`/`Workspaces`) | Until the databases are unified, skills take the names from here instead of remembering them |
@@ -144,4 +144,4 @@ These sections will appear in `_template.md` once the PM decides; for now this i
 
 ## Example: how one config line changes the behavior of ten skills
 
-`acme.md` records Sentry `projects_in_scope: authorizer-api`, everything else `out_of_scope` with a reason. The result, without editing a single skill: stability-scan scans one project instead of seven, client-report does not mention MO/CP errors, daily-team-prep does its quick check only on authorizer-api, risk-register does not create risks on client-owned components, velocity-report adds the annotation about non-comparable periods. This effect is exactly why the registry exists.
+`acme.md` records Sentry `projects_in_scope: core-api`, everything else `out_of_scope` with a reason. The result, without editing a single skill: stability-scan scans one project instead of seven, client-report does not mention errors of client-owned components, daily-team-prep does its quick check only on core-api, risk-register does not create risks on client-owned components, velocity-report adds the annotation about non-comparable periods. This effect is exactly why the registry exists.

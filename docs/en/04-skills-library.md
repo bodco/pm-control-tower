@@ -4,9 +4,10 @@
 
 A skill = a folder with a `SKILL.md` file (plus, if needed, `README.md`, `scripts/`, `references/`, `inputs/`) that Claude reads and executes. `SKILL.md` has frontmatter (`name`, `description` up to 1024 characters, because sync rejects longer ones) and a body with instructions. The description is both a description and a trigger: Claude decides to apply the skill when the request matches the description (trigger words in two languages).
 
-Skills are synced between Claude Desktop (Cowork) and cloud sessions. Currently: **47 entries**: 37 of our own (34 active, 3 frozen), 9 stock Anthropic ones (docx, xlsx, pptx, pdf, canvas-design, skill-creator, learn, morning, import-memory), 1 plugin one (`topic-analyzer`). There are no tombstones left: all five were deleted after the renames. Compared with v0.2 (53 entries) that is minus `gmail-collector`, minus `proj-weekly-report`, minus five tombstones; separately there are the design, product-management and finance plugins with their own skills, which are not counted here.
+Skills are synced between Claude Desktop (Cowork) and cloud sessions. Two different numbers that should not be confused:
 
-> the synced folder holds 50 entries. The `project-lifecycle` and `change-request` engines were added, and `risk-register` and `client-report` were substantially updated (PM Toolkit, `14`). A detailed recount of own / stock / plugin skills was not done.
+- **The handover package** (the `pm-control-tower` plugin): **21 skills**, all of type E (engines) plus the infrastructure skill `projects`. This is what a colleague receives.
+- **The author's instance**: about 50 entries in the synced folder: the same engines, project adapters (P), frozen adapters (H), other-domain skills (X) and stock Anthropic skills (S). No exact count is kept, because it goes stale every week. In the catalog below, types P/H/X/S are not part of the package and are shown as examples of what the 20% of adapters looks like.
 
 ## Anatomy of a PM skill (an engine)
 
@@ -51,7 +52,7 @@ Type legend: **E** = engine (core, project-agnostic, reads the registry), **P** 
 
 | Skill | Type | What it does | Triggers | Schedule |
 |---|---|---|---|---|
-| `slack-collector` | E | The project's Slack channels for a period to the Threads DB with automatic status classification, a red icon, a 14-day review pass, gap analysis. Two modes from the config (`slack_access`): `mcp` (the workspace connected directly to Claude) and `chrome` (reading the web UI via Claude in Chrome) | "collect Acme slack for the week", "collect slack" | daily 07:05 via `acme-daily-slack-sync` |
+| `slack-collector` | E | The project's Slack channels for a period to the Threads DB with automatic status classification, a red icon, a 14-day review pass, gap analysis. Modes from the config (`slack_access`): `mcp` (the Claude connector), `mcp_local` (the PM's own local MCP server), `chrome` (reading the web UI, last resort), `none` | "collect Acme slack for the week", "collect slack" | daily 07:05 via `acme-daily-slack-sync` |
 | `mac-mail-collector` | E | Reads the buffer `~/work/Mail/<account>/incoming/` (AppleScript + LaunchAgent export new mail from Mail.app every 15 min as JSON + EML), filters out noise and calendar invites, routes by project, writes to Threads, moves items to `processed/` | "check the mail", "process the mail" | daily 09:12 |
 | `signal-desktop` | X | Reading/sending in Signal Desktop via computer use | "read signal" | on-demand |
 
@@ -59,7 +60,7 @@ Type legend: **E** = engine (core, project-agnostic, reads the registry), **P** 
 
 **The limit on collectors: completeness, not convenience.** Principle 10 in `00` (all messages and meetings must be in Notion) works as a filter on acceptable collection modes, not as a wish. A collection mode is acceptable only when it produces a **complete** slice of the channel for the period, with message bodies and threads. Slack email notifications, partial browser reads of "the last 20 messages" and manual digests do not pass this bar and are not a "worse but acceptable" alternative: they are disqualified, because they create false confidence that the context has been collected.
 
-The practical consequence for Slack, **resolved**: the Claude connector holds one authorization per account, but the second and every further workspace is connected through the PM's own read-only integration (an `xoxp` token) via the local MCP server `slack-mcp-server` in `claude_desktop_config.json`. Verified on our own company workspace: channel list, history, threads with comments. The token is read from `secrets.env` at startup and is not stored in the JSON. So `slack_access` has three values: `mcp` (the Claude connector), `mcp_local` (own server, not implemented in the skill yet) and `chrome` (fallback). The full description, connection checklist and limits: the "Slack without a connector" page in Notion under the Control Tower Framework project.
+The practical consequence for Slack, **resolved**: the Claude connector holds one authorization per account, but the second and every further workspace is connected through the PM's own read-only integration (an `xoxp` token) via the local MCP server `slack-mcp-server` in `claude_desktop_config.json`. Verified on our own company workspace: channel list, history, threads with comments. The token is read from `secrets.env` at startup and is not stored in the JSON. So `slack_access` has four values: `mcp` (the Claude connector), `mcp_local` (own server, Step 1B in `slack-collector`), `chrome` (fallback) and `none`. The full description, connection checklist and limits: the "Slack without a connector" page in the author's Knowledge Base (not part of the package).
 
 ### 2. Prep skills (before meetings)
 
@@ -85,10 +86,10 @@ The practical consequence for Slack, **resolved**: the Claude connector holds on
 | Skill | Type | What it does | Schedule |
 |---|---|---|---|
 | `notion-meeting-topics` | E | Turns a Notion meeting page into a detailed bilingual report (decisions, action items, topics) and appends it to the same page | on-demand: "meeting <url>" |
-| `topic-analyzer` | E | Meetings + Threads for a period to created/updated Topics DB pages with a relation to the sources | on-demand + Mon 06:32 via `weekly-topics-db-update` |
+| `topic-manager` | E | Meetings + Threads (and Gmail when the config sets `gmail.client_search_filter`) for a period to created/updated Topics DB pages with a relation to the sources; on-demand and weekly mode in one skill (the merge of `topic-analyzer` + `weekly-topics-db-update`) | on-demand + Mon 06:32 |
 | `risk-register` | E | RAID register: scans Jira/Slack/Meetings/Threads/Sentry and the early warning signals from `_standards.md`, groups them, creates/updates the Risks DB with `Kind` (Risk / Assumption / Issue / Dependency), generates two reports (Internal UA / External EN with "Decisions needed from you"). Card v0.7.1: Kind, the corrected title field name `Name`, signals and bus factor | Fri (before the review) |
 | `change-request` | E | Every client wish goes into bucket A (trivial, logging only) / B (hours) / C (touches data, money, security, public contracts: always a CR); a per-project Extras Log including free work; a CR draft in English; the client's decision in Decisions; a goodwill budget (default 10% of the hours cap, to be calibrated) | on-demand + threads with Category Scope Change |
-| `project-lifecycle` | E | Modes: kickoff (config, Notion anchors, Charter, first decision, tech start, the `projects.skill` package), handover-in (KT with evidence, baseline, undocumented promises), health-check (8 RAG areas with evidence), team-onboarding/offboarding, closure / transition to support | on-demand + quarterly health check |
+| `project-lifecycle` | E | Modes: kickoff (config, Notion anchors, Charter, first decision, tech start, config registration), handover-in (KT with evidence, baseline, undocumented promises), health-check (8 RAG areas with evidence), team-onboarding/offboarding, closure / transition to support | on-demand + monthly health check (the 2nd) |
 | `client-satisfaction-tracker` | E | Client sentiment from Slack/Gmail/transcripts with cultural calibration (Culture Map, individual profiles, 4 signal levels, 6 cultural patterns) | 1st and 15th of the month |
 | `thread-ticket-sync` | E | Two-phase: threads without tickets in the client's Notion, then turning selected threads into tasks (individual / consolidated) | on-demand |
 | `inbox-responder` | E | Awaiting Reply threads to a category, context (Sentry, logs, Jira, Topics), a reply draft in the thread's language, Inbox Review | daily after the mail run |
@@ -107,21 +108,21 @@ The practical consequence for Slack, **resolved**: the Claude connector holds on
 | Skill | Type | What it does |
 |---|---|---|
 | `acme-debug` | P | RCA of any bug: local KBs (components + SYSTEM.md + SDLC.md), the code on the branch deployed to the affected env, DB schemas, Sentry + CloudWatch, live APIs |
-| `acme-db-assistant` | P | Knowledge of the PBR (89 tables, 106 FKs) and Authorizer (14 tables) schemas, SQL, data debugging |
+| `acme-db-assistant` | P | Knowledge of the platform's two database schemas (about 100 tables), SQL, data debugging |
 | `acme-env-audit` | P | Audit of branches and envs on local git refs: dev/master drift, direct commits, unbackported hotfixes, twin commits; verdicts on deploy readiness; five verification laws |
-| `acme-beneficiary-audit` | P | Three-way reconciliation of beneficiaries: Authorizer xlsx to PBR csv to the card provider API (19k+ users), ACTION_PLAN.md in Ukrainian |
+| `acme-beneficiary-audit` | P | Three-way reconciliation of beneficiaries: two database exports against the card provider API (19k+ users), ACTION_PLAN.md in Ukrainian |
 | `acme-beneficiary-transactions` | P | Chronology of a beneficiary's operations from all sources, the moment the balance went negative |
-| `authorizer-code-review` | P | KB-driven code review of the Authorizer (Java 11 / Spring Boot): KB first, then only the files from the diff; LESSONS.md at the end |
-| `middle-office-code-review`, `client-portal-code-review`, `mobile-code-review` | H | Frozen since 2026-08 / 2026-06 (the components are client-owned), only on an explicit request |
+| `acme-core-code-review` | P | KB-driven code review of the core service (Java / Spring Boot): KB first, then only the files from the diff; LESSONS.md at the end |
+| `acme-<component>-code-review` (three skills) | H | Frozen (the components moved to the client), only on an explicit request |
 
 ### 7. Other domains (showing how universal the engines are)
 
 | Skill | Type | Domain |
 |---|---|---|
-| `t2-worklog-collect`, `t2-worklog-check` | X | Reconciliation of the Swan team's logging on T2 (Beta): collecting 5 files, checking totals, PTO, holidays |
-| `calyx-export`, `signant-export` | X | Exports from clinical trial IRT/RTSM via Chrome + a Ukrainian comparison with the previous slice |
-| `dila-lab-order`, `marken-order` | X | Ordering a lab courier: a docx into the patient's folder + a draft email |
-| `ukr-dissertation-format` | X | Ministry of Education requirements for dissertations |
+| `beta-worklog-collect`, `beta-worklog-check` | X | Reconciliation of a partner team's logging on the Beta project: collecting files, checking totals, PTO, holidays |
+| `<portal>-export` (two skills) | X | Exports from clinical-trial IRT/RTSM portals via Chrome + a Ukrainian comparison with the previous slice |
+| `<lab>-order` (two skills) | X | Ordering a lab courier: a docx into the patient's folder + a draft email |
+| personal skills | X | for example document formatting to the Ministry of Education requirements |
 
 ### 8. Stock and meta
 
@@ -133,12 +134,12 @@ The review appendix dropped the idea of "de-Acme-ing everything": project skills
 
 | Skill today | What is universal in it | What should move to the config | Proposed name |
 |---|---|---|---|
-| `acme-env-audit` | audit of branch/env drift, the five verification laws, `scripts/audit.sh` | the branch-to-env map, author aliases, deliberate divergences (`references/acme-map.md`) | `env-audit` |
+| `acme-env-audit` | audit of branch/env drift, the five verification laws, its own `audit.sh` inside the skill folder | the branch-to-env map, author aliases, deliberate divergences (`references/acme-map.md`) | `env-audit` |
 | `acme-jira-estimate-setter` | bulk setting of estimates by rules | the rules (bug-fix 4h, everything else timeSpent), the Bug type workaround | no rename needed: after v0.3 this is a correct adapter |
-| `authorizer-branch-review` (scheduled) | reacting to `REVIEW:` in a channel, thread review | the channel, the review skill | `branch-review` with `{config.slack.dev_review_channel}` |
+| `acme-branch-review` (scheduled) | reacting to `REVIEW:` in a channel, thread review | the channel, the review skill | `branch-review` with the review channel in the config |
 | `acme-daily-slack-sync` (scheduled) | daily ingest + review pass | the project | **Done**: the cloud Routine `Acme daily Slack sync`, the prompt only supplies the project and the period |
 
-Adapters that stay project-specific forever: `acme-beneficiary-audit`, `acme-beneficiary-transactions`, `acme-db-assistant`, `acme-debug` with its KB, `acme-notion-jira-sync` (the client's Notion), `calyx-export` / `signant-export` (portals without an API), `dila-lab-order` / `marken-order`. At a new client their own equivalents will appear in their place: a parser for a manual CSV from Linear, browser collection from Trello, reconciliation of their exports. The decision on the three renames is the PM's (see `13`).
+Adapters that stay project-specific forever: `acme-beneficiary-audit`, `acme-beneficiary-transactions`, `acme-db-assistant`, `acme-debug` with its KB, `acme-notion-jira-sync` (the client's Notion), `<portal>-export` (portals without an API), `<lab>-order`. At a new client their own equivalents will appear in their place: a parser for a manual CSV from Linear, browser collection from Trello, reconciliation of their exports. The rename of the two engines (`env-audit`, `branch-review`) is deferred: until the scenario repeats on a second project, the adapters stay project-specific.
 
 ### The graceful degradation rule for engines
 Every engine that reads the tracker must, after Step 0, check `{config.task_tracker.api_access}`:
@@ -170,7 +171,7 @@ A skill is not deleted, it becomes a tombstone: the description starts with "DEP
 Frozen skills (the component went to the client) get "OUT OF SCOPE since <date>: HISTORICAL REFERENCE ONLY. Trigger ONLY when the user explicitly asks" in the description. This keeps the knowledge about the codebase while preventing the skill from firing proactively.
 
 ### Audit
-The monthly cloud Skill Health Check compares every one of our skills against the configs: contradictions with the facts, references to non-existent paths/tools, hardcoded values, expired date-stamped facts, frozen skills with proactive triggers, naming violations, silent defaults, overlong descriptions. The report goes to the Reports DB with a "skill | discrepancy | severity | what to fix" table.
+The monthly cloud Automation Health Check compares every one of our skills against the configs: contradictions with the facts, references to non-existent paths/tools, hardcoded values, expired date-stamped facts, frozen skills with proactive triggers, naming violations, silent defaults, overlong descriptions. The report goes to the Reports DB with a "skill | discrepancy | severity | what to fix" table.
 
 ### Installation and sync
 - Cowork: Settings → Cowork → Skills → Upload skill (a folder or a `.skill` zip).
@@ -197,9 +198,10 @@ Rules that must apply across all skills at once live in `projects/SKILL.md` rath
 | **JQL Isolation Validator** | no tracker query goes out without `project = {key}`; if the key is not in the config, hard stop | v0.6.0 |
 | **Data Completeness header** | every report starts with a line on the state of each source; `EMPTY` and `FAILED` are never merged into one | v0.6.0 |
 | **PM standards and PM Profile** | reports, preps, metrics, risks and decisions follow `projects/_standards.md` and the `PM Profile` section of the config: the reader rule with a mandatory "Decisions needed" section, the metrics profile, agendas by key, RAID via `Kind`, the decision standard | v0.7.0 |
+| **The 5-minute rule** | a write to an external system without confirmation is allowed only when the effect can be undone within 5 minutes (a page, a row, a backlog ticket, a draft); messages to the client, production changes, transitions to Done, deletions and the client's board need approval | v1.1 |
 
 > **Lesson.** The rules turned out not to be in the live `projects/SKILL.md`, even though the documents described them as being in force: the card was either not saved or was overwritten by the next save. Restored in the v0.7.0 package. Conclusion: the state of a cross-cutting rule is verified by grepping the synced copy (`~/.claude/skills/synced/.../projects/SKILL.md`), not by the documentation.
 
 The reason for this construction is simple: a cross-cutting rule copied into ten skills diverges after the first edit to any one of them. A copy in each skill is acceptable only when the rule really does differ between skills.
 
-**Consequence for the library revision:** during a pass over the skills, every engine must get an explicit reference to these two rules in its Step 0. A skill that sends an unscoped JQL or prints a report without the completeness line counts as outdated, and the monthly Skill Health Check now catches this with a dedicated check.
+**Consequence for the library revision:** during a pass over the skills, every engine must get an explicit reference to these two rules in its Step 0. A skill that sends an unscoped JQL or prints a report without the completeness line counts as outdated, and the monthly Automation Health Check now catches this with a dedicated check.

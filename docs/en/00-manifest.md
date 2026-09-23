@@ -96,11 +96,11 @@ In total: roughly a full working day per week is returned to the PM. These numbe
 ## Limits of applicability
 
 The framework has been worked out on:
-- **Acme (PROJ)**: a fintech platform, Kanban, Jira Server, Slack, Sentry, CloudWatch, Java/Python/Angular/Flutter, client in Colombia. The full stack.
+- **Acme (PROJ)**: a fintech platform, Kanban, Jira Server, Slack, Sentry, CloudWatch, Java/Python/Angular/Flutter, a client in another country and culture. The full stack.
 - **Gamma, Delta**: smaller projects, connected to the `.ai/` protocol in September 2026 (Gamma is finished, its config is in `status: archived`).
+- **Beta**: worklog reconciliations for a partner team; separate skills outside the PM registry.
+- **Two clinical trials**: not software projects; they show that the engines (mail collection, documents, browser exports) work outside development too.
 
 Since 0.7.0 the framework relies not only on its own skills but also on the PM Toolkit as a standard: metrics, agendas, RAID, Change Requests, KT and the health check are the same for every project and accompany the project from pre-start to closure (`14-pm-toolkit-integration.md`).
-- **Beta (T2)**: worklog reconciliations for the Swan team; separate skills outside the PM registry.
-- **Clinical trials (BaxDuo, REDEFINE-HF)**: not software projects; they show that the engines (mail collection, documents, browser exports) work outside development too.
 
-This matters for handover: the framework is not a set of "Acme scripts" but a way of organising work that simply happens to be most deeply worked out on Acme.
+This matters for handover: the framework is not a set of "Acme scripts" but a way of organising work that simply happens to be most deeply worked out on Acme. The handover package (the 21-skill plugin, the Notion template, the config template) contains only the core; everything the documents below call an adapter, the author's instance or another domain is not in the package and is mentioned as an example.
