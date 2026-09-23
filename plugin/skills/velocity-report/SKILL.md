@@ -97,6 +97,8 @@ assignee, created and resolved dates, time spent, original estimate.
 
 ## Report Format
 
+**Template** (`velocity-report`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 Generate in Ukrainian:
 
 ```

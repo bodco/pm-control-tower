@@ -200,6 +200,8 @@ the window size.
 
 ## Report Format
 
+**Template** (`daily-team-prep`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 Generate in Ukrainian, keep it compact. This is a prep doc, not a full report.
 
 The FIRST line of the report is the Data Completeness header (`projects/SKILL.md`): one

@@ -13,6 +13,7 @@ Folder contents:
 | `SKILL.md` | registry rules: Rule Zero, Default Project Rule, Naming Convention, how skills read the config, how to add a project |
 | `_standards.md` | standards that are identical for all projects (the machine-readable version of the PM Toolkit, `14`) |
 | `_template.md` | empty config template |
+| `_templates.md` | house registry of document templates: keys, built-in formats, where each document is saved, lookup order (`15`) |
 | `<slug>.md` | project config, for example `acme.md` (~29 KB) |
 
 ## Three rules
@@ -108,7 +109,7 @@ A ready-made Gmail query for the client's mail, or "none".
 Positions of our culture and the client's on 7 scales, individual calibration of each member of the client team (downgrader multipliers, key "tells"), a table translating indirect phrasing into severity. Read by `client-satisfaction-tracker` and `client-meeting-prep`. For a new project at least the client's country has to be filled in; reference profiles for 10 countries are in the skill.
 
 ### PM Profile
-Case A/B/C, phase, approach, `metrics_profile` (profile key from `_standards.md`), WIP limit, contract (type, `hours_cap_month`, budget, billing, period), SLA, milestones, `decision_rights` (a short RACI), IDs of Toolkit documents (Charter, KT, Extras Log), `goodwill_budget_pct` for `change-request` and the date of the last health check (the Extras fields were added in 0.7.2). Together with the stakeholder columns in `Team - Client` (Influence, Interest, Channel, Cadence) and the `Agenda` column in Meetings Schedule, this is what turned the PM Toolkit into project state. A missing section does not break the skills: the profile is derived from `board_type` and the report says `PM Profile: SKIPPED`.
+Case A/B/C, phase, approach, `metrics_profile` (profile key from `_standards.md`), WIP limit, contract (type, `hours_cap_month`, budget, billing, period), SLA, milestones, `decision_rights` (a short RACI), IDs of Toolkit documents (Charter, KT, Extras Log), `goodwill_budget_pct` for `change-request` and the date of the last health check (the Extras fields were added in 0.7.2). Together with the stakeholder columns in `Team - Client` (Influence, Interest, Channel, Cadence) and the `Agenda` column in Meetings Schedule, this is what turned the PM Toolkit into project state. A missing section does not break the skills: the profile is derived from `board_type` and the report says `PM Profile: SKIPPED`. Since v1.2.0 the `templates` block (`root`, `overrides`) sets document templates for this project only; they beat the house registry `_templates.md` (`15`).
 
 ### Changelog (append-only, newest on top)
 Date and what changed. This is the "memory of changes" that the Automation Health Check compares against the skills.

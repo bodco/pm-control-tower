@@ -197,6 +197,9 @@ state of either branch.
 
 ### 7. Compose the report
 
+The skeleton below is the built-in default for the template key `deploy-analysis`. A house
+or project template (see "Document templates" in `projects/SKILL.md`) replaces it.
+
 Template (body in `{config.default_language}`, ticket keys and technical terms as they are):
 
 ```markdown

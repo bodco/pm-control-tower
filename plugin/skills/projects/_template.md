@@ -305,6 +305,9 @@ pm_profile:
     last_health_check: none      # date of the last Project Health Check
   reporting:
     locked_template_page_id: none   # a previous client report whose structure wins over client-report's formats, or none
+  templates:                 # per-project document templates; beat the house registry in projects/_templates.md
+    root: none               # folder with {doc_key}.md files for this project only (e.g. a client-imposed format), or none
+    overrides: {}            # doc_key: "path/to/file.md" or "notion:<page id>"
 ```
 
 A missing PM Profile does not break skills: the profile is derived from `board_type` and the

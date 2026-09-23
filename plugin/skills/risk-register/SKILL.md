@@ -420,6 +420,8 @@ new signals in the current scan:
 
 ## Risk Dossier Format
 
+**Template** (`risk-register.dossier`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 Page body, written in `{config.default_language}` (Ukrainian by default):
 
 ```markdown
@@ -460,6 +462,8 @@ Kind: {Risk / Assumption / Issue / Dependency}
 ---
 
 ## Chat Output Summary
+
+**Template** (`risk-register.internal`, `risk-register.external`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
 
 After processing, produce **TWO** summaries: internal and external.
 

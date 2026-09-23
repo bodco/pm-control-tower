@@ -71,6 +71,8 @@ bucket in one line of evidence (the quote and what it touches).
 
 ## Step 3 - Extras Log (per project, includes free work)
 
+**Template** (`change-request.extras-log`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 A page "Scope & Extras Log - {project_name}" under the project page. Find it by
 `pm_profile.documents.extras_log_page_id`, else by title under the project page; if it
 does not exist, create it with this table and output the config patch line for its ID:
@@ -82,6 +84,8 @@ Status: `logged`, `in CR`, `approved`, `rejected`, `done`, `not ours`. `Billed`:
 `free`, `billable`, `TBD`. Append one row per ask; never delete rows.
 
 ## Step 4 - Change Request draft (B on request, C always)
+
+**Template** (`change-request.cr`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
 
 Client-facing, English, from the Toolkit CR template:
 

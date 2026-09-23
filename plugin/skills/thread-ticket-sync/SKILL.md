@@ -155,6 +155,8 @@ client_tickets = [
 
 ## PHASE 2 - Ticket Creation
 
+**Template** (`thread-ticket-sync.ticket`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 Triggered when the user provides selected thread numbers. Three modes:
 
 ### Mode A - Individual tickets (default)

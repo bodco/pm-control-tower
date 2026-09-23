@@ -35,6 +35,7 @@
 ## Крок 3. Notion Control Tower
 
 1. Дублювати шаблон сторінки CONTROL TOWER з 11 базами (Inbox, Tasks Tracker, Meetings, Threads, Topics, Knowledge Base, Risks, Reports, Projects, Workspaces, Decisions) або створити за описом у `02-notion-control-tower.md`.
+   Пункти 2-3 руками не робляться: ID баз Claude знаходить сам через Notion MCP при налаштуванні плагіна, а сторінки клієнта і проєкту створює kickoff (`16`).
 2. Записати data source ID кожної бази (з URL або через Notion MCP fetch) у майбутній конфіг.
 3. Створити сторінку клієнта у Workspaces і сторінку проєкту у Projects.
 4. Перевірити, що relation у всіх базах називаються `Project`, `Workspace`, `Meetings`, `Threads`, `Knowledge Base`, `Tasks Tracker`, `Inbox` (без емодзі), статус AI-ревʼю - `AI Review`, а прогрес у Topics - `Progress`: саме ці назви зашиті у двигуни. Якщо ваша схема відрізняється, правте схему, а не двадцять скілів.

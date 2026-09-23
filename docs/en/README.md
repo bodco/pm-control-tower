@@ -22,3 +22,5 @@ Read in this order. Documents 00 to 02 explain what the framework is, 10 is the 
 | 12 | [Glossary](12-glossary.md) | Terms used across the documents |
 | 13 | [Open questions and backlog](13-open-questions.md) | What is still undecided, what was decided and why, the technical backlog |
 | 14 | [PM Toolkit integration](14-pm-toolkit-integration.md) | PM standards wired into the skills, from pre-start to closure |
+| 15 | [Document templates](15-document-templates.md) | Catalog of the documents the skills generate, and how to plug in company or personal templates |
+| 16 | [Step by step: setup and a new project](16-runbook.md) | What to click and which prompts to type: setup from scratch and a new project start, with the list of manual steps |

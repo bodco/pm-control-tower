@@ -13,6 +13,7 @@
 | `SKILL.md` | правила реєстру: Rule Zero, Default Project Rule, Naming Convention, як скіли читають конфіг, як додати проєкт |
 | `_standards.md` | стандарти, однакові для всіх проєктів (машинна версія PM Toolkit, `14`) |
 | `_template.md` | порожній шаблон конфігу |
+| `_templates.md` | house-реєстр шаблонів документів: ключі, вбудовані формати, куди що зберігається, порядок пошуку (`15`) |
 | `<slug>.md` | конфіг проєкту, наприклад `acme.md` (~29 KB) |
 
 ## Три правила
@@ -108,7 +109,7 @@ task_tracker:
 Позиції нашої і клієнтської культури на 7 шкалах, індивідуальна калібровка кожного учасника клієнтської команди (мультиплікатори downgrader-ів, ключові "tells"), таблиця перекладу непрямих формулювань у серйозність. Читає `client-satisfaction-tracker` і `client-meeting-prep`. Для нового проєкту потрібно заповнити хоча б країну клієнта; референсні профілі 10 країн є у скілі.
 
 ### PM Profile
-Кейс A/B/C, фаза, підхід, `metrics_profile` (ключ профілю з `_standards.md`), WIP-ліміт, контракт (тип, `hours_cap_month`, бюджет, білінг, період), SLA, мілстоуни, `decision_rights` (короткий RACI), ID документів з Toolkit (Charter, KT, Extras Log), `goodwill_budget_pct` для `change-request` і дата останнього health check (поля Extras додані в 0.7.2). Разом з колонками стейкхолдерів у `Team - Client` (Influence, Interest, Channel, Cadence) і колонкою `Agenda` у Meetings Schedule це і є те, що з PM Toolkit стало станом проєкту. Відсутня секція не ламає скіли: профіль виводиться з `board_type`, у звіті `PM Profile: SKIPPED`.
+Кейс A/B/C, фаза, підхід, `metrics_profile` (ключ профілю з `_standards.md`), WIP-ліміт, контракт (тип, `hours_cap_month`, бюджет, білінг, період), SLA, мілстоуни, `decision_rights` (короткий RACI), ID документів з Toolkit (Charter, KT, Extras Log), `goodwill_budget_pct` для `change-request` і дата останнього health check (поля Extras додані в 0.7.2). Разом з колонками стейкхолдерів у `Team - Client` (Influence, Interest, Channel, Cadence) і колонкою `Agenda` у Meetings Schedule це і є те, що з PM Toolkit стало станом проєкту. Відсутня секція не ламає скіли: профіль виводиться з `board_type`, у звіті `PM Profile: SKIPPED`. З v1.2.0 блок `templates` (`root`, `overrides`) задає шаблони документів лише цього проєкту; вони перемагають house-реєстр `_templates.md` (`15`).
 
 ### Changelog (append-only, newest on top)
 Дата і що змінилось. Це "пам'ять про зміни", яку Automation Health Check порівнює зі скілами.

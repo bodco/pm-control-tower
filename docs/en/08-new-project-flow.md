@@ -47,6 +47,8 @@ For case B: the Access Matrix and Engagement Status are filled in with particula
 
 ## Phase 2. Notion: anchor pages and memory (day 1, 1 h)
 
+> **Do not do this by hand.** Items 1-4, 6 and 7 are done by `project-lifecycle` in `kickoff` mode (K3): pages, relations, the first decision, IDs in the config. The PM only switches on AI Meeting Notes (item 8) and clicks the "New project" template if the tool did not apply it. Step by step with prompts: `16`.
+
 1. **Projects DB**: create the project page from the database's "New project" template (5 built-in views filtered by project), fill in Status, Start date, Workspace. Copy the ID into the config as `notion.project_page_id`.
 2. **Workspaces DB**: if this is a new client/company, create a page; the ID goes into `workspace_page_id`. If it is the same client, use the existing one.
 3. **Decisions DB**: the first line "Project <name> started, scope =..., team =..., model =...", Area = Scope, Source = the kickoff meeting or the SOW.

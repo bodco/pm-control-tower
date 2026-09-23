@@ -63,6 +63,8 @@ Using BOTH the transcript and the summary, generate a comprehensive bilingual re
 
 ### Report Structure
 
+**Template** (`notion-meeting-topics`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 For EACH topic discussed, create a section with:
 
 1. **Section header** - numbered, bilingual (client_language / default_language, by default EN / UA)

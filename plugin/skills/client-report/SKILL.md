@@ -144,13 +144,18 @@ on the client; from open Change Requests (Reports DB, Type `Change Request`) wit
 decision; from the prep and meeting action items assigned to client people. Each: what,
 who (from `decision_rights` / Team - Client), by when, what happens without it.
 
-## Locked template (wins over the formats below)
+## Template (wins over the formats below)
 
-If the config (`{config.pm_profile.reporting.locked_template_page_id}`) or the PM names a
-previous report as the locked template for a report type, that report's sections, order and visual language win over
-the formats in this skill: only the content changes. Reader-rule elements the locked
-template lacks (status line, "Decisions Needed From You", capacity line, beyond-scope
-block) are NOT inserted silently; list them in chat as a proposal for the PM.
+Keys `client-report.weekly`, `client-report.monthly`, `client-report.steering`. Resolve
+the template first per "Document templates" in `projects/SKILL.md` (registry
+`../projects/_templates.md`): a project or house template replaces the formats below,
+only the content changes. The locked template stays supported: if the config
+(`{config.pm_profile.reporting.locked_template_page_id}`) or the PM names a previous
+report as the locked template for a report type, that report's sections, order and
+visual language win over the house template and the built-in formats. Reader-rule
+elements a template lacks (status line, "Decisions Needed From You", capacity line,
+beyond-scope block) are NOT inserted silently; list them in chat as a proposal for the
+PM and write `(missing: ...)` next to `Template` in the completeness header.
 
 ## Reader rule (all three formats)
 

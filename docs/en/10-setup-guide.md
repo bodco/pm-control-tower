@@ -35,6 +35,7 @@ Tip: connect them one at a time and check each with a simple request ("show the 
 ## Step 3. The Notion Control Tower
 
 1. Duplicate the CONTROL TOWER page template with its 11 databases (Inbox, Tasks Tracker, Meetings, Threads, Topics, Knowledge Base, Risks, Reports, Projects, Workspaces, Decisions), or build it from the description in `02-notion-control-tower.md`.
+   Items 2-3 are not done by hand: Claude finds the database IDs itself through the Notion MCP while customizing the plugin, and the kickoff creates the client and project pages (`16`).
 2. Write down the data source ID of each database (from the URL or via Notion MCP fetch) into the future config.
 3. Create the client page in Workspaces and the project page in Projects.
 4. Check that the relations in every database are called `Project`, `Workspace`, `Meetings`, `Threads`, `Knowledge Base`, `Tasks Tracker`, `Inbox` (no emoji), that the AI review status is `AI Review` and the Topics progress is `Progress`: these exact names are baked into the engines. If your schema differs, fix the schema, not twenty skills.

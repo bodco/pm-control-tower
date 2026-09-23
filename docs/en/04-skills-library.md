@@ -199,6 +199,7 @@ Rules that must apply across all skills at once live in `projects/SKILL.md` rath
 | **Data Completeness header** | every report starts with a line on the state of each source; `EMPTY` and `FAILED` are never merged into one | v0.6.0 |
 | **PM standards and PM Profile** | reports, preps, metrics, risks and decisions follow `projects/_standards.md` and the `PM Profile` section of the config: the reader rule with a mandatory "Decisions needed" section, the metrics profile, agendas by key, RAID via `Kind`, the decision standard | v0.7.0 |
 | **The 5-minute rule** | a write to an external system without confirmation is allowed only when the effect can be undone within 5 minutes (a page, a row, a backlog ticket, a draft); messages to the client, production changes, transitions to Done, deletions and the client's board need approval | v1.1 |
+| **Document templates** | every document has a key; before composing, a skill looks for a template at the project level, then house (`_templates.md`), then uses its built-in format; a template never changes the invariants, and `Template` is shown in the Data Completeness header (`15`) | v1.2 |
 
 > **Lesson.** The rules turned out not to be in the live `projects/SKILL.md`, even though the documents described them as being in force: the card was either not saved or was overwritten by the next save. Restored in the v0.7.0 package. Conclusion: the state of a cross-cutting rule is verified by grepping the synced copy (`~/.claude/skills/synced/.../projects/SKILL.md`), not by the documentation.
 

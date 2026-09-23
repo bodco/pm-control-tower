@@ -256,6 +256,8 @@ Pick ONE label from the config's Labels Taxonomy table, matching the thread's na
 
 #### 4.4 - Create the ticket
 
+**Template** (`slack-collector.ticket`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 Use `create_issue` on the Jira MCP server from `{config.jira.mcp_write}` (default `jira`); if `mcp_read` names a second server with different tool names, map the operations by meaning; `known_bug` in the config records any quirk (e.g. a cosmetic JSON error on Jira Server 7.x writes):
 
 ```

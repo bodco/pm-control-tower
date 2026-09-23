@@ -31,6 +31,8 @@ library works with the new reality a second later. Nothing is hardcoded anywhere
 | `docs/en/` | Framework documentation in English |
 | `docs/uk/` | The same documentation in Ukrainian |
 | `templates/` | `secrets.env.example`: variable names, fake values, and where the real file must live (the same copy travels inside the plugin) |
+| `templates/documents/` | a sample document template and a README: how to plug in company or personal templates (`docs/en/15-document-templates.md`) |
+| `templates/cowork-global-instructions.md` | a Cowork global instructions template (Ukrainian and English) for step 6 of `docs/en/16-runbook.md` |
 
 ## The Notion template
 
@@ -53,10 +55,10 @@ usable on its own, with none of the automation in this repository.
 2. Install the plugin: send `dist/pm-control-tower.plugin` to yourself in Claude and press install.
 3. Say to Claude: `set up the pm-control-tower plugin for me`. It walks you through
    every `~~` placeholder: your database IDs, your home folder, your tracker.
-4. Copy `_template.md` inside the `projects` skill, rename it to your project and fill it in.
+4. Say to Claude: `set up a new project <Name>, case A`. It builds the config, the Notion pages and the folders itself.
 5. Try it: `prepare me for the sync on <your project>`.
 
-Full instructions: `plugin/SETUP.md`. Placeholder reference: `plugin/CONNECTORS.md`.
+Step by step with prompts: `docs/en/16-runbook.md`. Full instructions: `plugin/SETUP.md`. Placeholder reference: `plugin/CONNECTORS.md`.
 
 **Start with four skills.** `projects` (infrastructure, read by everything else),
 `daily-team-prep`, `weekly-overview`, `mac-mail-collector`. The rest connects when
@@ -113,6 +115,7 @@ weeks of calibration for your own project, not an hour.
 |---|---|---|
 | 1.0.0 | 2026-09-11 | First public package: 21 skills, the Notion template, documentation in two languages |
 | 1.1.0 | 2026-09-19 | Plugin aligned with the documentation and the public Notion template (relation names, the `AI Review` / `Progress` statuses, config keys from `_template.md`, `task_tracker.api_access` in 14 engines, the 5-minute rule); anonymization; `.mcp.json` with the `jira` and `confluence` servers; the secrets template inside the plugin |
+| 1.2.0 | 2026-09-23 | Custom document templates: a template key for every document, the house registry `projects/_templates.md`, the `pm_profile.templates` block in the config, the "Document templates" rule in `projects/SKILL.md`, a **Template** line in 18 skills, the `template-check` mode of `project-lifecycle`, document `15` with the document catalog; step-by-step document `16` (setup from scratch and a new project through kickoff) and a global instructions template |
 
 Open questions and the technical backlog: `docs/en/13-open-questions.md`.
 

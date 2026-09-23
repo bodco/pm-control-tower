@@ -158,6 +158,8 @@ If the directory is empty or files are older than 14 days, say so:
 
 ## Report Format - Ukrainian (internal)
 
+**Template** (`stability-scan.internal`, `stability-scan.external`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 The primary report is in Ukrainian and must include detail a developer can act on:
 a timestamp plus a stream name lets them jump straight to the right log instead of
 searching blindly.

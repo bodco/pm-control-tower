@@ -47,6 +47,8 @@
 
 ## Phase 2. Notion: якірні сторінки і пам'ять (день 1, 1 год)
 
+> **Руками цього не робити.** Пункти 1-4, 6 і 7 виконує `project-lifecycle` у режимі `kickoff` (K3): сторінки, relation, перше рішення, ID у конфігу. За ПМом лише увімкнення AI Meeting Notes (пункт 8) і один клік шаблону "New project", якщо інструмент його не застосував. Покроково з промптами: `16`.
+
 1. **Projects DB**: створити сторінку проєкту за шаблоном бази "New project" (5 вбудованих в'юшок, відфільтрованих по проєкту), заповнити Status, Start date, Workspace. Скопіювати ID у конфіг `notion.project_page_id`.
 2. **Workspaces DB**: якщо новий клієнт/компанія, створити сторінку; ID у `workspace_page_id`. Якщо клієнт той самий, використати наявну.
 3. **Decisions DB**: перший рядок "Project <name> started, scope =..., team =..., model =...", Area = Scope, Source = kickoff-мітинг або SOW.

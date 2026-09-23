@@ -1,6 +1,6 @@
 ---
 name: project-lifecycle
-description: "Project lifecycle engine for Control Tower: kickoff of a new project (config, Notion anchor pages, Charter, first decision, tech start), handover-in from another PM (KT and baseline), monthly Project Health Check, team member onboarding and offboarding, and project closure or transition to support. Follows projects/_standards.md and the PM Profile of the config. Never defaults to a project. Use when the user mentions \"новий проєкт\", \"заведи проєкт\", \"kickoff\", \"онбординг проєкту\", \"прийом проєкту\", \"приймаю проєкт\", \"KT\", \"handover\", \"project health check\", \"аудит стану проєкту\", \"здоров'я проєкту\", \"новий член команди\", \"онбординг розробника\", \"хтось іде з проєкту\", \"закриття проєкту\", \"project closure\", \"переходимо в саппорт\", or when it runs as the monthly health-check task."
+description: "Project lifecycle engine for Control Tower: kickoff of a new project (config, Notion anchor pages, Charter, first decision, tech start), handover-in from another PM (KT and baseline), monthly Project Health Check, team member onboarding and offboarding, and project closure or transition to support. Follows projects/_standards.md and the PM Profile of the config. Never defaults to a project. Use when the user mentions \"новий проєкт\", \"заведи проєкт\", \"kickoff\", \"онбординг проєкту\", \"прийом проєкту\", \"приймаю проєкт\", \"KT\", \"handover\", \"project health check\", \"аудит стану проєкту\", \"здоров'я проєкту\", \"новий член команди\", \"онбординг розробника\", \"хтось іде з проєкту\", \"закриття проєкту\", \"project closure\", \"переходимо в саппорт\", \"перевір шаблони\", \"template check\", or when it runs as the monthly health-check task."
 ---
 
 # Project Lifecycle
@@ -19,6 +19,7 @@ The human playbooks live in the Notion PM Toolkit; the machine standards live in
 | `health-check` | "project health check X", "аудит стану", monthly task (2nd of the month) | 8-area RAG report with evidence and top-3 |
 | `team-onboarding` / `team-offboarding` | "новий розробник на X", "Y іде з проєкту" | onboarding page, access request list, config patch, Decision row |
 | `closure` | "закриваємо проєкт", "переходимо в саппорт" | closing checklist with evidence, handover pack, config patch, list of tasks to disable |
+| `template-check` | "перевір шаблони", "template check", "які шаблони використовуються" | table: document key, resolved template source, missing invariants (chat only) |
 
 If the mode is unclear from the request, ask which one (one question, list the modes).
 
@@ -108,7 +109,9 @@ Relation names are `Project` and `Workspace` in every database.
    template if the tool supports it; otherwise create the page and tell the PM to apply
    the template in Notion). Set Status `In progress`, Start date, Workspace.
 3. Under the project page: **Current State** (5-10 lines: what is happening, open
-   questions, next dates) and **Project Charter** (duplicate the Toolkit Charter
+   questions, next dates) and **Project Charter** (template key
+   `project-lifecycle.charter`, resolved per "Document templates" in `projects/SKILL.md`;
+   when no house or project template is set, duplicate the Toolkit Charter
    template, the page under `{config.pm_profile.documents.pm_toolkit_page_id}` named
    "Project Charter", with `notion-duplicate-page`, move it under the project page,
    fill it from the config; unknowns stay "уточнити"; if the Toolkit page ID is `none`,
@@ -172,7 +175,9 @@ configured). Second wave (stability, deploy, board health) only with engineering
 
 Principle: trust but verify. The main trap is inheriting "all green" on faith.
 
-1. Duplicate the Toolkit KT / Handover Checklist template (under
+1. Resolve the template `project-lifecycle.kt-checklist` ("Document templates" in
+   `projects/SKILL.md`); when no house or project template is set, duplicate the
+   Toolkit KT / Handover Checklist template (under
    `{config.pm_profile.documents.pm_toolkit_page_id}`; if `none`, create a plain page
    with the checklist sections) under the project page; save its ID for
    `pm_profile.documents.kt_checklist_page_id` (config patch).
@@ -240,7 +245,9 @@ never guessed; no new Risks DB entries are created, candidates are listed for th
 ## Modes `team-onboarding` / `team-offboarding`
 
 **Onboarding** (Toolkit Team Member Onboarding):
-1. Duplicate the onboarding template (`{config.pm_profile.documents.onboarding_template_page_id}`;
+1. Resolve the template `project-lifecycle.onboarding` ("Document templates" in
+   `projects/SKILL.md`); when no house or project template is set, duplicate the
+   onboarding template (`{config.pm_profile.documents.onboarding_template_page_id}`;
    if `none`, create a plain page with the sections below) under the project page,
    fill it: access list derived from the Access Matrix (as requests the PM makes, never
    granted by this skill), links to the Charter and KB, `decision_rights` as "хто за що",
@@ -270,7 +277,7 @@ never guessed; no new Risks DB entries are created, candidates are listed for th
    open bugs from the tracker, tech debt) documented, financial closeout (PM or account
    only; the skill lists what to check, never numbers it does not have), team offboarding,
    retrospective, relationship close, renewal / reference ask.
-3. Handover pack page under the project page: latest Monthly Memory Digest, active
+3. Handover pack page under the project page (template key `project-lifecycle.handover-pack`): latest Monthly Memory Digest, active
    Decisions, open Risks and Issues, Access Matrix, KB links. Honest about loose ends.
 4. **Transition to support** variant: config patch `phase: support`,
    `metrics_profile: kanban_support`, `sla` to agree, meetings re-mapped; a draft
@@ -283,7 +290,21 @@ never guessed; no new Risks DB entries are created, candidates are listed for th
 
 ---
 
+## Mode `template-check`
+
+Read-only. For the named project (or the house level when the user says "усі" / "house"),
+walk the resolution order of every key in `../projects/_templates.md` and output one
+table in chat: key, resolved source (`project`, `house`, `Toolkit`, `built-in`), whether
+the source is reachable from this session and from cloud runs, and the invariants the
+template lacks (reader-rule elements for reader-facing reports, the eight Extras Log
+columns, the month heading of topic sections). No writes, no report page.
+
 ## Report storage
+
+Template keys of the reports below: `project-lifecycle.kickoff`, `.handover`,
+`.health-check`, `.closure` (resolve per "Document templates" in `projects/SKILL.md`;
+the mode sections above are the built-in formats).
+
 
 Reports DB `{config.notion.reports_db}` (in `kickoff`, the shared ID from `_template.md`).
 

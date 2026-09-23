@@ -73,6 +73,8 @@ thread-ticket-sync, jira-management, jira-board-health, sentry-assistant) starts
 5. If the task produces a report, a meeting prep, metrics, a risk entry or a
    decision entry, ALSO read `projects/_standards.md` and the `PM Profile`
    section of the config (see "PM standards and PM Profile" below)
+6. If the task produces a document listed in `projects/_templates.md`, resolve its
+   template first (see "Document templates" below)
 
 If the config file doesn't exist, tell the user: "Project config not found.
 Available projects: [list files in projects/]"
@@ -215,7 +217,11 @@ States: `OK`, `EMPTY` (source reachable, nothing in the period), `STALE`
 scope), `FAILED` (source unreachable or errored). `EMPTY` and `FAILED` are
 never merged into one: that merge once hid a broken Slack collector for
 months. The line is present even when everything is OK, so that its absence
-is itself a visible defect. Also list `PM Profile` when the skill uses it.
+is itself a visible defect. Also list `PM Profile` when the skill uses it, and
+`Template` when the document has a key in `_templates.md`: `Template: built-in`,
+`Template: house (<source>)`, `Template: project (<source>)` or
+`Template: FALLBACK built-in (<source> unreachable)`, plus
+`(missing: <invariant>)` when the template lacks a required element.
 
 ## Agent write permissions: the 5-minute rule
 
@@ -270,6 +276,47 @@ Rules every engine applies:
 7. **Estimates.** The number comes from the assignee; skills decompose and
    show history, never propose or anchor a figure.
 
+## Document templates
+
+Every generated document has a key (`client-report.weekly`, `change-request.cr`, ...).
+`projects/_templates.md` lists the keys, where each built-in format lives and where the
+document is saved. A company, a PMO or a single PM can replace any of these formats with
+their own template without editing a skill.
+
+1. **Resolve.** Before composing, walk the resolution order in `_templates.md`: project
+   override, project templates root, (client reports) the locked template, house
+   override, house `templates_root`, house Notion templates page, (lifecycle pages) the
+   PM Toolkit page, built-in. First hit wins. Read the template in full.
+2. **Unreachable source** (a Mac path in a cloud run, a Notion page without access, a
+   missing file named explicitly in an override): fall to the next level, write
+   `Template: FALLBACK ...` in the completeness header and say it in chat. A file that
+   simply does not exist in a templates root is not an error: the key is not overridden.
+3. **Fill.** Headings of the template are the sections of the output, in order. Fill
+   them by meaning from the data the skill already collects. `<!-- ct: ... -->`
+   comments are instructions and are removed; `{{placeholders}}` are filled from the
+   config and the run; fixed text is copied verbatim. No data = "No data for this
+   period"; data the skill does not collect = "TBD: fill manually", listed to the PM.
+   Never invent content to fill a section.
+4. **Invariants a template never overrides:**
+   - the Data Completeness header (first line; for External documents an HTML comment
+     on the first line of the saved `.md` and the chat, never in the client-facing body);
+   - language: client-facing documents in `client_language`, internal ones in
+     `default_language`; no em dash or en dash anywhere;
+   - sanitization of External documents (`risk-register` rules: no internal names,
+     tools, rates or people risks);
+   - storage: database, `Type`, `Skill`, `Visibility`, relations, report name pattern;
+   - the 5-minute rule and "sending stays manual";
+   - machine-read structure: `change-request.extras-log` keeps its eight columns (more
+     may be added), `topic-manager.month-section` keeps the `## {Month} {Year}` heading,
+     tickets keep the markup of `task_tracker.type`.
+5. **Reader rule vs template.** If a template lacks a reader-rule element (status line,
+   "Decisions needed from you", risks with actions), the skill does NOT insert it
+   silently: it writes `(missing: ...)` in the header and proposes the addition to the
+   PM in chat. The template owner decides.
+6. **Template check.** On request ("перевір шаблони", "template check", mode
+   `template-check` of `project-lifecycle`) list every key with its resolved source
+   and the missing invariants, for a named project or for the house level.
+
 ## Files in this directory
 
 | File | Purpose |
@@ -277,6 +324,7 @@ Rules every engine applies:
 | `<your-project>.md` | Your project config. Copy `_template.md`, rename it to your project slug and fill it in. One file per project |
 | `_standards.md` | Cross-project PM standards (machine version of the Notion PM Toolkit): metrics, profiles, agendas, reader rule, document minimum, RAID, decisions |
 | `_template.md` | Blank template for adding a new project |
+| `_templates.md` | House registry of document templates: keys, built-in formats, where each document is saved, resolution order |
 
 ## Adding a new project
 

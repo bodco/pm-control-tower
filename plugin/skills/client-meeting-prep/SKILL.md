@@ -122,6 +122,8 @@ Never claim to know statuses from a client tracker with `api_access: false`.
 
 ## Report Format by Meeting Type
 
+**Template** (`client-meeting-prep.planning`, `client-meeting-prep.status-sync`, `client-meeting-prep.one-on-one`, `client-meeting-prep.review`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 The meeting names below map to the `Agenda` key (fallback: the `Type` column) of the
 config's Meetings Schedule: planning = `sprint_planning` / `backlog_refinement`, status
 sync = `client_status_sync`, 1-1 = `stakeholder_1on1`, review = `client_demo` /

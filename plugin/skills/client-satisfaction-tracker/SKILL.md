@@ -149,6 +149,8 @@ Before flagging a silence gap or disengagement pattern as a warning signal, sani
 
 ## Output Report
 
+**Template** (`client-satisfaction`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 Write report in Ukrainian (per `{config.default_language}` for internal) or English (if requested for sharing). Match the register of past reports for the same project when you have one to compare against: use status emoji (🟢🟡🔴) on the overall score and per-person scores, write in engaged, concrete prose rather than dry bullet fragments, and let notable findings (a resolved alert, a standout quote, a structural break) carry a sentence or two of narrative color - this is a report a PM will actually enjoy re-reading, not just a data dump. Never invent color that isn't backed by the evidence, and never let liveliness replace precision: every score, quote and claim still needs a source and a date.
 
 Report structure:

@@ -111,6 +111,8 @@ without gaps, but the report still shows a fixed `since` / `until` header.
 
 ## Report Storage - Notion
 
+**Template** (`deploy-analysis`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The built-in default is the report skeleton in `README.md`, step 7; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 **Database:** `{config.notion.reports_db}`. No database ID is hardcoded here; if the
 config does not carry one, say so and leave the report local.
 

@@ -289,6 +289,8 @@ This prepends the new month above existing content.
 
 ## Month Section Format
 
+**Template** (`topic-manager.month-section`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 **STRICTLY in Ukrainian.** English technical terms are NOT translated. Markdown only, no HTML tags anywhere (no `<br>`, no `<div>`, nothing) - line breaks and lists are plain Markdown (blank lines between paragraphs, `- ` for bullets).
 
 ```markdown

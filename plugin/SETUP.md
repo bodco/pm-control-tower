@@ -14,9 +14,9 @@ Duplicate the **PM Control Tower** template for yourself. It is a set of linked
 databases: Reports, Threads, Meetings, Topics, Decisions, Risks, Knowledge Base,
 Tasks Tracker, Projects, Workspaces, Inbox.
 
-In the **Projects** database create a page for your project, and in
-**Workspaces** a page for your workspace. They are needed as relation values:
-tagging with them is exactly what keeps projects apart inside shared databases.
+Do **not** create the project and workspace pages by hand: the `project-lifecycle`
+skill does it in kickoff mode (Step 4). The step-by-step scenario with prompts is
+`docs/en/16-runbook.md`.
 
 If you want meeting transcripts in the Meetings database, switch on Notion's
 **AI Meeting Notes** (a paid Notion add-on). Without it Meetings holds whatever
@@ -50,7 +50,9 @@ Tell Claude:
 
 Cowork's plugin customization flow finds every spot marked with `~~` and walks
 you through them: the data source IDs of your Notion databases, your home
-folder, the URLs and the path to the local Jira server. The full list of
+folder, the URLs and the path to the local Jira server. You do not need to look up
+the database IDs: add "find the database IDs yourself through the Notion MCP" to the
+prompt (Notion must be able to see the CONTROL TOWER page). The full list of
 placeholders and where to get each value is in `CONNECTORS.md`. If the flow
 does not start, edit `.mcp.json` and `skills/projects/_template.md` by hand.
 
@@ -61,8 +63,11 @@ picked up.
 
 ## Step 4. The config for your project
 
-Copy `skills/projects/_template.md` to `skills/projects/<your-slug>.md` inside
-the plugin (ask Claude "customize the pm-control-tower plugin: add project
+The easy way: in a task with `~/work` connected, say "set up a new project <Name>,
+case A/B/C" (the `project-lifecycle` skill, kickoff mode). It builds the config, the
+Notion pages, the first decision, the local folders and the registration itself, and
+asks only for what is missing. By hand: copy `skills/projects/_template.md` to
+`skills/projects/<your-slug>.md` inside the plugin (ask Claude "customize the pm-control-tower plugin: add project
 <slug>", or edit the plugin folder by hand and repackage it) and fill it in:
 access matrix, tracker access mode, team, channels, meeting schedule, mail
 routing. `none` for what you do not have, `unknown` for what you do not know

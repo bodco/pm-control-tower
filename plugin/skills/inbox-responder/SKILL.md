@@ -130,6 +130,8 @@ Set `Category` and determine which context sources to consult.
 
 ## Step 4 - Generate draft response
 
+**Template** (`inbox-responder.draft`): resolve it first per "Document templates" in `projects/SKILL.md` (registry `../projects/_templates.md`). The format below is the built-in default; a house or project template replaces its sections, order and fixed wording, never the invariants listed there.
+
 ### For FYI threads
 - No draft needed
 - Set Draft Response = "(FYI - no reply needed)"
