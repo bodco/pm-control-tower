@@ -233,7 +233,9 @@ email_routing:
 
 Shared addresses are not listed by hand: an address is shared when it appears in
 `client_emails` of two or more active configs. A thread belongs to a project only when a
-`unique_emails` entry or a `unique_domains` suffix matches.
+`unique_emails` entry, a `unique_domains` suffix or a non-shared `client_emails` address
+matches. `mac_mail_accounts` is a fallback for incoming mail only; outgoing (Sent) mail
+is routed by recipients alone.
 
 ## Engagement Status (as of {YYYY-MM-DD})
 - **model**: {delivery | support | ...}

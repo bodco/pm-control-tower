@@ -123,7 +123,7 @@ Date and what changed. This is the "memory of changes" that the Automation Healt
 
 ## What is duplicated outside the config (deliberately, and must be kept in sync)
 
-1. **The email registry**: lives only in the `email_routing` section of the configs; `mac-mail-collector` reads all active configs and builds the registry in memory, no collector keeps its own address table. Addresses shared between projects are no longer maintained by hand: an address counts as shared if it appears in `client_emails` of two or more active configs. There is one source of truth: the config.
+1. **The email registry**: lives only in the `email_routing` section of the configs; `mac-mail-collector` reads all active configs and builds the registry in memory, no collector keeps its own address table. Addresses shared between projects are no longer maintained by hand: an address counts as shared if it appears in `client_emails` of two or more active configs. A thread belongs to a project when a `unique_emails` entry, a `unique_domains` suffix or a non-shared `client_emails` address matches; the account folder (`mac_mail_accounts`) is only a fallback for incoming mail, outgoing mail is routed by recipients alone. There is one source of truth: the config.
 2. **Global Cowork instructions** ("PM Workspace"): the table of active projects and a short cheat sheet for the default one. Cut down to the role model and meta-rules (Rule Zero, Default Project Rule, no inventing facts, language/style) plus a "project to slug" table; all facts are read from `projects/` (`13` #11).
 3. **Scheduled tasks**: task prompts name the project explicitly ("for the Acme project"). This is not duplication of facts, it is the correct way to supply the project for the Default Project Rule.
 

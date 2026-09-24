@@ -32,10 +32,16 @@ description: "Generates prep notes for the project's internal team sync (time an
 `slack_access` takes exactly one of `mcp | mcp_local | chrome | none`.
 
 5. **Secrets.** Tokens are never stored in the config. Read the value at runtime and
-   never print it:
+   never print it. The secrets file lives on the PM's Mac, so read it with the device
+   shell (`device_bash`), not in the cloud container. Inside the device shell a
+   connected folder is mounted under `$HOME/mnt/<folder-name>/`, so the Mac path from
+   `{config.sentry.secrets_file}` is not valid there as written. Run `ls $HOME/mnt/`
+   first instead of assuming the path; if the secrets folder is not connected, request
+   access to it once (`device_request_folder_access`) and read the file under its
+   mount point.
 
 ```bash
-grep '^{config.sentry.token_env}=' {config.sentry.secrets_file} | cut -d= -f2-
+grep '^{config.sentry.token_env}=' <secrets file under $HOME/mnt/...> | cut -d= -f2-
 ```
 
 If the config file doesn't exist, tell the user: "Project config not found.
@@ -48,6 +54,17 @@ Before the first write of a run, fetch the Reports data source (`notion-fetch` o
 Name`, `Date`, `Type`, `Skill`, `Visibility`, `Summary`, `Project`, `Workspace`). If the
 live schema differs from this skill, the live schema wins: write with the real names and
 report the discrepancy in chat so the config and this skill are fixed the same day.
+
+## Step 0c - Meeting time and cadence
+
+The config's Meetings Schedule is the default, but a sync time drifts faster than
+anything else in the config. Order of trust for the time and cadence of the internal
+sync: what the PM says now, then the recurring calendar event for this project's
+internal sync (Google Calendar or whatever calendar the PM uses), then the config. If
+the calendar or the PM contradicts the config, use the newer fact, say so in one line
+of the prep ("конфіг застарів: синк о ..., за календарем") and never present the old
+time as current. Rule Zero still applies: the config is fixed the same day (Changelog
+line), the skill never keeps its own copy of the time.
 
 ---
 
@@ -65,16 +82,20 @@ Instead, derive the window from evidence:
    filter, or `notion-query-data-sources` if the plan allows) for the most recent
    report with `Type = "Daily Team Prep"` and `Project` matching this project,
    sorted by date descending, limit 1.
-2. If found: `WINDOW_START` = that report's date (the day after it, i.e. collect
-   everything published since that prior prep ran). This self-corrects automatically
-   if the meeting cadence changes - no calendar math needed.
-3. If no prior report exists (first run for this project, or the report type was
-   never saved before): fall back to `{config.meetings.internal_sync_cadence}` and the
-   Meetings Schedule table to estimate the most recent likely prior sync day
-   from the documented pattern, and say explicitly in the report that this is a
-   first-run estimate, not derived from history ("перший запуск, період оцінено за
-   розкладом конфігу, не за історією"). If the cadence is `none` or missing, ask the
-   user for the window.
+2. If found and it is no more than 7 days old: `WINDOW_START` = that report's date
+   (collect everything published since that prior prep ran). This self-corrects
+   automatically if the meeting cadence changes - no calendar math needed.
+3. If none exists, or the newest one is older than 7 days (a stale report is not a
+   usable anchor): take `WINDOW_START` from the calendar. Find the most recent
+   internal sync occurrence that already happened (the recurring calendar event for
+   this project's internal sync, or the newest matching row in the Meetings DB) and
+   use its date. Only if the calendar has nothing, fall back to
+   `{config.meetings.internal_sync_cadence}` and the Meetings Schedule table to
+   estimate the most recent likely prior sync day from the documented pattern. Say
+   explicitly in the report which case applied ("останній prep від {date}, період
+   оцінено за календарем" or "перший запуск, період оцінено за розкладом конфігу, не
+   за історією"). If the cadence is `none` or missing and the calendar is empty, ask
+   the user for the window.
 4. State the actual window used as the first line of the report body:
    `Огляд за період: {WINDOW_START} - {today}`.
 
@@ -83,8 +104,8 @@ This same `WINDOW_START` drives every section below - there is no separate "last
 
 ---
 
-Generates a compact prep document for the project's internal sync (authoritative
-schedule in the project config). The goal is to ensure nothing falls through the
+Generates a compact prep document for the project's internal sync (schedule from the
+project config, corrected by Step 0c). The goal is to ensure nothing falls through the
 cracks across the actual gap since the last sync: blockers get discussed, progress
 gets acknowledged, and action items get followed up.
 
@@ -127,7 +148,15 @@ project = {config.task_tracker.project_key} AND status in ("{active statuses fro
 
 For each ticket: key, summary, assignee, from-status, to-status (if transitioned).
 Exact status names and transition IDs come from the config's Workflow table, verbatim
-(names with spaces or slashes are quoted in JQL exactly as written there).
+(names with spaces or slashes are quoted in JQL exactly as written there). Many Jira
+read connectors return the current status only, not the changelog: when the previous
+status is unavailable, say so in one line instead of guessing.
+
+**Idle assignees rule.** A person whose assigned active tickets have not been updated
+for 7 days or more is not actively on the project right now: leave them out of the
+report entirely (not in "Хто чим зайнятий", not in the discussion notes, not in action
+items, not in DMs) and do not remark that they were left out. Stale tickets are the
+job of `jira-board-health`, not of the sync prep.
 
 **When `api_access` is false:** take the same three views from
 `{config.task_tracker.fallback_source}` as far as it allows (a manual export usually
@@ -144,7 +173,12 @@ From `WINDOW_START` to now, using the access method from `{config.slack.slack_ac
 `slack_search_public_and_private`, `slack_list_user_channels`); `mcp_local` = the local
 server named in `{config.slack.mcp_local_server}` (typically `conversations_history`,
 `conversations_replies`, `channels_list`); `chrome` = the Claude in Chrome connector on
-the web UI; `none` = skip Slack with one header line. Focus on:
+the web UI; `none` = skip Slack with one header line. For `mcp` use the Slack
+connector tools, not another Slack server that may be attached to the session: it can
+point to a different workspace. Private channels do not show up in channel search, so
+read them by the channel IDs listed in the config, with `oldest` set to the epoch
+second of `WINDOW_START` 00:00 in the PM's timezone (compute it, do not guess). Focus
+on:
 - messages with replies (active discussions)
 - messages mentioning team members
 - messages about bugs, issues, or blockers
@@ -155,15 +189,16 @@ Personal DMs can carry information that never makes it into a channel (a quick
 heads-up, an informal blocker report, a client aside). Include them, scoped to
 avoid pulling in unrelated personal chats:
 
-1. List the PM's own conversations (`slack_list_user_channels` for `slack_access:
-   mcp`, or the equivalent listing tool for `mcp_local` - filter to `im`/`mpim`
-   types). Skip this step entirely if the access mode is `chrome` (no listing tool)
+1. List the PM's own conversations (`slack_list_user_channels` with
+   `types=im,mpim` for `slack_access: mcp`, or the equivalent listing tool for
+   `mcp_local`). Skip this step entirely if the access mode is `chrome` (no listing tool)
    or if the listing call is unavailable - say so in the report rather than silently
    omitting the section.
-2. Keep only DMs with people who appear in this project's config: the "Team -
-   Internal" or "Team - Client" rosters. Discard DMs with anyone not on either
-   roster - this is what keeps the section scoped to project-relevant conversations
-   instead of the PM's entire personal DM history.
+2. Keep only DMs and group DMs with people who appear in this project's config: the
+   "Team - Internal" or "Team - Client" rosters. Discard DMs with anyone not on either
+   roster and with anyone under Former Members - this is what keeps the section
+   scoped to project-relevant conversations instead of the PM's entire personal DM
+   history.
 3. For each kept DM, read messages from `WINDOW_START` to now. Apply the same
    relevance filter as channel messages (blockers, bugs, decisions, anything
    actionable) - skip pure small talk.
@@ -177,26 +212,31 @@ Fetch the Meetings DB (`{config.notion.meetings_db}`; `notion-fetch` the data so
 and filter) for meetings since `WINDOW_START` that have a report appended. Scan for
 action item patterns: "Action:", "TODO:", "Дія:", bullet points with assignees. Filter
 by the `Project` relation (`["https://app.notion.com/p/{config.notion.project_page_id}"]`,
-id without dashes).
+id without dashes). Include both internal syncs and client meetings, and label which is
+which.
 
 ### 4. Sentry: critical new issues (quick check)
 
-Only the projects in scope, not every slug on the instance. Compute the number of
-full or partial days between `WINDOW_START` and today (minimum 1) as `N`:
+Only the projects in scope, not every slug on the instance.
+
+The project issues endpoint accepts only `statsPeriod` values `24h` and `14d` (anything
+else returns HTTP 400). Use `24h` when the window is one day or less, otherwise `14d`,
+then keep only issues whose `lastSeen` is at or after `WINDOW_START`:
 
 ```
-GET {config.sentry.url}/api/0/projects/{config.sentry.org_slug}/{slug}/issues/?query=is:unresolved&statsPeriod={N}d&sort=date&limit=5
+GET {config.sentry.url}/api/0/projects/{config.sentry.org_slug}/{slug}/issues/?query=is:unresolved&statsPeriod=14d&sort=date&limit=25
 ```
 
 for each slug in `{config.sentry.projects_in_scope}`, via curl with
-`Authorization: Bearer <token read from the secrets file>` (never print the token).
-If the instance rejects `statsPeriod`, fall back to `start`/`end` ISO dates. Slugs in
-`{config.sentry.projects_out_of_scope}` and components the config's Scope of
-Responsibility marks as client-owned are context only: never promise our fix and never
-create tickets or risks for them. Only include issues with
-more than 5 events in the window (skip noise) - scale the noise threshold down for a
-short (1-day) window and up for a long one if the raw count looks clearly wrong for
-the window size.
+`Authorization: Bearer <token read from the secrets file>`. Run the request in the
+device shell and print only the fields you need, never the token. `count` in the
+response is the lifetime count of the issue, not the count inside the window, so say
+that when quoting numbers. Report separately: (a) issues whose `firstSeen` falls inside
+the window (new), (b) error-level issues that are still recurring, (c) everything else
+as one line of noise (info/debug payload logging that the config marks as expected is
+not a defect). Slugs in `{config.sentry.projects_out_of_scope}` and components the
+config's Scope of Responsibility marks as client-owned are context only: never promise
+our fix and never create tickets or risks for them.
 
 ## Report Format
 
@@ -209,11 +249,11 @@ line with the state of every source the skill was supposed to use, `PM Profile`
 included, in English when `{config.default_language}` is English.
 
 ```
-## Team Sync Prep - [date] (до внутрішнього міту [час з конфігу])
+## Team Sync Prep - [date] (до внутрішнього міту [час, див. Step 0c])
 
 Джерела: Tracker OK · Slack EMPTY (0 повідомлень за період) · DMs SKIPPED (slack_access: chrome) · Meetings OK · Sentry SKIPPED (url: none) · PM Profile OK
 
-Огляд за період: [WINDOW_START] - [сьогодні] [позначка, якщо це перший запуск-оцінка]
+Огляд за період: [WINDOW_START] - [сьогодні] [позначка про спосіб визначення періоду]
 
 [рядок про джерело задач і його свіжість - тільки якщо це не живий трекер]
 
@@ -238,11 +278,17 @@ included, in English when `{config.default_language}` is English.
 (якщо нічого вартого уваги не знайдено - рядок опускається, не пишеться "немає")
 
 ### Невиконані action items з мітів
-- [дата міту]: [action item] - [відповідальний]
+- [дата міту, тип]: [action item] - [відповідальний, якщо названо]
 
 ### Sentry (за період)
-- [project]: [error] (X events)
+- [project]: [нові issue / error-рівень, що повторюється / шум одним рядком]
 (якщо чисто - "Sentry: без нових критичних помилок"; якщо не підключений - сказати це)
+
+### Джерела, яких немає на цьому проєкті
+[список, або рядок опускається, якщо все підключено]
+
+### Для обговорення (висновки prep)
+[короткі пункти: що суперечить конфігу, що ризикує дедлайном, що потребує рішення PM]
 
 ### Мої нотатки до обговорення
 [порожній блок - PM заповнює вручну перед мітом]
@@ -259,15 +305,17 @@ included, in English when `{config.default_language}` is English.
 5. Highlight blockers and action items prominently. These are the most important parts.
 6. If a data source fails at runtime (as opposed to being unconfigured), mark it
    `FAILED` in the header (never merged with `EMPTY`), note it in one line and move on.
+   If the failure is a folder that is not mounted, request access to that one folder
+   and retry once before giving up.
 7. If running as a scheduled task, save to the outputs folder and to the Notion Reports
    DB (see Report Storage).
 8. If running manually (including a live demo), present in chat, and still consider
    saving to Reports DB unless the user is clearly just testing/demoing.
-9. On a sync-day question ("is today a sync day"): the config's documented cadence is
-   a description of the general pattern, not a formula to run - when in doubt, generate
-   the prep anyway rather than trying to compute day-of-week parity. The cadence can
-   change (the config will say so if it has); Step 0.5's evidence-based window already
-   makes this skill resilient to that.
+9. On a sync-day question ("is today a sync day"): generate the prep anyway rather
+   than computing day-of-week parity from the config. Use the calendar for the actual
+   schedule (Step 0c); the config's documented cadence is only a description of the
+   general pattern and can be stale. Step 0.5's evidence-based window already makes
+   this skill resilient to cadence changes.
 10. The 5-minute rule (`projects/SKILL.md`, "Agent write permissions"). Writes allowed
     without asking: the prep page in the Reports DB; everything else is a draft for
     the PM.
@@ -282,13 +330,17 @@ anyone listed under Former Members as active.
 
 Save the report to the Notion Reports DB: `{config.notion.reports_db}`.
 
-Use `notion-create-pages` with these properties (property names verified in Step 0b;
-Reports uses the relations `Project` and `Workspace`, values as arrays of page URLs):
+**Create it inside the database, never as a loose page.** Call `notion-create-pages`
+with `parent = {"type": "data_source_id", "data_source_id": "<id from reports_db>"}`.
+Without that parent Notion silently drops every property and creates a private,
+untitled page outside the Reports DB. Properties (names verified in Step 0b; Reports
+uses the relations `Project` and `Workspace`, values as arrays of page URLs):
 
 | Property | Value |
 |----------|-------|
 | Report Name | `Team Sync Prep - [date]` |
 | date:Date:start | Today's date in ISO format (YYYY-MM-DD) |
+| date:Date:is_datetime | 0 |
 | Type | `Daily Team Prep` |
 | Skill | `daily-team-prep` |
 | Visibility | `Internal` |
@@ -300,3 +352,8 @@ The **full report content** goes as the page body (Notion Markdown, in blocks of
 most 2000 characters), so Control Tower keeps a complete searchable archive. Keep
 `Type` as `Daily Team Prep` even though the cadence isn't literally daily any more -
 Step 0.5 relies on this exact value to find the previous run.
+
+**Verify after saving.** Fetch the created page and confirm that the ancestor path
+shows the Reports database, the title is set, and Project and Workspace are filled. If
+not, fix it (move the page into the data source, then update properties) before
+reporting it as saved.

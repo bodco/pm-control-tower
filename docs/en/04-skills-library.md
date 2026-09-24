@@ -53,7 +53,7 @@ Type legend: **E** = engine (core, project-agnostic, reads the registry), **P** 
 | Skill | Type | What it does | Triggers | Schedule |
 |---|---|---|---|---|
 | `slack-collector` | E | The project's Slack channels for a period to the Threads DB with automatic status classification, a red icon, a 14-day review pass, gap analysis. Modes from the config (`slack_access`): `mcp` (the Claude connector), `mcp_local` (the PM's own local MCP server), `chrome` (reading the web UI, last resort), `none` | "collect Acme slack for the week", "collect slack" | daily 07:05 via `acme-daily-slack-sync` |
-| `mac-mail-collector` | E | Reads the buffer `~/work/Mail/<account>/incoming/` (AppleScript + LaunchAgent export new mail from Mail.app every 15 min as JSON + EML), filters out noise and calendar invites, routes by project, writes to Threads, moves items to `processed/` | "check the mail", "process the mail" | daily 09:12 |
+| `mac-mail-collector` | E | Reads the buffer `~/work/Mail/<account>/incoming/` (AppleScript + LaunchAgent export new incoming and sent mail from Mail.app every 15 min as JSON + EML, `fix_recipients.py` fills `to`/`cc` and `date_utc`), processes everything that sits in `incoming/`, filters out noise and calendar invites, routes by project (outgoing mail by recipients only), writes to Threads (sent mail with no reply gets the 📤 icon), moves items to `processed/` only after a successful write, reports the collector state | "check the mail", "process the mail" | daily 09:12 |
 | `signal-desktop` | X | Reading/sending in Signal Desktop via computer use | "read signal" | on-demand |
 
 > `gmail-collector` has been removed. All of the PM's work mailboxes are connected to Mail.app, so `mac-mail-collector` picks them up; the only account that remained on Gmail is connected directly over MCP and needs no collector. The email routing registry that lived in that skill's body has moved to the `email_routing` section of the project configs (see `03`).
@@ -66,7 +66,7 @@ The practical consequence for Slack, **resolved**: the Claude connector holds on
 
 | Skill | Type | What it does | Schedule |
 |---|---|---|---|
-| `daily-team-prep` | E | Compact prep for the internal sync: who is working on what, board movement, blockers, topics from Slack, outstanding action items, Sentry for the last 24 h | weekdays 11:08 (before 12:00) |
+| `daily-team-prep` | E | Compact prep for the internal sync: who is working on what, board movement, blockers, topics from Slack, outstanding action items, Sentry for the period, points for discussion. The window runs from the previous prep (if it is not older than 7 days) or from the last sync in the calendar; the sync time comes from the PM, then the calendar, then the config | weekdays 11:08 (before 12:00) |
 | `client-meeting-prep` | E | Adaptive prep for the meeting types in the config (Planning, Status Sync, 1-1, Review): progress, blockers, risks, open questions, what to ask | Mon/Tue/Thu/Fri 16:0x before 17:00 |
 | `jira-board-health` | E | Board hygiene: no labels, stale In Progress, Done without fixVersion, long-blocked, stuck statuses | Fri 16:02 together with review prep |
 

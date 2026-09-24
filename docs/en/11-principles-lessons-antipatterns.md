@@ -24,6 +24,7 @@
 20. **Documentation is not proof.** A rule that the docs describe as active may be missing from the live skill (the card did not save, or it was overwritten). The state of a skill is verified by grepping the synced copy after every save.
 21. **A library with no wiring is dead.** The PM Toolkit sat in Notion next to the system for a year and influenced not a single report. The value appeared once the standard got one machine-readable home (`_standards.md`) and a rule that the engines read it at Step 0 (`14`).
 22. **General work stays general.** While building the framework, do not sort out project-specific discrepancies along the way (contracts, people's hours): they go into their own project context, otherwise the general work dissolves.
+23. **A time marker is not a filter.** The mail collector took only files newer than `.last_cowork_scan` and silently lost messages exported later (Mail.app had been closed, a slow sync): their files turned out older than the marker. On a real project three client threads went missing this way. The queue is defined by location (`incoming/` = unprocessed), not by time; the marker is informational only. The same goes for the prep window: a stale previous report is not an anchor, the window comes from the calendar.
 
 ## Antipatterns (what breaks the system most often)
 
@@ -49,6 +50,7 @@
 | A skill description over 1024 characters | sync rejects it | make it shorter, move the triggers into the body |
 | A date-stamped fact not checked for 90+ days | silent staleness | Automation Health Check, re-verification |
 | A chart across the team-change date with no annotation | reads like a collapse | Metric Continuity warning in the config |
+| A collector filtering by a time marker (`-newer`) | late-exported data is lost for good, silently | the queue is the `incoming/` folder, the marker is informational; an old buffer goes to `backlog/` |
 
 ## Security and privacy
 

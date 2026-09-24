@@ -1,6 +1,6 @@
 ---
 name: mac-mail-collector
-description: "Scans ~~home-folder/work/Mail/ for emails exported from Mac Mail.app via AppleScript, routes them to projects using the Email Routing block of each active project config, and writes relevant threads to the Notion Threads DB. Use whenever the user mentions \"пошта\", \"mail\", \"імейли\", \"check mail\", \"mac mail\", \"перевір пошту\", \"обробити пошту\", \"process mail\", \"нові листи\", \"new emails from mail\", \"apple mail\", \"що прийшло на пошту\", \"scan mail buffer\", or any request involving emails from Mac Mail.app. When triggered, execute immediately - do not ask for confirmation. The only exception: if the project is ambiguous, ask."
+description: "Scans ~~home-folder/work/Mail/ for emails exported from Mac Mail.app via AppleScript (INBOX and Sent), routes them to projects using the Email Routing block of each active project config, and writes relevant threads to the Notion Threads DB. Use whenever the user mentions \"пошта\", \"mail\", \"імейли\", \"check mail\", \"mac mail\", \"перевір пошту\", \"обробити пошту\", \"process mail\", \"нові листи\", \"new emails from mail\", \"apple mail\", \"що прийшло на пошту\", \"scan mail buffer\", \"sent mail\", \"відправлені листи\", or any request involving emails from Mac Mail.app. When triggered, execute immediately - do not ask for confirmation. The only exception: if the project is ambiguous, ask."
 ---
 
 # Mac Mail Buffer Processor
@@ -8,22 +8,33 @@ description: "Scans ~~home-folder/work/Mail/ for emails exported from Mac Mail.a
 ## Architecture
 
 ```
-Mail.app --[AppleScript, every 15min]--> ~~home-folder/work/Mail/{account}/incoming/
-                                                    |
-                                          [This Cowork skill]
-                                                    |
-                                     +------+-------+-------+
-                                     |              |       |
-                                  Notion         Summary   processed/
-                               Threads DB        to user
-                        (props + FULL bodies
-                         in the PAGE BODY)
+Mail.app --[LaunchAgent every 15 min, only while Mail.app is running]
+   |-- mail_export.applescript       INBOX of every account
+   |-- mail_export_sent.applescript  Sent of every account (lookback 5 days)
+   |-- fix_recipients.py             fills to/cc + date_utc from EML headers
+   v
+~~home-folder/work/Mail/{account}/incoming/
+                     |
+            [This Cowork skill]
+                     |
+     +---------------+---------------+
+     |               |               |
+  Notion          Summary        processed/
+Threads DB        to user
+(props + FULL
+ bodies in the
+ PAGE BODY)
 ```
 
-The AppleScript half lives in `~~home-folder/work/Mail/scripts/`
-(`mail_export.applescript`, `mail_collector.sh`, `com.~~org.mail-collector.plist`,
-`mail_backfill.sh`). It exports EVERY new message per account and does no project
-routing. All routing happens in this skill.
+The shell/AppleScript half lives in `~~home-folder/work/Mail/scripts/`
+(`mail_collector.sh`, `mail_export.applescript`, `mail_export_sent.applescript`,
+`fix_recipients.py`, `com.~~org.mail-collector.plist`, `mail_backfill.sh`; setup in
+document `10a` of the Control Tower docs). It exports EVERY new message per account,
+incoming and outgoing, and does no project routing. All routing happens in this skill.
+
+One-time Sent backfill: write a number of days into
+`~~home-folder/work/Mail/.sent_backfill_days`. The next collector run uses it and
+renames the file to `.sent_backfill_days.done-<timestamp>`.
 
 ## Step 0 - Build the routing registry from project configs
 
@@ -43,7 +54,8 @@ routing. All routing happens in this skill.
      silently fails to write the relation. If the live schema differs, use the real
      names and report the discrepancy.
 4. Derive shared addresses: an address present in `client_emails` of TWO OR MORE
-   active configs is shared. Never maintain a shared list by hand.
+   ACTIVE configs is shared. Archived configs do not count. Never maintain a shared
+   list by hand.
 5. If the user named a project, process only its mail. Otherwise process all
    projects (the normal scheduled behavior). This is the documented exception to
    the Default Project Rule in `projects/SKILL.md`: the collector routes mail to
@@ -62,21 +74,28 @@ lives ONLY in the configs; no collector keeps its own address table.
 
 ```
 ~~home-folder/work/Mail/
-  .last_scan_timestamps.json     -- AppleScript per-mailbox last scan tracker
-  .last_cowork_scan              -- touch file, Cowork last processing time
-  .collector.log                 -- AppleScript run log
+  .last_scan_timestamps.json     -- AppleScript per-mailbox INBOX scan tracker
+  .last_cowork_scan              -- touch file, informational only (NOT a filter)
+  .sent_backfill_days            -- optional, one-time Sent backfill request
+  .collector.log                 -- collector run log (INBOX, SENT, fix_recipients)
   scripts/                       -- AppleScript + shell wrapper + LaunchAgent
 
   {Account_Name}/                -- one folder per Mail.app account
-    incoming/                    -- new emails (JSON), ready for processing
+    incoming/                    -- NOT YET PROCESSED emails (JSON). Everything here gets processed.
       {message_id}.json
     incoming-eml/                -- raw EML originals
       {message_id}.eml
-    processed/                   -- JSON moved here after Cowork processes
+    processed/                   -- JSON moved here after Cowork processes it
       {message_id}.json
     processed-eml/               -- EML moved here after processing
       {message_id}.eml
+    backlog/, backlog-eml/       -- optional: an archived historical buffer (e.g. mail from
+                                    before the framework was set up). Never processed
+                                    automatically; only on explicit request.
 ```
+
+The exporters check `incoming/`, `processed/` and `backlog/` before writing a file,
+so moving files between these folders never causes re-exports.
 
 ---
 
@@ -90,15 +109,24 @@ lives ONLY in the configs; no collector keeps its own address table.
   "to": "you@our-company.com, teammate@our-company.com",
   "cc": "client.ops@example-client.com",
   "date": "2026-04-10T14:30:00Z",
+  "date_utc": "2026-04-10T11:30:00Z",
   "body": "Full email body text...",
   "read": true,
   "account": "our company",
-  "mailbox": "INBOX"
+  "mailbox": "INBOX",
+  "direction": "outgoing"
 }
 ```
 
-> The `body` field is the canonical content. It MUST be written into the Notion
-> page body (see Step 4b). The Description property is only a short preview.
+- `mailbox` is `INBOX` or `Sent`. `direction: "outgoing"` is present on Sent exports.
+- `date` is the Mac's LOCAL time with a misleading `Z` suffix. Always use
+  `date_utc` for Notion dates. If `date_utc` is missing, take the `Date:` header
+  from the matching EML (`incoming-eml/<same name>.eml`) and convert to UTC.
+- `to` / `cc` come from `fix_recipients.py` (AppleScript returns them empty). If
+  they are still empty, parse the `To:` / `Cc:` headers of the matching EML
+  before routing. Never route on `from` alone when the EML is available.
+- `body` is the canonical content. It MUST be written into the Notion page body
+  (see Step 4b). The Description property is only a short preview.
 
 ---
 
@@ -115,13 +143,20 @@ projects where only certain people on a shared domain count.
 
 **Shared-address rule:** a thread belongs to a project ONLY if at least one
 `unique_emails` entry or `unique_domains` suffix matches. If only shared addresses
-appear (present in two or more configs), skip rather than guess.
+appear (present in two or more ACTIVE configs), skip rather than guess. An address
+that is in `client_emails` of exactly one active config is not shared and counts
+as a match for that project.
 
-**Account fallback:** the Mac Mail account folder name is a strong secondary
+**Account fallback (INBOX only):** the Mac Mail account folder name is a secondary
 signal. If no address or domain matches but the folder is listed in a project's
 `mac_mail_accounts`, tag the email with that project (after noise and calendar
 filtering). Client mail can land in an unexpected account folder, so route by
 participant address first and by folder name only as a fallback.
+
+**Outgoing mail (`mailbox: Sent`):** NEVER use the account fallback. An outgoing
+message belongs to a project only when a recipient (to/cc) matches that project's
+`unique_emails`, `unique_domains` or non-shared `client_emails`. Outgoing mail to
+team members only, or to unrelated people, is `unmatched`.
 
 If nothing matches: classify as `unmatched`.
 
@@ -131,17 +166,19 @@ Skip emails with subject starting with (case-insensitive):
 `Invitation:`, `Updated invitation:`, `Accepted:`, `Declined:`,
 `Tentatively accepted:`, `Canceled event:`, `Cancelled event:`,
 `Canceled:`, `Cancelled:` (Microsoft Teams meeting cancellations),
+`New Time Proposed:`, `Aceptado:`, `Rechazado:` (calendar replies, incl. Spanish locale),
 `Notes:` (Gemini meeting note auto-emails),
 `Pre-Read for your upcoming meeting:` (Read AI),
 `Recap:` (Read AI),
-`⏪ Pre-Read`, `⏩ Recap` (Read AI with emoji prefixes)
+`⏪ Pre-Read`, `⏩ Recap`, `🗓` (Read AI with emoji prefixes)
 
 Also skip emails whose subject contains `meeting.ics` attachment hints
 or starts with calendar provider tags like `[Calendar]`, `[ICS]`.
 
 Also skip emails whose body is purely a meeting invitation (Microsoft Teams /
 Google Meet join block: "Join the meeting now", "Meeting ID", "Passcode",
-no human message), even if the subject has no calendar prefix.
+no human message), even if the subject has no calendar prefix. This applies to
+outgoing invites too.
 
 ### Noise filter
 
@@ -170,44 +207,57 @@ but they don't need to be processed into Notion.
 
 ## Execution Steps
 
-### Step 1 - Discover mailboxes and count
+### Step 1 - Collector health + discover mailboxes
 
-```bash
-for dir in ~~home-folder/work/Mail/*/incoming/; do
-  MAILBOX=$(basename "$(dirname "$dir")")
-  COUNT=$(find "$dir" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
-  echo "$MAILBOX: $COUNT"
-done
-```
+1. Collector health (report problems in the final summary, do not stop):
+   ```bash
+   tail -n 400 ~~home-folder/work/Mail/.collector.log | grep -E "Scan complete|Sent scan complete|SENT|SKIP: Mail.app|FAILED|ERROR|fix_recipients" | tail -n 15
+   ```
+   - Many consecutive `SKIP: Mail.app is not running` lines = nothing was
+     collected in that window. Say how long Mail.app has been closed.
+   - `SENT ERROR` = outgoing mail is not being collected. Say so.
+2. Count ALL files in every `incoming/` folder. **Process every file in
+   `incoming/`, regardless of file modification time.** Do NOT filter with
+   `-newer .last_cowork_scan`: files exported late (Mail.app closed, slow sync,
+   Sent backfill) end up older than the marker and would be skipped forever.
+   Anything still in `incoming/` is by definition unprocessed.
+   ```bash
+   for dir in ~~home-folder/work/Mail/*/incoming/; do
+     MAILBOX=$(basename "$(dirname "$dir")")
+     COUNT=$(find "$dir" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+     echo "$MAILBOX: $COUNT"
+   done
+   ```
+3. Never touch `backlog/` unless the user explicitly asks for it. A large historical
+   buffer belongs in `backlog/`, not in a date filter.
 
-If the buffer holds a large historical backlog, scope a routine run to files
-newer than the `.last_cowork_scan` marker:
+Report to user: "Found X unprocessed emails across Y mailboxes (Z outgoing)."
 
-```bash
-find ~~home-folder/work/Mail/*/incoming/ -name "*.json" \
-  -newer ~~home-folder/work/Mail/.last_cowork_scan
-```
-
-Report to user: "Found X new emails across Y mailboxes."
+Classification (Step 2) is cheap: do it for all files with one local python
+script on the user's machine (the device shell), not by reading files one by one
+into context. Read full bodies only for the files that matched a project.
 
 ### Step 2 - Read and classify each email
 
 For each JSON file in each `incoming/` folder:
 
 1. Read the JSON (keep the full `body` - you will need it in Step 4b)
-2. Extract all participants: `from` + `to` + `cc` (split by `, `)
+2. Extract all participants: `from` + `to` + `cc` (split by `, `); fall back to
+   the EML headers if `to` is empty
 3. Check against Calendar invite filter (skip if match)
 4. Check against Noise filter (skip if match)
 5. **Project matching** per the Email Routing Rules above, using the registry
-   built in Step 0 from the project configs
+   built in Step 0 from the project configs (outgoing mail: no account fallback)
+6. Flag messages whose `date_utc` is older than 14 days as `late arrival` in the
+   summary. They are still processed normally (dedup in 4c).
 
 ### Step 3 - Present summary
 
 ```
 ## Mail Buffer Report
 
-### {Project} - N emails
-1. **{subject}** from {from} ({date})
+### {Project} - N emails (M outgoing)
+1. **{subject}** from {from} ({date_utc}) [OUT] [late]
    Preview: {first 100 chars}...
 
 ### Unmatched - K emails
@@ -220,9 +270,11 @@ For each JSON file in each `incoming/` folder:
 
 ### Step 4 - Process matched emails (write BOTH properties AND page body)
 
-**Thread grouping:** Group emails by subject line (strip Re:/Fwd: prefixes).
-If multiple emails share the same normalized subject, treat as one thread
-(one Notion page, multiple message blocks in the body).
+**Thread grouping:** Group emails by subject line (strip Re:/RE:/Fwd:/FW:/RV:
+prefixes). If multiple emails share the same normalized subject, treat as one thread
+(one Notion page, multiple message blocks in the body). Incoming and outgoing
+messages with the same normalized subject are ONE thread, interleaved
+chronologically.
 
 #### 4a. Properties (metadata / index only)
 
@@ -230,16 +282,22 @@ If multiple emails share the same normalized subject, treat as one thread
 - `Thread Name` = normalized subject
 - `Email Link` = `message://<id>` of the LATEST message in the thread
 - `Type` = `["Email"]`
-- `Reported at` = date of the FIRST message; `Last Reply Date` = date of the
-  LATEST message (set `:is_datetime` = 1)
+- `Reported at` = `date_utc` of the FIRST message; `Last Reply Date` = `date_utc`
+  of the LATEST message (set `:is_datetime` = 1)
 - `Project` = `["https://app.notion.com/p/<project_page_id-without-dashes>"]`
 - `Workspace` = `["https://app.notion.com/p/<workspace_page_id-without-dashes>"]`
   (names confirmed against the live schema in Step 0)
 - `Status` = `"AI Review"` (created by an automation; the PM confirms)
 - `Knowledge Base` = KB relation (optional, the page named in `{config.email_routing.knowledge_base}`, or none)
-- Icon = 🔴 if the last author is NOT in that project's `team_emails`, otherwise none
+- Icon:
+  - 🔴 if the last author is NOT in that project's `team_emails`
+  - 📤 if EVERY message in the thread is outgoing (we sent it, no reply yet).
+    This is the record that the email was actually sent (reports, invoices,
+    documentation packages, escalations).
+  - otherwise none
 - `Description` = SHORT preview ONLY, e.g.
   `\[N msgs\] from <latest sender>: <first ~200 chars of latest body>`.
+  For outgoing-only threads prefix with `\[Sent, no reply yet\]`.
   This is a one-line index hint. It is NOT the archive and must never be the
   only place the message text lives.
 
@@ -257,7 +315,7 @@ Write the page content with this structure:
 
 ### 1 - <subject of message 1>
 **From:** <from>
-**Date:** <date>
+**Date:** <date_utc>
 **To:** <to>          (include line only if present)
 **Cc:** <cc>          (include line only if present)
 
@@ -273,9 +331,10 @@ Write the page content with this structure:
 
 Rules for the body:
 - One numbered block per message, oldest first.
-- If a forwarded message embeds an earlier email inline (quoted header + body)
-  and no separate JSON exists for it, reconstruct that earlier email as its own
-  numbered block using the quoted header (From/To/Cc/Subject/Date).
+- If a message embeds an earlier email inline (quoted header + body) and no
+  separate JSON exists for it, reconstruct that earlier email as its own
+  numbered block using the quoted header (From/To/Cc/Subject/Date). This is how
+  our own original is recovered when only the client's reply was exported.
 - Preserve sender names and addresses.
 - Strip image placeholder glyphs and signatures' tracking pixels; keep the
   human-written text.
@@ -284,13 +343,15 @@ Rules for the body:
 
 #### 4c. Check existing (dedup / append)
 
-Query Threads DB, filter by `Thread Name` (normalized subject).
+Query Threads DB, filter by `Thread Name` (normalized subject) AND `Project`.
 - Not found -> create the page (4a + 4b).
-- Found and `Last Reply Date` unchanged -> skip.
-- Found and a NEW reply arrived -> APPEND the new message block(s) to the page
-  body, and update `Last Reply Date`, `Email Link`, and `Description`. Do not
-  overwrite the existing body; do not change `Status` if it is already
-  `Replied`, `Closed`, or `Spectator Mode`.
+- Found and every message is already in the body (same From + Date) -> skip.
+- Found and a NEW message arrived (reply, or our own outgoing message) -> APPEND
+  the new message block(s) to the page body in chronological position, and update
+  `Last Reply Date`, `Email Link`, `Description` and the icon. Do not overwrite the
+  existing body; do not change `Status` if it is already `Replied`, `Closed`, or
+  `Spectator Mode`. A late-arriving older message goes into its chronological
+  place and does not move `Last Reply Date` backwards.
 
 ### Step 5 - Move to processed
 
@@ -299,16 +360,18 @@ ACCOUNT="Account_Name"
 MSGID="safe_message_id"
 mkdir -p "~~home-folder/work/Mail/$ACCOUNT/processed/"
 mkdir -p "~~home-folder/work/Mail/$ACCOUNT/processed-eml/"
-mv "~~home-folder/work/Mail/$ACCOUNT/incoming/$MSGID.json" \
+mv -n "~~home-folder/work/Mail/$ACCOUNT/incoming/$MSGID.json" \
    "~~home-folder/work/Mail/$ACCOUNT/processed/$MSGID.json"
-mv "~~home-folder/work/Mail/$ACCOUNT/incoming-eml/$MSGID.eml" \
+mv -n "~~home-folder/work/Mail/$ACCOUNT/incoming-eml/$MSGID.eml" \
    "~~home-folder/work/Mail/$ACCOUNT/processed-eml/$MSGID.eml"
 ```
 
-Also move unmatched and skipped emails to processed (they are processed,
-just not written to Notion). The `processed/` JSON + `processed-eml/` EML are
-the durable source of truth: if a page body is ever lost, it can be rebuilt
-from these files (backfill).
+Move unmatched and skipped emails to processed too (they are processed, just not
+written to Notion). Do it in one local script, not file by file. Only move a
+matched email AFTER its Notion write succeeded; on a Notion error leave it in
+`incoming/` so the next run retries it. The `processed/` JSON + `processed-eml/`
+EML are the durable source of truth: if a page body is ever lost, it can be
+rebuilt from these files (backfill).
 
 ### Step 6 - Update scan marker
 
@@ -316,16 +379,22 @@ from these files (backfill).
 touch ~~home-folder/work/Mail/.last_cowork_scan
 ```
 
+Informational only (when Cowork last ran). It is never used to select files.
+
 ### Step 7 - Print summary
 
 ```
-Джерела: Mail buffer OK ({N} accounts) · Notion OK · configs OK ({M} active)
+Джерела: Mail buffer OK ({N} accounts) · Collector OK · Notion OK · configs OK ({M} active)
 Done. Processed X emails from Mac Mail buffer:
-- {Project}: A (created: B, updated: C, skipped: D)
+- {Project}: A (created: B, updated: C, skipped: D; outgoing: E; late: F)
 - Unmatched: I (moved to processed)
 - Noise/calendar: J (filtered out)
-- Errors: K
+- Errors: K (left in incoming/ for retry)
+- Collector health: <OK | Mail.app closed since ... | SENT ERROR ...>
 ```
+
+`Collector` in the header is `STALE` when Mail.app has been closed for a long stretch
+and `FAILED` on `SENT ERROR` or `FAILED` lines in the log.
 
 ---
 
@@ -346,9 +415,10 @@ Do not copy addresses into this skill. An inline address list here is a regressi
 
 ## Safety
 
-- This skill only READS from the buffer folder on disk
+- This skill only READS from the buffer folder on disk and moves files between
+  its subfolders
 - It NEVER interacts with Mail.app directly
-- It NEVER sends emails
+- It NEVER sends emails (outgoing mail is only archived, never re-sent)
 - It NEVER deletes originals (only moves to processed/)
 - EML files are preserved as archive in processed-eml/
 - The full message text always lives in the Notion page BODY, never only in a

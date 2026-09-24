@@ -165,9 +165,11 @@ active configs and builds the registry in memory; no collector keeps its own
 address table.
 
 Derived, never maintained by hand: an address is **shared** when it appears in
-`client_emails` of two or more active configs. A thread belongs to a project only
-when a `unique_emails` entry or a `unique_domains` suffix matches. Noise and
-calendar filters are engine logic and stay in `mac-mail-collector`.
+`client_emails` of two or more active configs (archived configs do not count). A
+thread belongs to a project only when a `unique_emails` entry, a `unique_domains`
+suffix or a non-shared `client_emails` address matches; the `mac_mail_accounts`
+folder is a fallback for incoming mail only, never for outgoing. Noise and calendar
+filters are engine logic and stay in `mac-mail-collector`.
 
 ## Notion relation property names (unified 2026-09-08)
 
@@ -188,6 +190,13 @@ skill creates a missing select option on first write (Notion allows it).
 If a live schema ever diverges from this paragraph, the live schema wins: fetch
 the data source before the first write of a run, write with the real name, and
 report the discrepancy so this file is fixed the same day.
+
+Rows are always created inside the database: `notion-create-pages` with
+`parent = {"type": "data_source_id", "data_source_id": "<id from the config>"}`.
+Without that parent Notion silently drops every property and creates a private,
+untitled page outside the database. After the write, fetch the page once and check
+that its ancestor is the database and the title and relations are filled; fix it
+before reporting it as saved.
 
 ## JQL Isolation Validator - MANDATORY (all modes, including debugging)
 
