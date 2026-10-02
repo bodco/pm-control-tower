@@ -287,14 +287,20 @@ chronologically.
 - `Project` = `["https://app.notion.com/p/<project_page_id-without-dashes>"]`
 - `Workspace` = `["https://app.notion.com/p/<workspace_page_id-without-dashes>"]`
   (names confirmed against the live schema in Step 0)
-- `Status` = `"AI Review"` (created by an automation; the PM confirms)
+- `Status` = computed from the thread content using the **canonical status table in
+  `../projects/_standards.md` section 11**. That table is the single source of truth
+  for Threads DB statuses across every source, Email included, so do not keep a second
+  copy of the rules here. `AI Review` is only for a thread the rules genuinely cannot
+  classify; it is NOT the default on create. Sender side for those rules: a sender in
+  that project's `team_emails` is internal, anyone else is external.
 - `Knowledge Base` = KB relation (optional, the page named in `{config.email_routing.knowledge_base}`, or none)
-- Icon:
-  - 🔴 if the last author is NOT in that project's `team_emails`
+- Icon = derived from the computed `Status` via the same table in section 11, with ONE
+  Email-specific override:
   - 📤 if EVERY message in the thread is outgoing (we sent it, no reply yet).
     This is the record that the email was actually sent (reports, invoices,
-    documentation packages, escalations).
-  - otherwise none
+    documentation packages, escalations), and it outranks the status icon because
+    "sent, nobody answered" is the fact worth seeing at a glance.
+  - otherwise the status icon, and no icon at all when `Status` = `Closed`.
 - `Description` = SHORT preview ONLY, e.g.
   `\[N msgs\] from <latest sender>: <first ~200 chars of latest body>`.
   For outgoing-only threads prefix with `\[Sent, no reply yet\]`.
@@ -348,10 +354,15 @@ Query Threads DB, filter by `Thread Name` (normalized subject) AND `Project`.
 - Found and every message is already in the body (same From + Date) -> skip.
 - Found and a NEW message arrived (reply, or our own outgoing message) -> APPEND
   the new message block(s) to the page body in chronological position, and update
-  `Last Reply Date`, `Email Link`, `Description` and the icon. Do not overwrite the
-  existing body; do not change `Status` if it is already `Replied`, `Closed`, or
-  `Spectator Mode`. A late-arriving older message goes into its chronological
-  place and does not move `Last Reply Date` backwards.
+  `Last Reply Date`, `Email Link` and `Description`. Do not overwrite the existing
+  body. A late-arriving older message goes into its chronological place and does
+  not move `Last Reply Date` backwards.
+  **`Status` and the icon are always recomputed from the thread as it now stands**,
+  including when `Last Reply Date` did not move. There are no immutable statuses:
+  `Replied`, `Closed` and `Spectator Mode` used to be treated as final, which left
+  rows stuck on a stale status long after the thread had moved on. The collector owns
+  these two fields; a status a human set by hand is overwritten too, so if a human
+  decision has to stick, it belongs in the body or in `Description`, not in `Status`.
 
 ### Step 5 - Move to processed
 

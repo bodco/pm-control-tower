@@ -52,7 +52,7 @@ Type legend: **E** = engine (core, project-agnostic, reads the registry), **P** 
 
 | Skill | Type | What it does | Triggers | Schedule |
 |---|---|---|---|---|
-| `slack-collector` | E | The project's Slack channels for a period to the Threads DB with automatic status classification, a red icon, a 14-day review pass, gap analysis. Modes from the config (`slack_access`): `mcp` (the Claude connector), `mcp_local` (the PM's own local MCP server), `chrome` (reading the web UI, last resort), `none` | "collect Acme slack for the week", "collect slack" | daily 07:05 via `acme-daily-slack-sync` |
+| `slack-collector` | E | The project's Slack channels for a period to the Threads DB with a status and an icon from `projects/_standards.md` section 11 (recomputed on every pass), a review pass over every non-Closed thread with no date window, gap analysis. Modes from the config (`slack_access`): `mcp` (the Claude connector), `mcp_local` (the PM's own local MCP server), `chrome` (reading the web UI, last resort), `none` | "collect Acme slack for the week", "collect slack" | daily 07:05 via `acme-daily-slack-sync` |
 | `mac-mail-collector` | E | Reads the buffer `~/work/Mail/<account>/incoming/` (AppleScript + LaunchAgent export new incoming and sent mail from Mail.app every 15 min as JSON + EML, `fix_recipients.py` fills `to`/`cc` and `date_utc`), processes everything that sits in `incoming/`, filters out noise and calendar invites, routes by project (outgoing mail by recipients only), writes to Threads (sent mail with no reply gets the 📤 icon), moves items to `processed/` only after a successful write, reports the collector state | "check the mail", "process the mail" | daily 09:12 |
 | `signal-desktop` | X | Reading/sending in Signal Desktop via computer use | "read signal" | on-demand |
 
@@ -92,7 +92,7 @@ The practical consequence for Slack, **resolved**: the Claude connector holds on
 | `project-lifecycle` | E | Modes: kickoff (config, Notion anchors, Charter, first decision, tech start, config registration), handover-in (KT with evidence, baseline, undocumented promises), health-check (8 RAG areas with evidence), team-onboarding/offboarding, closure / transition to support | on-demand + monthly health check (the 2nd) |
 | `client-satisfaction-tracker` | E | Client sentiment from Slack/Gmail/transcripts with cultural calibration (Culture Map, individual profiles, 4 signal levels, 6 cultural patterns) | 1st and 15th of the month |
 | `thread-ticket-sync` | E | Two-phase: threads without tickets in the client's Notion, then turning selected threads into tasks (individual / consolidated) | on-demand |
-| `inbox-responder` | E | Awaiting Reply threads to a category, context (Sentry, logs, Jira, Topics), a reply draft in the thread's language, Inbox Review | daily after the mail run |
+| `inbox-responder` | E | Open threads without a draft (Need Follow-up, Awaiting Reply, AI Review) to a category, context (Sentry, logs, Jira, Topics), a reply draft in the thread's language, Inbox Review; never writes Status or the icon | daily after the mail run |
 
 ### 5. Tracker and monitoring management
 

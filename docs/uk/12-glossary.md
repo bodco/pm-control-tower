@@ -24,8 +24,8 @@
 | **Downgrader multiplier** | Коефіцієнт серйозності для непрямих формулювань клієнта |
 | **Threads** | База вхідних комунікацій (Slack, Email, Other) зі статусами |
 | **Awaiting Reply / Need Follow-up / Spectator Mode / Replied / Closed / AI Review** | Статуси тредів |
-| **AI Review** | Статус у Threads, Tasks Tracker, Inbox і Risks: запис потребує ревʼю агентом (у старій схемі називався `Claude`) |
-| **Червона крапка (🔴)** | Іконка треду, де останній автор не з нашої команди |
+| **AI Review** | У Threads: правила колектора не вирішили статус, потрібне око людини (не дефолт і не маркер черги). У Tasks Tracker, Inbox і Risks: запис створено або оновлено автоматикою, людина підтверджує. У старій схемі називався `Claude` |
+| **Червона крапка (🔴)** | Іконка треду зі статусом Need Follow-up: відкрита дія на нашому боці (`projects/_standards.md` розділ 11) |
 | **Topics** | База наскрізних тем через мітинги і треди |
 | **Decisions DB / Decision Log** | Журнал рішень; джерело constraints для брифів |
 | **Reports DB** | Архів усіх згенерованих звітів з Type, Skill, Visibility |

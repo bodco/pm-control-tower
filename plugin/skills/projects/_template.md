@@ -153,8 +153,9 @@ All databases use the same names: `Project` and `Workspace` (singular, no emoji)
 Cross-relations have no emoji either: `Meetings`, `Threads`, `Topics`, `Knowledge Base`,
 `Tasks Tracker`, `Inbox`. Values are always a JSON array of page URLs:
 `["https://app.notion.com/p/<id-without-dashes>"]`.
-Status values written by skills: `AI Review` (created or updated by an automation, a human
-should confirm) in Threads, Topics and Risks; Topics progress lives in the status property
+Threads `Status` and icon follow `_standards.md` section 11 (computed by the collectors on
+every run). In Topics and Risks skills write `AI Review` (created or updated by an
+automation, a human should confirm); Topics progress lives in the status property
 `Progress`. If a live schema ever diverges from this paragraph, the live schema wins: fetch the
 data source, write with the real name, and fix this file the same day.
 
@@ -226,7 +227,7 @@ email_routing:
   unique_emails:        # occur ONLY on this project; matching goes by these
     - {email}
   unique_domains: []    # if the whole client organisation is on one domain, e.g. client.com
-  team_emails:          # ours, for the 🔴 icon when the last author is not ours
+  team_emails:          # ours: sender side for the Threads status rules (_standards.md section 11)
     - {email}
   knowledge_base: none  # name of a KB page with address lists, or none
 ```

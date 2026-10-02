@@ -5,7 +5,7 @@ This document describes what a real day, week and month look like once the autop
 ## The day
 
 ### Before 09:00 (autopilot, no human involved)
-- 07:05 Yesterday's Slack in Threads, with statuses. Threads whose last author is not one of us are marked with a red dot.
+- 07:05 Yesterday's Slack in Threads, with statuses and icons from `projects/_standards.md` section 11: 🔴 means the ball is on our side.
 - 09:01 The daily work report: what happened yesterday (calendar, meetings, threads, Jira movement, Slack) and the plan for today. In the Reports DB and locally.
 - 09:12 Mail from Mail.app into Threads; inbox-responder drafts replies to everything that is waiting on us.
 - The project's Current State is updated for the last 2 days.
@@ -13,7 +13,7 @@ This document describes what a real day, week and month look like once the autop
 ### 09:00-09:30 The morning ritual (high energy, 15-30 min)
 1. Open CONTROL TOWER.
 2. Today's Reports: read the daily-work-report. This replaces "go through everything by hand".
-3. Awaiting Reply: review the inbox-responder drafts. Three actions per thread: send it (with your own edits), turn it into a ticket (`jira-management` or thread-ticket-sync), or defer it with Need Follow-up.
+3. Open threads with inbox-responder drafts. Three actions per thread: send it (with your own edits), turn it into a ticket (`jira-management` or thread-ticket-sync), or defer it by writing the decision into the page body or `Description`. Do not change Status by hand: the next collector pass moves it by the reply.
 4. Inbox: process it in 2 min (Route / delete).
 5. Today / This Week + Overdue: pick the top 3 for the day. This is a menu, not a contract. Here you see the whole load together: both projects, company matters, personal. If today's total Effort level does not fit into the day, something gets moved before the day starts rather than at 19:00.
 6. Red signals: new Sentry errors from the prep, critical risks, deadlines. If something is on fire, `acme-debug` or `sentry-assistant` in a single sentence.

@@ -101,7 +101,7 @@ Create scheduled tasks with IDs taken from the config (Meetings Schedule → ID 
 
 | Order | Task | Schedule | Prompt (abbreviated) |
 |---|---|---|---|
-| 1 | `<slug>-daily-slack-sync` | daily 07:0x | slack-collector for yesterday for <Project>, auto-classify, 14-day review |
+| 1 | `<slug>-daily-slack-sync` | daily 07:0x | slack-collector for yesterday for <Project>, auto-classify, review pass |
 | 2 | `daily-team-prep` (shared, if there is one internal sync) or `<slug>-team-prep` | working days, 55 min before the sync | daily-team-prep for <Project> |
 | 3 | prep tasks for each client meeting | 55 min before each one | client-meeting-prep type <X> for <Project> |
 | 4 | `weekly-overview` (shared across all projects) | Mon 08:0x | already exists, picks up the new project automatically |

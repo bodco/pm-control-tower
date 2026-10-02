@@ -52,7 +52,7 @@ Workspace, Project; повний текст у тілі сторінки.
 
 | Скіл | Тип | Що робить | Тригери | Розклад |
 |---|---|---|---|---|
-| `slack-collector` | E | Slack-канали проєкту за період → Threads DB з авто-класифікацією статусу, червоною іконкою, 14-денним review pass, gap-аналізом. Режими з конфігу (`slack_access`): `mcp` (конектор Claude), `mcp_local` (власний локальний MCP-сервер), `chrome` (читання веб-UI, резерв), `none` | "збери слак Acme за тиждень", "collect slack" | щодня 07:05 через `acme-daily-slack-sync` |
+| `slack-collector` | E | Slack-канали проєкту за період → Threads DB зі статусом та іконкою за `projects/_standards.md` розділ 11 (перераховуються на кожному проході), review pass по всіх non-Closed тредах без вікна дат, gap-аналізом. Режими з конфігу (`slack_access`): `mcp` (конектор Claude), `mcp_local` (власний локальний MCP-сервер), `chrome` (читання веб-UI, резерв), `none` | "збери слак Acme за тиждень", "collect slack" | щодня 07:05 через `acme-daily-slack-sync` |
 | `mac-mail-collector` | E | Читає буфер `~/work/Mail/<account>/incoming/` (AppleScript + LaunchAgent експортують нові вхідні і відправлені листи з Mail.app кожні 15 хв як JSON + EML, `fix_recipients.py` дописує `to`/`cc` і `date_utc`), обробляє все, що лежить в `incoming/`, фільтрує шум і календарні інвайти, роутить по проєктах (вихідні лише за отримувачами), пише у Threads (відправлені без відповіді з іконкою 📤), переносить у `processed/` лише після успішного запису, показує стан колектора | "перевір пошту", "обробити пошту" | щодня 09:12 |
 | `signal-desktop` | X | Читання/надсилання у Signal Desktop через computer use | "прочитай сигнал" | on-demand |
 
@@ -92,7 +92,7 @@ Workspace, Project; повний текст у тілі сторінки.
 | `project-lifecycle` | E | Режими kickoff (конфіг, Notion-якорі, Charter, перше рішення, tech start, реєстрація конфігу), handover-in (KT з доказами, baseline, незадокументовані обіцянки), health-check (8 областей RAG з доказами), team-onboarding/offboarding, closure / перехід у саппорт | on-demand + щомісячний health check (2-ге число) |
 | `client-satisfaction-tracker` | E | Настрій клієнта зі Slack/Gmail/транскриптів з культурною калібровкою (Culture Map, індивідуальні профілі, 4 рівні сигналів, 6 культурних патернів) | 1-ше і 15-те число |
 | `thread-ticket-sync` | E | Двофазний: треди без тікетів у клієнтському Notion → перетворення обраних тредів на задачі (individual / consolidated) | on-demand |
-| `inbox-responder` | E | Треди Awaiting Reply → категорія, контекст (Sentry, логи, Jira, Topics), драфт відповіді мовою треду, Inbox Review | щодня після пошти |
+| `inbox-responder` | E | Відкриті треди без драфту (Need Follow-up, Awaiting Reply, AI Review) → категорія, контекст (Sentry, логи, Jira, Topics), драфт відповіді мовою треду, Inbox Review; Status та іконку не пише | щодня після пошти |
 
 ### 5. Управління трекером і моніторингом
 

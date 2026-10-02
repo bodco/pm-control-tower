@@ -181,9 +181,12 @@ Values are always a JSON array of page URLs in the form
 (`Projects`, `Workspaces`, `🏛️ Workspaces`, emoji-prefixed names) is gone; a
 skill body that still uses those names is stale.
 
-Status values written by automations: `AI Review` (Threads, Topics, Risks: the
-item was created or updated by a skill and a human should confirm it; the
-template's "AI Review Queue" view filters on it). Topics progress is the status
+Threads `Status` and page icon: computed by the collectors from the thread content
+on every run, by the canonical table in `_standards.md` section 11 (the only copy;
+skills and docs point there). In Threads `AI Review` means "the rules could not
+decide, a human has to look", never a default or a queue marker. Topics and Risks:
+`AI Review` = the item was created or updated by a skill and a human should confirm
+it; the template's "AI Review Queue" view filters on it. Topics progress is the status
 property `Progress`. Reports `Type` and `Skill`, Tasks Tracker `Source`: the
 skill creates a missing select option on first write (Notion allows it).
 
@@ -331,7 +334,7 @@ their own template without editing a skill.
 | File | Purpose |
 |------|---------|
 | `<your-project>.md` | Your project config. Copy `_template.md`, rename it to your project slug and fill it in. One file per project |
-| `_standards.md` | Cross-project PM standards (machine version of the Notion PM Toolkit): metrics, profiles, agendas, reader rule, document minimum, RAID, decisions |
+| `_standards.md` | Cross-project PM standards (machine version of the Notion PM Toolkit): metrics, profiles, agendas, reader rule, document minimum, RAID, decisions, Threads DB statuses and icons (section 11) |
 | `_template.md` | Blank template for adding a new project |
 | `_templates.md` | House registry of document templates: keys, built-in formats, where each document is saved, resolution order |
 

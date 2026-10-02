@@ -30,7 +30,7 @@
 ### Щоденні
 | Час | Task ID | Що робить |
 |---|---|---|
-| 07:05 щодня | **хмарна Routine `Acme daily Slack sync`** (замінила локальну `acme-daily-slack-sync`) | `slack-collector` за вчора і сьогодні з перекриттям, авто-класифікація, 14-денний review pass. Причина переносу: локальний промпт кликав неіснуючий `acme-slack-collector` і збій не діагностувався з хмари. Кроки 2 (JSON) і 4 (Jira) свідомо пропущені в хмарному промпті: немає диска і немає локального Jira MCP |
+| 07:05 щодня | **хмарна Routine `Acme daily Slack sync`** (замінила локальну `acme-daily-slack-sync`) | `slack-collector` за вчора і сьогодні з перекриттям, авто-класифікація, review pass по всіх non-Closed тредах. Причина переносу: локальний промпт кликав неіснуючий `acme-slack-collector` і збій не діагностувався з хмари. Кроки 2 (JSON) і 4 (Jira) свідомо пропущені в хмарному промпті: немає диска і немає локального Jira MCP |
 | ~09:15 щодня (06:15 UTC) | **хмарна Routine `Acme threads -> Jira tickets`**  | Черга (не часове вікно): бере треди з `Jira Sync` порожнім або `Error`, трирівнева перевірка дублів (журнал Notion → якір Slack-permalink у Jira description → смисловий пошук), максимум 10 тредів за прогін, старі треди у беклог на ручне підтвердження. Покриває те, що `slack-collector` Step 4 не може зробити в хмарі |
 | 09:01 Пн-Пт | `daily-work-report` | Щоденний робочий звіт українською (календар, мітинги, треди, Jira, Slack; вчора + план на сьогодні) → Reports DB + `~/work/Daily Reports/` |
 | 09:12 щодня | `daily-process-mail-0910` | `mac-mail-collector` → `inbox-responder` |

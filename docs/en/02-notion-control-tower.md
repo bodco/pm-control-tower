@@ -46,23 +46,23 @@ Inbound communications from every channel. One page = one thread.
 |---|---|---|
 | `Thread Name` | title | the thread subject |
 | `Type` | multi_select | Email, Slack, Signal, Zoom, Other |
-| `Status` | select | `Spectator Mode` (does not concern us, we watch), `Awaiting Reply` (they are waiting for us), `Replied`, `Need Follow-up` (we are waiting for them, a reminder is due), `Closed`, `AI Review` (created or updated by an automation, a human should confirm; the template has an AI Review Queue view) |
+| `Status` | select | `Closed`, `Need Follow-up`, `Awaiting Reply`, `Replied`, `Spectator Mode`, `AI Review`. Meanings, rules and the matching icons live in one place: `projects/_standards.md` section 11. Only the collector writes it |
 | `Category` | select | set by inbox-responder: Error/Bug, Data Question, Scope Change, Blocker, Status Update, FYI |
 | `Context Sources` | multi_select | Sentry, AWS Logs, Jira Board, Topics DB, Knowledge Base, LLM Only (what inbox-responder used) |
 | `Draft Response` | text | a draft reply in the language of the thread |
 | `Description` | text | a short preview; the full text only in the page body |
 | `Email Link`, `Slack Link` | url | links to the source |
 | `Reported at` | date | the first message |
-| `Last Reply Date` | date | the last comment (updated by the 14-day review pass) |
+| `Last Reply Date` | date | the last comment (updated by the collector and its review pass) |
 | `Jira Key`, `Jira Sync`, `Jira Sync Checked` | text, select, date | the link to a ticket: key, sync state (Created, Matched, Skipped (info), Rejected by PM, Error), check date; maintained by `slack-collector` Step 4 or a cloud threads-to-tickets task |
 | `Follow-Up Check` | formula | an "all good" checkbox; unchecked = a follow-up is needed |
 | `ID` | auto-increment | |
 | `Project`, `Workspace` | relation | mandatory |
 | `Topics`, `Knowledge Base`, `Tasks Tracker`, `Inbox` | relation | links to the other databases |
-| Page icon | 🔴 or empty | a red dot if the last author is not from our team (this is the page icon, not a property) |
+| Page icon | by status | set by the status, not by the last author (`projects/_standards.md` section 11; for Email 📤 when every message is outgoing with no reply). This is the page icon, not a property |
 | Page body | blocks | the full thread text in 2000-character blocks |
 
-The status classification rules live in `slack-collector` (Step 3), `AI Review` is set only when the confidence of the rule is < 70%. Once a day the 14-day review pass re-reads non-Closed threads, appends new comments and reclassifies the status.
+The status and icon table lives only in `projects/_standards.md` section 11; skills and docs point to it. The collectors (`slack-collector`, `mac-mail-collector`) recompute `Status` and the icon on every pass, even when `Last Reply Date` did not move; no status is immutable, so a human decision that has to stick goes into the page body or `Description`. The `slack-collector` review pass (Step 3B) re-reads every non-Closed Slack thread of the project daily, with no date window. `inbox-responder` never writes the status or the icon.
 
 ### 💬 Meetings
 Written by Notion AI Meeting Notes (transcript + summary + action items). Then `notion-meeting-topics` appends a bilingual report to the same page.

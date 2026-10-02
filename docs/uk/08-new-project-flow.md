@@ -101,7 +101,7 @@
 
 | Порядок | Task | Розклад | Промпт (скорочено) |
 |---|---|---|---|
-| 1 | `<slug>-daily-slack-sync` | щодня 07:0x | slack-collector за вчора для <Project>, auto-classify, 14-day review |
+| 1 | `<slug>-daily-slack-sync` | щодня 07:0x | slack-collector за вчора для <Project>, auto-classify, review pass |
 | 2 | `daily-team-prep` (спільний, якщо один внутрішній синк) або `<slug>-team-prep` | робочі дні за 55 хв до синку | daily-team-prep для <Project> |
 | 3 | prep-задачі під кожен клієнтський мітинг | за 55 хв до кожного | client-meeting-prep тип <X> для <Project> |
 | 4 | `weekly-overview` (спільний для всіх проєктів) | Пн 08:0x | вже існує, підхоплює новий проєкт автоматично |

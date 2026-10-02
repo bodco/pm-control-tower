@@ -46,23 +46,23 @@ Notion тут - не вікі і не сховище документів, а с
 |---|---|---|
 | `Thread Name` | title | тема треду |
 | `Type` | multi_select | Email, Slack, Signal, Zoom, Other |
-| `Status` | select | `Spectator Mode` (нас не стосується, спостерігаємо), `Awaiting Reply` (чекають нас), `Replied`, `Need Follow-up` (ми чекаємо їх, треба нагадати), `Closed`, `AI Review` (створено або оновлено автоматикою, людина має підтвердити; у шаблоні є вʼюшка AI Review Queue) |
+| `Status` | select | `Closed`, `Need Follow-up`, `Awaiting Reply`, `Replied`, `Spectator Mode`, `AI Review`. Значення, правила і відповідні іконки описані в одному місці: `projects/_standards.md` розділ 11. Пише тільки колектор |
 | `Category` | select | ставить inbox-responder: Error/Bug, Data Question, Scope Change, Blocker, Status Update, FYI |
 | `Context Sources` | multi_select | Sentry, AWS Logs, Jira Board, Topics DB, Knowledge Base, LLM Only (що використав inbox-responder) |
 | `Draft Response` | text | чернетка відповіді мовою треду |
 | `Description` | text | короткий прев'ю; повний текст тільки у тілі сторінки |
 | `Email Link`, `Slack Link` | url | посилання на джерело |
 | `Reported at` | date | перше повідомлення |
-| `Last Reply Date` | date | останній коментар (оновлює 14-денний review pass) |
+| `Last Reply Date` | date | останній коментар (оновлює колектор і його review pass) |
 | `Jira Key`, `Jira Sync`, `Jira Sync Checked` | text, select, date | звʼязок з тікетом: ключ, стан синхронізації (Created, Matched, Skipped (info), Rejected by PM, Error), дата перевірки; веде `slack-collector` Step 4 або хмарна задача треди → тікети |
 | `Follow-Up Check` | formula | галочка "все ок"; знята галочка = потрібен follow-up |
 | `ID` | auto-increment | |
 | `Project`, `Workspace` | relation | обов'язково |
 | `Topics`, `Knowledge Base`, `Tasks Tracker`, `Inbox` | relation | зв'язки з іншими базами |
-| Іконка сторінки | 🔴 або порожньо | червона крапка, якщо останній автор не з нашої команди (це іконка сторінки, не властивість) |
+| Іконка сторінки | за статусом | визначається статусом, а не останнім автором (`projects/_standards.md` розділ 11; для Email 📤, коли всі листи вихідні і без відповіді). Це іконка сторінки, не властивість |
 | Тіло сторінки | блоки | повний текст треду блоками по 2000 символів |
 
-Правила класифікації статусу живуть у `slack-collector` (Step 3), `AI Review` ставиться тільки коли впевненість правила < 70%. Раз на день 14-денний review pass перечитує non-Closed треди, дописує нові коментарі, перекласифіковує статус.
+Таблиця статусів та іконок живе тільки в `projects/_standards.md` розділ 11, скіли й документи посилаються на неї. Колектори (`slack-collector`, `mac-mail-collector`) перераховують `Status` і іконку на кожному проході, навіть коли `Last Reply Date` не змінився; незмінних статусів немає, тому рішення людини, яке мусить триматись, пишуть у тіло сторінки або в `Description`. Review pass у `slack-collector` (Step 3B) щодня перечитує всі non-Closed Slack-треди проєкту без вікна дат. `inbox-responder` статус і іконку не пише.
 
 ### 💬 Meetings
 Пишуться Notion AI Meeting Notes (транскрипт + summary + action items). Далі `notion-meeting-topics` дописує на ту ж сторінку двомовний звіт.

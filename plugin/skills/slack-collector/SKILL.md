@@ -12,7 +12,7 @@ description: "Collects Slack channel/thread messages into the project's Notion T
 1. Determine the project from the user's request. If the project is NOT explicitly named, do not guess and do not default: ask the user which project (list the configs in `projects/`). See the Default Project Rule in projects/SKILL.md.
 2. Read the project config `../projects/{project_slug}.md` relative to this skill's folder (the `projects` skill folder sits next to this one). If the relative read fails, locate it with Glob: `**/projects/{project_slug}.md` under the skills directory. (Legacy note: `_projects/` no longer exists.)
 3. All values below marked as `{config.xxx}` come from the config file. Where the config carries the same information as a markdown table rather than a scalar value (the team roster, the Labels Taxonomy), this skill says so explicitly and reads the table - it does not invent a fake key for it.
-4. Read `../projects/SKILL.md` for the cross-cutting rules (Default Project Rule, JQL Isolation Validator, Data Completeness header, the 5-minute rule).
+4. Read `../projects/SKILL.md` for the cross-cutting rules (Default Project Rule, JQL Isolation Validator, Data Completeness header, the 5-minute rule) and `../projects/_standards.md` section 11, the canonical Threads DB status and icon table this skill writes by.
 5. Check `{config.task_tracker.api_access}` right after this step: Step 4 writes tickets, so when it is `false` (or `{config.task_tracker.type}` is `none`), Step 4 produces the ticket text as a draft in the channel summary instead of writing, and the summary says so.
 
 If the config file doesn't exist, tell the user: "Project config not found. Available projects: [list files in projects/]"
@@ -154,9 +154,13 @@ If file does not exist: create with `[]`.
 
 For each collected message:
 
-**Determine icon:**
-- `last_author` NOT in the project's internal team roster (the "Team - Internal" table in the project config, matched against Name and Jira Username columns) → `icon = "🔴"`
-- `last_author` IS in the internal team roster → `icon = null`
+**Determine `author_side` (an input to the status rules, not an output of its own):**
+- `last_author` IS in the project's internal team roster (the "Team - Internal" table in the project config, matched against Name and Jira Username columns, plus the "Former Members" table: someone who has left is still OUR side historically) → `author_side = internal`
+- otherwise → `author_side = external`
+
+**Determine Status - always computed from the thread content, never carried over.** Read the whole thread and apply the canonical status table in `../projects/_standards.md` section 11, first matching rule top to bottom. That table is the single source of truth for every Threads DB source (`mac-mail-collector` uses the same one); do not keep a copy of it here. `author_side` informs the rules (an external last author with an unanswered ask means `Need Follow-up`, our own last message with a pending question to them means `Awaiting Reply`) but it does NOT set the status by itself and it never sets the icon. `AI Review` is only for a thread the rules genuinely cannot decide; it is not the default on create.
+
+**Determine icon - from the computed Status, nothing else,** via the same table in section 11. A `Closed` thread never carries 🔴, whoever wrote the last message.
 
 **Check if record exists:**
 Fetch the Threads data source (`{config.notion.threads_db}`) and filter (or `notion-query-data-sources` when the plan allows). Match by the `archives/{CHANNEL}/p{ts}` tail of `slack_link`, ignoring the host - a workspace rename changes the permalink host (e.g. a workspace can be renamed) but old Notion records keep the old host, and Slack redirects from old hosts anyway. Comparing the full URL string breaks deduplication silently after any workspace rename.
@@ -171,7 +175,7 @@ Properties:
 - Type (multi_select): `["Slack"]`
 - Project (relation): `["https://app.notion.com/p/{config.notion.project_page_id without dashes}"]`
 - Workspace (relation): `["https://app.notion.com/p/{config.notion.workspace_page_id without dashes}"]`
-- Status: `AI Review` (reserved for items created or updated by automations; the PM changes it after confirming)
+- Status: as computed above (`AI Review` only when the rules genuinely cannot decide)
 - Knowledge Base (relation): the page for `message.knowledge_base`, if one exists
 - Icon: as determined above
 
@@ -204,9 +208,31 @@ Example for a 3500-char comment:
 
 This rule applies to BOTH `main_message.text` and each `comment.text`.
 
-**If FOUND → compare Last Reply Date:**
-- Equal (to the minute) → **skip**
-- Different → **update:** set Last Reply Date, recalculate icon, fully rewrite page content
+**If FOUND → reconcile the row with the thread as just read.** Three things are decided independently; do NOT gate the second and third on the first:
+
+1. **Last Reply Date** - set it if it differs from the thread's real last reply (compare to the minute).
+2. **Status and icon** - **always** recompute them from the thread content and write them if they differ from what the row holds. This happens on every pass, including when `Last Reply Date` did not move: a thread can be resolved by the very reply that is already recorded, so a row can sit on `Need Follow-up` long after the work shipped and the client confirmed. There are no immutable statuses (`_standards.md` section 11): a status set by hand is overwritten too.
+3. **Page body** - rewrite it only when the set of messages actually changed (new replies, or edited text). An unchanged body is left alone: a pointless rewrite burns calls and churns the page's edit history.
+
+Log the result per message as one of: `created`, `updated (date)`, `updated (status)`, `updated (date+status)`, `skipped (no change)`.
+
+### Step 3B - Review pass over non-Closed threads
+
+*(Runs once per invocation, after Step 3 has finished every channel. This is the safety net for threads whose parent message is older than the collection window: Step 1 only picks up top-level messages inside the window, so a thread started weeks ago that got a new reply yesterday is invisible to it. Without this pass that reply is never recorded.)*
+
+**Scope: every row in the Threads DB with this project's `Project` relation, `Type` = `Slack`, and `Status` not `Closed`. No date window.**
+
+Do not filter the scope by `Last Reply Date`. That filter is circular: the field is exactly the one that goes stale, so a row whose stored date is old (precisely the row with unrecorded replies) excludes itself from the pass that would fix it. Rows with an empty `Status` count as non-Closed and are in scope.
+
+Low-traffic projects have a handful of such rows, so re-reading all of them is cheap. If a project grows past ~60 non-Closed Slack threads, read the oldest `Last Reply Date` first and say in the summary how many were left for the next run, rather than narrowing by date.
+
+For each row in scope:
+
+1. Parse `channel_id` + `message_ts` out of `Slack Link` (`/archives/{CHANNEL_ID}/p{ts}` → strip the `p`, insert a `.` six digits from the end).
+2. Re-read the thread with the project's `slack_access` method (Step 1A, 1B or 1C).
+3. Rebuild the message object, then reconcile exactly as in the **If FOUND** branch of Step 3: date if it moved, Status and icon always, body only if the messages changed.
+
+A thread that this pass sets to `Closed` is reported, so the PM can see what was auto-closed and on what evidence.
 
 ### Step 4 - Sync to the tracker (the Jira MCP server from `{config.jira.mcp_write}`, default `jira`)
 
@@ -308,9 +334,19 @@ The summary opens with the Data Completeness header from `projects/SKILL.md` (on
 Джерела: Slack OK · Notion OK · Jira SKIPPED (api_access: false)
 ✅ #{channel_name} ({START_DATE} - {END_DATE}):
 - Notion Created: X | Updated: Y | Skipped: Z
-- Flagged 🔴: W
+- Flagged 🔴 (Need Follow-up): W
 - Jira Created: A | Matched: B | Skipped (info): C | Drafts: D | Unavailable: E
 - Errors: F
 ```
 
-Move to next channel. After all channels - print combined total (it opens with the same header line).
+If a channel had no new messages in the window, say so in one line rather than printing nothing: an empty day is normal on a low-traffic channel, and silence reads like a broken run.
+
+Move to next channel. After all channels - print combined total (it opens with the same header line), then the review pass:
+
+```
+🔁 Review pass (non-Closed Slack threads of the project):
+- Checked: N | Date updated: A | Status updated: B | Unchanged: C | Left for next run: L | Errors: E
+- Auto-closed: [thread name - one line of evidence, per thread]
+```
+
+The `Auto-closed` list is never collapsed into a count: a wrong auto-close is the one mistake in this pass the PM cannot see any other way.

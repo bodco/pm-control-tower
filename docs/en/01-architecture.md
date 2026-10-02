@@ -164,10 +164,10 @@ Needed when Notion accumulates a history that Claude cannot re-read in a single 
 ## Data flows: three end-to-end examples
 
 ### Example A. A client's Slack message becomes a ticket
-1. 07:05 `acme-daily-slack-sync` invokes `slack-collector` for yesterday: new threads in the Threads DB with a status (Closed / Spectator Mode / Awaiting Reply / Need Follow-up / Replied), and a red icon if the last author is not from our team.
-2. The same run does a 14-day review pass over the non-Closed threads (new comments, reclassification) and a gap analysis of "threads without tickets".
-3. 09:12 `daily-process-mail-0910` collects the mail, then `inbox-responder` takes the Awaiting Reply threads, classifies them, pulls in context (Sentry, logs, Jira, Topics), and writes a draft reply into the thread and onto the Inbox Review page.
-4. In the morning the PM opens the Control Tower: Awaiting Reply with drafts, and decides what to send and what to turn into a ticket (`jira-management` or `thread-ticket-sync`).
+1. 07:05 `acme-daily-slack-sync` invokes `slack-collector` for yesterday: new threads in the Threads DB with a status and an icon from the table in `projects/_standards.md` section 11 (🔴 = an open action on our side).
+2. The same run does a review pass over every non-Closed Slack thread of the project, with no date window (new comments, status and icon recomputed), and a gap analysis of "threads without tickets".
+3. 09:12 `daily-process-mail-0910` collects the mail, then `inbox-responder` takes the open threads without a draft (Need Follow-up, Awaiting Reply, AI Review), classifies them, pulls in context (Sentry, logs, Jira, Topics), and writes a draft reply into the thread and onto the Inbox Review page.
+4. In the morning the PM opens the Control Tower: open threads with drafts, and decides what to send and what to turn into a ticket (`jira-management` or `thread-ticket-sync`).
 
 ### Example B. A client meeting on Tuesday
 1. 16:02 `tuesday-client-prep` invokes `client-meeting-prep` for the "Status Sync" type from the config: Jira for the week, threads, risks from the Risks DB, open questions from previous meetings.

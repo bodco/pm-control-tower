@@ -21,8 +21,8 @@ the thread's project - never apply one project's credentials or context to anoth
 project's thread.
 
 Writes allowed without asking (the 5-minute rule): updating the thread's `Category`,
-`Context Sources`, `Draft Response` and `Status`, appending to the Inbox Review page.
-Nothing is ever sent.
+`Context Sources` and `Draft Response`, appending to the Inbox Review page. Nothing is
+ever sent, and `Status` and the page icon are never written (see Step 5).
 
 **Secrets.** Tokens are not stored in configs. The config gives the variable name and
 the file; read the value at runtime and never print it anywhere:
@@ -46,20 +46,28 @@ List everything skipped in the Step 7 summary so the gap is visible.
 ## Step 1 - Fetch unprocessed threads
 
 Query Threads DB for threads that need processing:
-- Status = "AI Review" AND Draft Response is empty (fresh threads - the collectors create pages with Status "AI Review")
-- OR Status = "Awaiting Reply" AND Draft Response is empty (manually triaged)
-- OR Status = "Need Follow-up" AND Draft Response is empty
+- `Draft Response` is empty AND `Status` is one of `Need Follow-up`, `Awaiting Reply`,
+  `AI Review`
 - Sorted by Reported at DESC
 - Limit: 20 threads max per run
 
-Pipeline: collectors create (Status "AI Review") -> this skill classifies + drafts (Status
-stays "AI Review") -> the PM sends and manually sets "Replied".
+Those three statuses are exactly the threads with something still open (meanings in
+`../projects/_standards.md` section 11). Do NOT key the queue off `AI Review` alone: the
+collectors do not stamp it on every new row, they compute a real status from the thread
+content, and `AI Review` means only "the rules could not classify this one". A queue
+built on it would see almost nothing.
+
+Pipeline: the collectors create the row and own `Status` and the icon, recomputing both
+from the thread on every run -> this skill classifies and fills `Category`,
+`Context Sources` and `Draft Response`, and touches nothing else -> the PM sends the
+reply in Slack or email -> the next collector pass sees that reply and moves the status
+by itself. Nothing in this pipeline is set by hand.
 
 Use Notion MCP: fetch the Threads data source (`notion-fetch` on
 `{config.notion.threads_db}`) and filter, or `notion-query-data-sources` when the plan
 allows it:
 ```
-Status in ("AI Review", "Awaiting Reply", "Need Follow-up") AND Draft Response is empty
+Status in ("Need Follow-up", "Awaiting Reply", "AI Review") AND Draft Response is empty
 ```
 Use the property names the fetched schema reports; if they differ from this skill, use
 the real ones and report the discrepancy.
@@ -134,8 +142,8 @@ Set `Category` and determine which context sources to consult.
 
 ### For FYI threads
 - No draft needed
-- Set Draft Response = "(FYI - no reply needed)"
-- Set Status = "AI Review" (processed)
+- Set Draft Response = "(FYI - no reply needed)" (that is the whole write: `Status`
+  stays as the collector set it)
 - Move to Step 5
 
 ### For all other threads
@@ -177,12 +185,16 @@ For each thread, update the Notion page with:
 Category: <classified category>
 Context Sources: [<list of sources actually consulted>]
 Draft Response: <generated draft>
-Status: "AI Review"
 ```
 
 Use Notion MCP: notion-update-page for each thread URL.
 
-**Important:** Do NOT change the Status if it was already "Replied", "Closed", or "Spectator Mode" - those are final states and should not be overwritten.
+**Important: never write `Status` or the page icon from this skill.** Those two fields
+are owned by the collectors, which recompute them from the thread content on every run
+(`_standards.md` section 11). Writing `Status` here would be overwritten on the next
+collector pass anyway, and in the meantime it hides the real state of the thread. Having
+a draft is not a state of the thread, it is a state of `Draft Response`, and that field
+already says it.
 
 ## Step 6 - Append to Inbox Review page
 
@@ -253,7 +265,10 @@ Inbox Review updated: <link to the Inbox Review page>
 ## Notes
 
 - This skill runs best AFTER `slack-collector` and `mac-mail-collector` have completed
-- The "AI Review" status in Threads DB marks items created or updated by automations that a human should confirm
-- Threads already in "Replied", "Closed", or "Spectator Mode" are never touched
-- After you send a draft: manually change Status from "AI Review" to "Replied" in Threads DB
+- The "AI Review" status in Threads DB means the collector's rules could not classify
+  the thread, so it needs a human eye. It is not a queue marker for this skill and is
+  not reserved for it
+- This skill never writes `Status`: the collectors own it and recompute it every run
+- After you send a draft there is nothing to set by hand: the next collector pass reads
+  the reply in the thread and moves the status itself
 - Scheduled trigger phrase for Cowork: `inbox-responder`

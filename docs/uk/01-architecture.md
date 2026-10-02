@@ -164,10 +164,10 @@ Cowork дає Claude: файлові інструменти, bash-пісочни
 ## Потоки даних: три наскрізні приклади
 
 ### Приклад А. Slack-повідомлення клієнта стає тікетом
-1. 07:05 `acme-daily-slack-sync` викликає `slack-collector` за вчора: нові треди у Threads DB зі статусом (Closed / Spectator Mode / Awaiting Reply / Need Follow-up / Replied), червона іконка, якщо останній автор не з нашої команди.
-2. Той же запуск робить 14-денний review pass по non-Closed тредах (нові коментарі, перекласифікація) і gap-аналіз "треди без тікетів".
-3. 09:12 `daily-process-mail-0910` збирає пошту, потім `inbox-responder` бере треди Awaiting Reply, класифікує, підтягує контекст (Sentry, логи, Jira, Topics), пише драфт відповіді у тред і на сторінку Inbox Review.
-4. Вранці ПМ відкриває Control Tower: Awaiting Reply з драфтами, вирішує, що відправити, що перетворити на тікет (`jira-management` або `thread-ticket-sync`).
+1. 07:05 `acme-daily-slack-sync` викликає `slack-collector` за вчора: нові треди у Threads DB зі статусом та іконкою за таблицею з `projects/_standards.md` розділ 11 (🔴 = відкрита дія на нашому боці).
+2. Той же запуск робить review pass по всіх non-Closed Slack-тредах проєкту без вікна дат (нові коментарі, перерахунок статусу й іконки) і gap-аналіз "треди без тікетів".
+3. 09:12 `daily-process-mail-0910` збирає пошту, потім `inbox-responder` бере відкриті треди без драфту (Need Follow-up, Awaiting Reply, AI Review), класифікує, підтягує контекст (Sentry, логи, Jira, Topics), пише драфт відповіді у тред і на сторінку Inbox Review.
+4. Вранці ПМ відкриває Control Tower: відкриті треди з драфтами, вирішує, що відправити, що перетворити на тікет (`jira-management` або `thread-ticket-sync`).
 
 ### Приклад Б. Клієнтський мітинг у вівторок
 1. 16:02 `tuesday-client-prep` викликає `client-meeting-prep` для типу "Status Sync" з конфігу: Jira за тиждень, треди, ризики з Risks DB, відкриті питання з попередніх мітингів.

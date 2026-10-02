@@ -87,7 +87,8 @@ Reports DB. If something is missing, the skill tells you what exactly, and does
 not invent it for you.
 
 Then, one at a time: `collect Slack for <project> for the last week` (check the
-Threads database: relations, statuses, the red icon), `weekly overview for
+Threads database: relations, statuses and icons per `projects/_standards.md`
+section 11), `weekly overview for
 <project>` (check that the report landed with the right Project and Workspace).
 Every glitch is a config fix first, a skill fix second.
 
