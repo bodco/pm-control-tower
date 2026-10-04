@@ -36,9 +36,11 @@ Inside, one variable per line, no quotes:
 JIRA_TOKEN=
 JIRA_EMAIL=
 CONFLUENCE_TOKEN=
+BITBUCKET_TOKEN=
 ```
 
-You issue the tokens yourself, in your own Jira and Confluence profile. The
+You issue the tokens yourself, in your own Jira and Confluence profile (and, only for the optional `bitbucket`
+server, a read-only personal access token in your Bitbucket profile). The
 plugin holds no secret value at all, only the variable names and the command
 that reads them.
 
@@ -56,7 +58,7 @@ prompt (Notion must be able to see the CONTROL TOWER page). The full list of
 placeholders and where to get each value is in `CONNECTORS.md`. If the flow
 does not start, edit `.mcp.json` and `skills/projects/_template.md` by hand.
 
-The Jira MCP server is third-party code you clone yourself (see
+The Jira MCP server (and the optional Bitbucket one) is third-party code you clone yourself (see
 `CONNECTORS.md`). After that, **restart Claude Desktop**: local MCP servers read
 the secrets file once at startup, and without a restart the new values are not
 picked up.

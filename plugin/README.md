@@ -69,7 +69,7 @@ by anyone except the author. Expect rough edges and report them.
   means a different stack, a different tracker, a different architecture. Skills
   like that get written on site.
 - **Code of third-party MCP servers.** The configuration is here, but the Jira
-  server code itself has to be cloned separately.
+  and Bitbucket server code itself has to be cloned separately.
 
 ## Important compatibility warning
 

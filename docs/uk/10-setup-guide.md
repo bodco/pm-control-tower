@@ -24,6 +24,7 @@
 | Slack (додатковий воркспейс) | локальний MCP-сервер (`slack-workspace2`), конфіг у Claude Desktop | коли офіційний конектор зайнятий іншим воркспейсом; токен читається з `Secrets/secrets.env` через `sh -c`, у JSON немає секрету |
 | Jira Server / Data Center | локальний MCP-сервер: у `.mcp.json` плагіна він називається `jira`, у конфігу проєкту імена задаються у `jira.mcp_write` / `jira.mcp_read` (автор тримає два сервери: один на запис, один на читання) | на Jira Server 7.x запис повертає косметичну помилку JSON, оновлення проходять; Jira Cloud - офіційний Atlassian MCP; токени читаються з `Secrets/secrets.env` через `sh -c`. Другий сервер лишений свідомо як резервний |
 | Confluence Server | локальний MCP-сервер (`confluence` у `.mcp.json` плагіна), конфіг у Claude Desktop | працює; URL `wiki.your-company.com` після міграції домену; токен читається з `Secrets/secrets.env` через `sh -c` |
+| Bitbucket Server / Data Center (опційно) | локальний MCP-сервер (`bitbucket` у `.mcp.json` плагіна, збирається з `n11techhub/mcp-bitbucket`), конфіг у Claude Desktop | personal access token лише на читання, читається з `Secrets/secrets.env` через `sh -c`; жоден скіл плагіна його ще не використовує |
 | Control Chrome | локальний MCP-сервер, окремо від конектора Claude in Chrome | керування вкладками реального Chrome на Маку, без токена |
 | Sentry | не MCP: REST API з токеном у конфігу (project:read, event:read, team:read) | self-hosted і SaaS однаково |
 | CloudWatch / інші логи | експорт у папку на диску; Claude читає файли | без прямого AWS-доступу з Cowork |
@@ -80,7 +81,7 @@
 | Azure DevOps / Linear / ClickUp з API | потрібен MCP або REST через скіл; двигуни залишаються, змінюється Step "Data Sources" | не зроблено | середньо |
 | Будь-який трекер клієнта **без API** (Jira Cloud, Linear, Trello, Asana, Monday, клієнтський Notion за SSO/MDM) | `task_tracker.api_access: false` у конфігу; джерела: ручний експорт CSV у `~/work/<slug>/exports/`, браузер (Chrome-скіл за зразком `<portal>-export`), action items з Meeting Notes, пошта. Двигуни працюють у режимі деградації | ключі у `_template.md`, перевірка `api_access` у 14 двигунах; гілка `false` наживо ще не проганялась | середньо; це найчастіший випадок в аутсорсі |
 | Sentry SaaS / Datadog | Sentry так само REST; Datadog - REST зі своїм токеном, треба адаптувати `stability-scan` | частково | середньо |
-| GitHub / GitLab / Bitbucket | локальні клони працюють однаково; PR-ревʼю через API або локальний diff | готово для локального режиму | легко |
+| GitHub / GitLab / Bitbucket | локальні клони працюють однаково; PR-ревʼю через API або локальний diff; для Bitbucket Server / Data Center є ще опційний локальний MCP `bitbucket` (`plugin/CONNECTORS.md`) | готово для локального режиму | легко |
 | Google Docs замість docx | `client-report` генерує docx; для Docs - через Drive-конектор | не зроблено | легко |
 
 ## Типові помилки при розгортанні
@@ -120,7 +121,7 @@
 
 1. **`dist/pm-control-tower.plugin`.** Колега надсилає його собі в чат Claude і
    натискає кнопку встановлення. Усередині 21 знеособлений скіл, `.mcp.json` з
-   блоками Jira і Confluence (без значень секретів), `SETUP.md`, `CONNECTORS.md`.
+   блоками Jira, Confluence і Bitbucket (без значень секретів), `SETUP.md`, `CONNECTORS.md`.
 2. **Посилання на публічний шаблон Notion.** Колега дублює його собі.
 3. **`plugin/templates/secrets.env.example`** (їде всередині плагіна): куди класти
    файл секретів і які змінні заповнити.

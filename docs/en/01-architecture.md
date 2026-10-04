@@ -90,6 +90,7 @@ Everything that information comes from. Two categories:
 | Google Calendar | events for the day (for the daily report) | read |
 | Jira (`jira`, local MCP; shipped in the plugin's `.mcp.json`) | search/get/create/update/transition/comment/attachment; the server name comes from the config's `jira.mcp_write` / `jira.mcp_read` | read + write |
 | Confluence (`confluence`, local MCP) | CQL search, reading, creating, comments, attachments | read + write; works after the domain migration, the token is read from `secrets.env` (`13` #43) |
+| Bitbucket Server (`bitbucket`, local MCP, optional) | pull requests, diffs, file content, branches, review activity | read; a read-only token also blocks merge and approve; no skill of the plugin uses it yet |
 | Control Chrome (local MCP) | controlling tabs in the real Chrome on the Mac (separate from the Claude in Chrome connector) | read + write under supervision |
 | Sentry | REST API directly, with a token from the config (not MCP) | read + status changes |
 | Chrome / built-in browser | automation where there is no API: clinical-trial portals, the client's Notion, Jira REST via JS | read + write under supervision |

@@ -10,7 +10,7 @@ A skill you start by hand saves time. A skill that starts by itself and puts the
 |---|---|---|
 | Where it runs | Claude Desktop on the Mac (the Mac has to be on and the app running) | a cloud container, no Mac needed |
 | Access to Mac files | yes, directly | only through the bridge, if the Mac is online |
-| Local MCP (jira (two servers), notion REST, confluence) | yes | through the bridge |
+| Local MCP (jira (two servers), notion REST, confluence, bitbucket) | yes | through the bridge |
 | Cloud connectors (Slack, Notion, Gmail, Calendar) | yes | yes |
 | Where it is defined | the folder `~/Documents/Claude/Scheduled/<task-id>/SKILL.md` (the prompt) + the schedule in the app | `create_trigger` / `list_triggers` through the Claude_Code_Remote MCP |
 | What is there right now (the author's instance) | 17 local tasks on Acme | 6: Automation Health Check (monthly), Monthly Memory Digest (monthly), Client Satisfaction (the 1st), **Project Health Check** (the 2nd), **Acme daily Slack sync** (daily at 07:05 Kyiv), **Acme threads -> Jira tickets** (daily at ~09:15 Kyiv) |

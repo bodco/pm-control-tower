@@ -13,6 +13,13 @@
         "-c",
         "JIRA_API_TOKEN=$(grep '^JIRA_TOKEN=' ~~home-folder/work/Secrets/secrets.env | cut -d= -f2-) JIRA_USER_EMAIL=$(grep '^JIRA_EMAIL=' ~~home-folder/work/Secrets/secrets.env | cut -d= -f2-) JIRA_BASE_URL=~~jira-base-url JIRA_TYPE=server JIRA_AUTH_TYPE=basic exec node ~~jira-mcp-path/build/index.js"
       ]
+    },
+    "bitbucket": {
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "BITBUCKET_TOKEN=$(grep '^BITBUCKET_TOKEN=' ~~home-folder/work/Secrets/secrets.env | cut -d= -f2-) BITBUCKET_URL=~~bitbucket-base-url exec node ~~bitbucket-mcp-path/dist/index.js"
+      ]
     }
   }
 }

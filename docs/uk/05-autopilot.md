@@ -10,7 +10,7 @@
 |---|---|---|
 | Де виконується | Claude Desktop на Mac (потрібен увімкнений Mac і застосунок) | хмарний контейнер, Mac не потрібен |
 | Доступ до файлів Mac | так, напряму | тільки через bridge, якщо Mac онлайн |
-| Локальні MCP (jira (два сервери), notion REST, confluence) | так | через bridge |
+| Локальні MCP (jira (два сервери), notion REST, confluence, bitbucket) | так | через bridge |
 | Хмарні конектори (Slack, Notion, Gmail, Calendar) | так | так |
 | Де визначено | папка `~/Documents/Claude/Scheduled/<task-id>/SKILL.md` (промпт) + розклад у застосунку | `create_trigger` / `list_triggers` через MCP Claude_Code_Remote |
 | Що там зараз (інстанція автора) | 17 локальних задач по Acme | 6: Automation Health Check (місячно), Monthly Memory Digest (місячно), Client Satisfaction (1-ше), **Project Health Check** (2-ге), **Acme daily Slack sync** (щодня 07:05 Київ), **Acme threads -> Jira tickets** (щодня ~09:15 Київ) |

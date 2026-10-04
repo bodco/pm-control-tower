@@ -24,6 +24,7 @@ For a PM who wants to reproduce the framework. Time estimate: the basic loop in 
 | Slack (additional workspace) | a local MCP server (`slack-workspace2`), configured in Claude Desktop | for when the official connector is taken by another workspace; the token is read from `Secrets/secrets.env` via `sh -c`, there is no secret in the JSON |
 | Jira Server / Data Center | a local MCP server: in the plugin's `.mcp.json` it is called `jira`, in the project config the names go into `jira.mcp_write` / `jira.mcp_read` (the author keeps two servers: one for writing, one for reading) | on Jira Server 7.x a write returns a cosmetic JSON error, the updates do go through; Jira Cloud is the official Atlassian MCP; tokens are read from `Secrets/secrets.env` via `sh -c`. Two connectors were kept deliberately: one is a backup |
 | Confluence Server | a local MCP server (`confluence` in the plugin's `.mcp.json`), configured in Claude Desktop | works; the URL is `wiki.your-company.com` after the domain migration; the token is read from `Secrets/secrets.env` via `sh -c` |
+| Bitbucket Server / Data Center (optional) | a local MCP server (`bitbucket` in the plugin's `.mcp.json`, built from `n11techhub/mcp-bitbucket`), configured in Claude Desktop | a read-only personal access token, read from `Secrets/secrets.env` via `sh -c`; no skill of the plugin uses it yet |
 | Control Chrome | a local MCP server, separate from the Claude in Chrome connector | controls tabs in the real Chrome on the Mac, no token |
 | Sentry | not MCP: the REST API with a token in the config (project:read, event:read, team:read) | self-hosted and SaaS behave the same |
 | CloudWatch / other logs | export into a folder on disk; Claude reads the files | without direct AWS access from Cowork |
@@ -80,7 +81,7 @@ The first two weeks: 10 minutes every morning in the CONTROL TOWER, following th
 | Azure DevOps / Linear / ClickUp with an API | needs an MCP or REST through a skill; the engines stay, the "Data Sources" step changes | not done | medium |
 | Any client tracker **without an API** (Jira Cloud, Linear, Trello, Asana, Monday, a client Notion behind SSO/MDM) | `task_tracker.api_access: false` in the config; sources: manual CSV export into `~/work/<slug>/exports/`, the browser (a Chrome skill modeled on `<portal>-export`), action items from Meeting Notes, email. The engines work in degraded mode | the keys are in `_template.md` and the `api_access` check is in 14 engines; the `false` branch has not been run live yet | medium; this is the most common case in outsourcing |
 | Sentry SaaS / Datadog | Sentry is REST in the same way; Datadog is REST with its own token, `stability-scan` needs adapting | partly | medium |
-| GitHub / GitLab / Bitbucket | local clones work the same; PR review through the API or a local diff | ready for local mode | easy |
+| GitHub / GitLab / Bitbucket | local clones work the same; PR review through the API or a local diff; Bitbucket Server / Data Center also has the optional local `bitbucket` MCP (`plugin/CONNECTORS.md`) | ready for local mode | easy |
 | Google Docs instead of docx | `client-report` generates docx; for Docs, go through the Drive connector | not done | easy |
 
 ## Common mistakes during rollout
@@ -120,7 +121,7 @@ assemble by hand. It is obsolete: the skills now travel as one bundle.
 
 1. **`dist/pm-control-tower.plugin`.** The colleague sends it to themselves in a Claude chat and
    presses the install button. Inside are 21 anonymized skills, an `.mcp.json` with
-   the Jira and Confluence blocks (without secret values), `SETUP.md`, `CONNECTORS.md`.
+   the Jira, Confluence and Bitbucket blocks (without secret values), `SETUP.md`, `CONNECTORS.md`.
 2. **A link to the public Notion template.** The colleague duplicates it for themselves.
 3. **`plugin/templates/secrets.env.example`** (travels inside the plugin): where to put
    the secrets file and which variables to fill in.

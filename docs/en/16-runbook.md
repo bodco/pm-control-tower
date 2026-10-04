@@ -48,10 +48,11 @@ What Claude does: finds the database IDs in your Notion and puts them into the p
 
 If the Notion MCP cannot see the databases, press **Share** on the CONTROL TOWER page in Notion and give the Claude integration access.
 
-### Step 5. Secrets and Jira (5-10 min, by hand, only for Jira Server / Confluence)
+### Step 5. Secrets and Jira (5-10 min, by hand, only for Jira Server / Confluence / Bitbucket Server)
 
 1. Open `~/work/Secrets/secrets.env` and paste the tokens. Claude does not see them and must not.
 2. Jira Server: clone the Jira MCP server into the folder Claude named in step 4 (see `plugin/CONNECTORS.md`). You can also say "clone and build the jira MCP server into ~/work/tools" if the network allows.
+   Bitbucket Server (optional, only if your own skills should read pull requests): clone and build `n11techhub/mcp-bitbucket` the same way and put a read-only personal access token into `BITBUCKET_TOKEN`.
 3. **Restart Claude Desktop.** Local MCP servers read the secrets only at startup.
 
 ### Step 6. Global instructions (2 min, by hand)

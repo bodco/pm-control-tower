@@ -17,7 +17,7 @@ cd plugin && zip -qr ../dist/pm-control-tower.plugin . -x "*.DS_Store" && cd ..
 
 21 проєктно-агностичний скіл, знеособлений: без імен клієнтів, без імен людей,
 без реальних ID баз Notion, без локальних шляхів. Плюс `.mcp.json` з блоками
-Jira і Confluence (без значень секретів), `SETUP.md`, `CONNECTORS.md`, `README.md`.
+Jira, Confluence і Bitbucket (без значень секретів), `SETUP.md`, `CONNECTORS.md`, `README.md`.
 
 ## Головне попередження
 

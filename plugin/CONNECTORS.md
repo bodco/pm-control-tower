@@ -25,6 +25,8 @@ start, open the files listed below and replace the placeholders by hand.)
 | `~~jira-base-url` | `.mcp.json` | the URL of your Jira Server | e.g. `https://jira.your-company.com` |
 | `~~jira-mcp-path` | `.mcp.json` | where the local Jira MCP server is cloned | see below |
 | `~~confluence-base-url` | `.mcp.json` | the URL of your Confluence | e.g. `https://wiki.your-company.com` |
+| `~~bitbucket-base-url` | `.mcp.json` | the URL of your Bitbucket Server (optional) | e.g. `https://bitbucket.your-company.com` |
+| `~~bitbucket-mcp-path` | `.mcp.json` | where the local Bitbucket MCP server is cloned and built (optional) | see below |
 | `~~org` | `mac-mail-collector` | the LaunchAgent name prefix for the mail exporter | `com.ivan.mail-collector.plist` |
 
 Everything project-specific (project and workspace page IDs, Sentry, Slack
@@ -33,8 +35,8 @@ your `projects/<slug>.md`, copied from `projects/_template.md`.
 
 ## MCP servers included
 
-The plugin ships a `.mcp.json` with two servers for shared company
-infrastructure. There are no secrets in it: the command reads the values from
+The plugin ships a `.mcp.json` with three servers for shared company
+infrastructure (Bitbucket is optional). There are no secrets in it: the command reads the values from
 your `secrets.env`.
 
 **Jira** (server name `jira`) needs one manual step: clone a Jira MCP server
@@ -53,6 +55,22 @@ can use the official Atlassian connector instead.
 (`brew install uv`), which runs `mcp-atlassian`, and a token in
 `CONFLUENCE_TOKEN`. No skill in this release writes to Confluence yet; the
 server is here for ad-hoc search and for the use cases listed in the docs.
+
+**Bitbucket Server** (server name `bitbucket`, optional) reads pull requests, diffs,
+file content, branches and review activity from a self-hosted Bitbucket Server or
+Data Center. No skill in this release uses it, so skip it unless you want your own
+code-review skills to read pull requests. It needs one manual step: clone and build
+`n11techhub/mcp-bitbucket` (`git clone`, `npm install`, `npm run build`) and
+substitute that folder for `~~bitbucket-mcp-path`; the entry point is
+`dist/index.js`. Do not run `npx mcp-bitbucket`: that npm name belongs to a different,
+unrelated package. The server signs in with a personal access token only (Profile,
+Manage account, Personal access tokens), read from `BITBUCKET_TOKEN`. Give the token
+read-only rights (Projects: Read, Repositories: Read) and nothing can be merged,
+approved or declined through it. Two limits seen on Bitbucket Server 5.16: code
+search (`bitbucket_search_content`) returns an error because the search endpoint is
+missing, and the full diff of a large pull request can exceed the output limit of one
+tool call, so read big diffs file by file. There is no tool that lists pull requests:
+the PR number has to come from you or from a ticket.
 
 ## Official connectors
 

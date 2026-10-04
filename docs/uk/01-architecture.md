@@ -90,6 +90,7 @@
 | Google Calendar | події за день (для щоденного звіту) | read |
 | Jira (`jira`, локальний MCP; у плагіні `.mcp.json`) | search/get/create/update/transition/comment/attachment; імʼя сервера у конфігу `jira.mcp_write` / `jira.mcp_read` | read + write |
 | Confluence (`confluence`, локальний MCP) | CQL-пошук, читання, створення, коментарі, вкладення | read + write; працює після міграції домену, токен читається з `secrets.env` (`13` #43) |
+| Bitbucket Server (`bitbucket`, локальний MCP, опційно) | pull request, diff, вміст файлів, гілки, активність ревʼю | read; токен лише на читання блокує і merge та approve; жоден скіл плагіна його ще не використовує |
 | Control Chrome (локальний MCP) | керування вкладками реального Chrome на Маку (окремо від Claude in Chrome конектора) | read + write під наглядом |
 | Sentry | REST API напряму з токеном з конфігу (не MCP) | read + зміна статусів |
 | Chrome / built-in browser | автоматизація там, де немає API: портали клінічних досліджень, клієнтський Notion, Jira REST через JS | read + write під наглядом |

@@ -24,6 +24,8 @@ Notion, ні твоїх шляхів, тому всі такі місця поз
 | `~~jira-base-url` | `.mcp.json` | URL твого Jira Server | напр. `https://jira.your-company.com` |
 | `~~jira-mcp-path` | `.mcp.json` | куди склонований локальний MCP-сервер Jira | див. нижче |
 | `~~confluence-base-url` | `.mcp.json` | URL твого Confluence | напр. `https://wiki.your-company.com` |
+| `~~bitbucket-base-url` | `.mcp.json` | URL твого Bitbucket Server (опційно) | напр. `https://bitbucket.your-company.com` |
+| `~~bitbucket-mcp-path` | `.mcp.json` | куди склонований і зібраний локальний MCP-сервер Bitbucket (опційно) | див. нижче |
 | `~~org` | `mac-mail-collector` | префікс імені LaunchAgent для експортера пошти | `com.ivan.mail-collector.plist` |
 
 Усе проєктне (ID сторінок проєкту і воркспейсу, Sentry, канали Slack, борд клієнта,
@@ -32,7 +34,7 @@ Notion, ні твоїх шляхів, тому всі такі місця поз
 
 ## MCP-сервери в комплекті
 
-У плагіні є `.mcp.json` з двома серверами під спільну інфраструктуру компанії.
+У плагіні є `.mcp.json` з трьома серверами під спільну інфраструктуру компанії (Bitbucket опційний).
 Секретів там немає: команда читає значення з твого `secrets.env`.
 
 **Jira** (сервер `jira`) потребує одного кроку руками: склонувати MCP-сервер Jira
@@ -50,6 +52,21 @@ Jira Cloud є офіційний конектор Atlassian.
 (`brew install uv`), який запускає `mcp-atlassian`, і токен у `CONFLUENCE_TOKEN`.
 Жоден скіл цього випуску ще не пише у Confluence; сервер тут для пошуку на вимогу
 і для сценаріїв, описаних у документації.
+
+**Bitbucket Server** (сервер `bitbucket`, опційно) читає pull request, diff, вміст
+файлів, гілки та активність ревʼю зі self-hosted Bitbucket Server або Data Center.
+Жоден скіл цього випуску його не використовує, тож пропусти, якщо не плануєш власних
+скілів код-ревʼю, які читають PR. Потрібен один крок руками: склонувати і зібрати
+`n11techhub/mcp-bitbucket` (`git clone`, `npm install`, `npm run build`) і підставити
+цю папку замість `~~bitbucket-mcp-path`; точка входу `dist/index.js`. Не запускай
+`npx mcp-bitbucket`: ця назва в npm належить іншому, не повʼязаному з цим пакету. Сервер входить
+лише за personal access token (Profile, Manage account, Personal access tokens), який
+читається з `BITBUCKET_TOKEN`. Дай токену права тільки на читання (Projects: Read,
+Repositories: Read), і через нього не можна ні змерджити, ні схвалити, ні відхилити PR.
+Два обмеження, бачені на Bitbucket Server 5.16: пошук по коду
+(`bitbucket_search_content`) повертає помилку, бо немає endpoint пошуку, а повний diff
+великого PR може перевищити ліміт виводу одного виклику, тому великі diff читай по
+файлах. Інструмента зі списком PR немає: номер PR треба взяти від себе або з тікета.
 
 ## Офіційні конектори
 

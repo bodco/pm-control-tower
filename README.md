@@ -99,8 +99,8 @@ exactly one in the system.
 - **Secrets.** No values, anywhere. Only variable names and the command that reads them.
 - **Client-specific adapters.** A different project means a different stack and tracker.
   Those skills are written in place.
-- **Third-party MCP server code.** The configuration travels, the Jira server itself
-  you clone yourself.
+- **Third-party MCP server code.** The configuration travels, the Jira and Bitbucket
+  servers themselves you clone yourself.
 
 ---
 
@@ -118,6 +118,7 @@ weeks of calibration for your own project, not an hour.
 | 1.2.0 | 2026-09-23 | Custom document templates: a template key for every document, the house registry `projects/_templates.md`, the `pm_profile.templates` block in the config, the "Document templates" rule in `projects/SKILL.md`, a **Template** line in 18 skills, the `template-check` mode of `project-lifecycle`, document `15` with the document catalog; step-by-step document `16` (setup from scratch and a new project through kickoff) and a global instructions template |
 | 1.3.0 | 2026-09-24 | Mail and sync prep from live use: `mac-mail-collector` collects Sent mail (a separate AppleScript, outgoing threads with the 📤 icon, routing by recipients only), fills `to`/`cc` and `date_utc` from the EML (`fix_recipients.py`), processes everything in `incoming/` instead of filtering by a time marker, keeps an optional `backlog/`, reports collector health, moves a file only after a successful Notion write; routing counts non-shared `client_emails`. `daily-team-prep`: sync time from the PM, then the calendar, then the config; window from the calendar when the previous prep is older than 7 days; Sentry `statsPeriod` 24h/14d with new vs recurring issues; idle assignees rule; "points for discussion" section; Reports rows created with a data source parent and verified after saving (now a rule in `projects/SKILL.md`). Document `10a` updated for Sent and `fix_recipients.py`, lesson 23 in `11` |
 | 1.4.0 | 2026-10-02 | Threads DB status and icon rules from live use: one canonical table in `projects/_standards.md` section 11, every skill and document points there. Collectors recompute `Status` and the icon on every pass, not only when `Last Reply Date` moved (rows used to sit on `Need Follow-up` for months after the work shipped and the client confirmed). The `slack-collector` review pass (new Step 3B) covers every non-Closed Slack thread of the project with no date window: filtering by `Last Reply Date` was circular, a row with unrecorded replies excluded itself. The icon follows the status, not the last author (closed threads no longer carry 🔴, the flagged count is honest); Email keeps the 📤 override. No immutable statuses; only collectors write `Status` and the icon, `inbox-responder` reads them and queues `Need Follow-up`, `Awaiting Reply` and `AI Review` rows without a draft. The meanings of `Awaiting Reply` and `Need Follow-up` in document `02` were inverted and are fixed |
+| 1.5.0 | 2026-10-03 | Optional `bitbucket` MCP server for a self-hosted Bitbucket Server / Data Center: a block in `.mcp.json` (placeholders `~~bitbucket-base-url`, `~~bitbucket-mcp-path`), `BITBUCKET_TOKEN` in the secrets template, a section in `CONNECTORS.md` (clone and build `n11techhub/mcp-bitbucket`, token only, read-only rights recommended; no skill of the plugin uses it yet), rows in documents `01`, `05`, `10` and `16`. Skills are unchanged |
 
 Open questions and the technical backlog: `docs/en/13-open-questions.md`.
 

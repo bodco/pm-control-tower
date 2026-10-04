@@ -16,8 +16,8 @@ cd plugin && zip -qr ../dist/pm-control-tower.plugin . -x "*.DS_Store" && cd ..
 ## What is inside
 
 21 project-agnostic skills, anonymized: no client names, no people's names, no
-real Notion database IDs, no local paths. Plus `.mcp.json` with the Jira and
-Confluence blocks (without secret values), `SETUP.md`, `CONNECTORS.md`, `README.md`.
+real Notion database IDs, no local paths. Plus `.mcp.json` with the Jira,
+Confluence and Bitbucket blocks (without secret values), `SETUP.md`, `CONNECTORS.md`, `README.md`.
 
 ## The main warning
 

@@ -48,10 +48,11 @@ Claude Desktop → Cowork → новий таск → **Add folder** → виб�
 
 Якщо Notion MCP не бачить бази, у Notion натисни **Share** на сторінці CONTROL TOWER і дай доступ інтеграції Claude.
 
-### Крок 5. Секрети і Jira (5-10 хв, руками, лише якщо Jira Server / Confluence)
+### Крок 5. Секрети і Jira (5-10 хв, руками, лише якщо Jira Server / Confluence / Bitbucket Server)
 
 1. Відкрий `~/work/Secrets/secrets.env` і встав токени. Claude їх не бачить і бачити не повинен.
 2. Jira Server: MCP-сервер Jira склонувати в папку, яку назвав Claude на кроці 4 (див. `plugin/CONNECTORS.md`). Можна сказати "склонуй і збери jira MCP сервер у ~/work/tools", якщо дозволяє мережа.
+   Bitbucket Server (опційно, лише якщо власні скіли мають читати pull request): склонуй і збери `n11techhub/mcp-bitbucket` так само і поклади токен лише на читання в `BITBUCKET_TOKEN`.
 3. **Перезапусти Claude Desktop.** Локальні MCP-сервери читають секрети лише при старті.
 
 ### Крок 6. Глобальні інструкції (2 хв, руками)
