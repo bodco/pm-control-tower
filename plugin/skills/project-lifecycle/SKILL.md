@@ -193,8 +193,8 @@ Principle: trust but verify. The main trap is inheriting "all green" on faith.
      not the stated plan.
    - People risks: only facts from work artifacts (roll-offs, PTO, single-owner
      components); no judgement about people.
-   - Painful topics and open promises with the client: open Threads `Need Follow-up`
-     (our open commitments) and `Awaiting Reply` (waiting on them), Topics `Open`,
+   - Painful topics and open promises with the client: open Threads `Awaiting Reply`
+     (our open commitments) and `Need Follow-up` (waiting on them), Topics `Open`,
      recent client-satisfaction report.
    - Tech debt and known risks: Risks DB, KB `LESSONS.md` if the config has `kb_root`.
    - Artifacts and access: Access Matrix vs what actually works today.

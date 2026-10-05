@@ -158,7 +158,7 @@ For each collected message:
 - `last_author` IS in the project's internal team roster (the "Team - Internal" table in the project config, matched against Name and Jira Username columns, plus the "Former Members" table: someone who has left is still OUR side historically) → `author_side = internal`
 - otherwise → `author_side = external`
 
-**Determine Status - always computed from the thread content, never carried over.** Read the whole thread and apply the canonical status table in `../projects/_standards.md` section 11, first matching rule top to bottom. That table is the single source of truth for every Threads DB source (`mac-mail-collector` uses the same one); do not keep a copy of it here. `author_side` informs the rules (an external last author with an unanswered ask means `Need Follow-up`, our own last message with a pending question to them means `Awaiting Reply`) but it does NOT set the status by itself and it never sets the icon. `AI Review` is only for a thread the rules genuinely cannot decide; it is not the default on create.
+**Determine Status - always computed from the thread content, never carried over.** Read the whole thread and apply the canonical status table in `../projects/_standards.md` section 11, first matching rule top to bottom. That table is the single source of truth for every Threads DB source (`mac-mail-collector` uses the same one); do not keep a copy of it here. `author_side` informs the rules (an external last author with an unanswered ask means `Awaiting Reply`, our own last message with a pending question to them means `Need Follow-up`) but it does NOT set the status by itself and it never sets the icon. `AI Review` is only for a thread the rules genuinely cannot decide; it is not the default on create.
 
 **Determine icon - from the computed Status, nothing else,** via the same table in section 11. A `Closed` thread never carries 🔴, whoever wrote the last message.
 
@@ -211,7 +211,7 @@ This rule applies to BOTH `main_message.text` and each `comment.text`.
 **If FOUND → reconcile the row with the thread as just read.** Three things are decided independently; do NOT gate the second and third on the first:
 
 1. **Last Reply Date** - set it if it differs from the thread's real last reply (compare to the minute).
-2. **Status and icon** - **always** recompute them from the thread content and write them if they differ from what the row holds. This happens on every pass, including when `Last Reply Date` did not move: a thread can be resolved by the very reply that is already recorded, so a row can sit on `Need Follow-up` long after the work shipped and the client confirmed. There are no immutable statuses (`_standards.md` section 11): a status set by hand is overwritten too.
+2. **Status and icon** - **always** recompute them from the thread content and write them if they differ from what the row holds. This happens on every pass, including when `Last Reply Date` did not move: a thread can be resolved by the very reply that is already recorded, so a row can sit on `Awaiting Reply` long after the work shipped and the client confirmed. There are no immutable statuses (`_standards.md` section 11): a status set by hand is overwritten too.
 3. **Page body** - rewrite it only when the set of messages actually changed (new replies, or edited text). An unchanged body is left alone: a pointless rewrite burns calls and churns the page's edit history.
 
 Log the result per message as one of: `created`, `updated (date)`, `updated (status)`, `updated (date+status)`, `skipped (no change)`.
@@ -334,7 +334,7 @@ The summary opens with the Data Completeness header from `projects/SKILL.md` (on
 Джерела: Slack OK · Notion OK · Jira SKIPPED (api_access: false)
 ✅ #{channel_name} ({START_DATE} - {END_DATE}):
 - Notion Created: X | Updated: Y | Skipped: Z
-- Flagged 🔴 (Need Follow-up): W
+- Flagged 🔴 (Awaiting Reply): W
 - Jira Created: A | Matched: B | Skipped (info): C | Drafts: D | Unavailable: E
 - Errors: F
 ```
