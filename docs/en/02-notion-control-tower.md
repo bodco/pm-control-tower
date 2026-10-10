@@ -81,7 +81,7 @@ Written by Notion AI Meeting Notes (transcript + summary + action items). Then `
 | `Meeting type` | multi_select | Product Discussions, Daily Sync, Sprint Planning, Weekly Team Sync, Internal Daily, Client Sync, Retro |
 | `Summary` | text | |
 | `Project`, `Workspace` | relation | |
-| `Topics`, `Tasks Tracker` | relation | no emoji in the name (see "Relation names" above). In the public template the Meetings side of the Topics relation still carries the emoji (`🧵 Topics`); when a skill writes from the Meetings side, fetch the data source first and use the name it reports |
+| `Topics`, `Tasks Tracker` | relation | no emoji in the name (see "Relation names" above). |
 | `Parent item`, `Sub-item` | relation (self) | meeting series |
 
 The transcript is pulled only when quotes are needed (client-satisfaction, Gemini briefs).

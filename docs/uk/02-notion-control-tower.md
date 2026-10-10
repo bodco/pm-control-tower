@@ -81,7 +81,7 @@ Notion тут - не вікі і не сховище документів, а с
 | `Meeting type` | multi_select | Product Discussions, Daily Sync, Sprint Planning, Weekly Team Sync, Internal Daily, Client Sync, Retro |
 | `Summary` | text | |
 | `Project`, `Workspace` | relation | |
-| `Topics`, `Tasks Tracker` | relation | без емодзі в назві (див. "Назви relation" вище). У публічному шаблоні з боку Meetings relation на Topics досі має емодзі (`🧵 Topics`); коли скіл пише з боку Meetings, спершу зчитай data source і використай назву, яку він повертає |
+| `Topics`, `Tasks Tracker` | relation | без емодзі в назві (див. "Назви relation" вище). |
 | `Parent item`, `Sub-item` | relation (self) | серії мітингів |
 
 Транскрипт підтягується лише коли потрібні цитати (client-satisfaction, Gemini-бріфи).
