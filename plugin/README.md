@@ -3,7 +3,7 @@
 [Українською](README.uk.md)
 
 A library of PM automation, put together over a year on a demanding fintech
-project and anonymized so it can be handed over. Twenty-one skills, with not a
+project and anonymized so it can be handed over. Twenty-two skills, with not a
 single fact about any specific project inside them.
 
 ## The principle everything rests on
@@ -47,6 +47,10 @@ period), `change-request` (sorting client asks into scope and hours).
 **Risks and status:** `risk-register`, `stability-scan`, `sentry-assistant`,
 `deploy-analysis`, `project-lifecycle`.
 
+**On the call:** `live-tips` (tips in the chat while you talk, a Meetings DB page with
+the transcript afterwards). Needs the local recorder from `tools/live-transcriber/` in
+the repository, see `docs/en/17-live-tips.md`.
+
 ## Installation
 
 Step by step in `SETUP.md`. In short: duplicate the Notion template, create a
@@ -55,7 +59,7 @@ plugin customization flow fills in the `~~` placeholders), add the config for
 your own project inside the plugin and run the first skills by hand.
 
 Status: beta. Every release since 1.1.0 is reviewed end to end against the Notion
-template and the config template (current: 1.5.2), but the plugin has not yet been
+template and the config template (current: 1.6.0), but the plugin has not yet been
 installed by anyone except the author. Expect rough edges and report them.
 
 ## What is deliberately missing

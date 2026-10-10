@@ -25,8 +25,9 @@
 
 | Папка | Що це |
 |---|---|
-| `plugin/` | Плагін для Claude: 21 проєктно-агностичний PM-скіл плюс конфігурація MCP-серверів. Вихідники |
+| `plugin/` | Плагін для Claude: 22 проєктно-агностичні PM-скіли плюс конфігурація MCP-серверів. Вихідники |
 | `dist/pm-control-tower.plugin` | Той самий плагін, зібраний і готовий до встановлення одним кліком |
+| `tools/live-transcriber/` | Локальний записувач дзвінків для `live-tips`: мікрофон + системний звук, Whisper на Маку, LaunchAgent та інсталятор (`docs/uk/17-live-tips.md`) |
 | `docs/en/` | Документація фреймворку англійською |
 | `docs/uk/` | Та сама документація українською |
 | `templates/` | `secrets.env.example`: назви змінних, фейкові значення і місце, де має лежати справжній файл (та сама копія їде всередині плагіна) |
@@ -77,6 +78,10 @@ steering), `client-satisfaction-tracker`, `change-request`.
 **Ризики і стан:** `risk-register`, `stability-scan`, `sentry-assistant`,
 `deploy-analysis`, `project-lifecycle`.
 
+**На дзвінку:** `live-tips` (локальна транскрипція, підказки в чаті під час розмови,
+сторінка в Meetings DB з транскриптом після дзвінка; потрібен Мак на Apple Silicon,
+див. `docs/uk/17-live-tips.md`).
+
 ---
 
 ## Два правила, які варто знати до старту
@@ -117,6 +122,7 @@ steering), `client-satisfaction-tracker`, `change-request`.
 | 1.5.0 | 2026-10-03 | Опційний MCP-сервер `bitbucket` для self-hosted Bitbucket Server / Data Center: блок у `.mcp.json` (позначки `~~bitbucket-base-url`, `~~bitbucket-mcp-path`), `BITBUCKET_TOKEN` у шаблоні секретів, розділ у `CONNECTORS.md` (склонувати і зібрати `n11techhub/mcp-bitbucket`, лише токен, рекомендовані права тільки на читання; жоден скіл плагіна його ще не використовує), рядки в документах `01`, `05`, `10` і `16`. Скіли не змінились |
 | 1.5.1 | 2026-10-05 | Виправлення 1.4.0: значення `Awaiting Reply` і `Need Follow-up` помилково переставили місцями, повернуто правильні. `Awaiting Reply` (🔴) = відповіді або дії чекають від нас; `Need Follow-up` (⏳) = ми спитали, мʼяч на їхньому боці, треба закинути фоллоу-ап. Виправлено в `projects/_standards.md` розділ 11, `slack-collector`, `project-lifecycle`, глосарії і публічному шаблоні Notion |
 | 1.5.2 | 2026-10-10 | Задокументовано Focus desk (вбудований dashboard на верху публічного шаблону Notion: My day з Do next, Reply & follow up, Risks needing attention, Recent reports; Overdue), опції Meeting type `Client Sync` і `Retro`, примітка про назви relation без емодзі в документі `02`. `Restricted internal sources`: узагальнене правило в `projects/SKILL.md` і блок `restricted_sources` у `_template.md` (відверті внутрішні канали лише контекст і ніколи не йдуть клієнту, навіть переказом), опційні ключі конфігу `scope_jql` та `instructions_doc`, документи `03` і `11` (урок 24). Гігієна: прибрано застарілі згадки `_projects/`, CLAUDE.md, списаного Gmail-колектора і локального лінтера автора; оновлено статус у `plugin/README.md`; `Notion/` додано в `.gitignore`. Логіка скілів без змін |
+| 1.6.0 | 2026-10-11 | Live tips: асистент на дзвінку. Новий скіл `live-tips` (локальна транскрипція дзвінка, Live Brief проєкту, підказки в чаті за тригерами: прохання, схожі на CR, обіцяні дати й оцінки, суперечності рішенням, неточні чи неповні відповіді самого ПМа, розмова співрозмовників іншою мовою; три способи завершити мітинг; після стопу сторінка в Meetings DB проєкту зі згенерованою назвою і date mention у назві, `Date`, `Project`, `Workspace`, транскрипт у блоці AI Meeting Notes і підсумок). Нова папка `tools/live-transcriber/`: локальний записувач (Swift `audiocap` для мікрофона і системного звуку через Core Audio process tap, Whisper large-v3-turbo на MLX, VAD, фільтри відлуння і галюцинацій, LaunchAgent, `install.sh`), назва LaunchAgent налаштовується через `launchd_label`. Документ `17` двома мовами: архітектура, встановлення з нуля, проведення дзвінка, завершення, обмеження Notion API на транскрипт meeting notes, траблшутінг, чекліст для колеги |
 
 Відкриті питання і технічний беклог: `docs/uk/13-open-questions.md`.
 

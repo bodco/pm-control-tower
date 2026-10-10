@@ -26,8 +26,9 @@ library works with the new reality a second later. Nothing is hardcoded anywhere
 
 | Folder | What it is |
 |---|---|
-| `plugin/` | A Claude plugin: 21 project-agnostic PM skills plus MCP server config. Source files |
+| `plugin/` | A Claude plugin: 22 project-agnostic PM skills plus MCP server config. Source files |
 | `dist/pm-control-tower.plugin` | The same plugin, packed and ready to install in one click |
+| `tools/live-transcriber/` | The local call recorder for `live-tips`: microphone + system audio, Whisper on the Mac, a LaunchAgent and an installer (`docs/en/17-live-tips.md`) |
 | `docs/en/` | Framework documentation in English |
 | `docs/uk/` | The same documentation in Ukrainian |
 | `templates/` | `secrets.env.example`: variable names, fake values, and where the real file must live (the same copy travels inside the plugin) |
@@ -79,6 +80,10 @@ steering), `client-satisfaction-tracker`, `change-request`.
 **Risk and state:** `risk-register`, `stability-scan`, `sentry-assistant`,
 `deploy-analysis`, `project-lifecycle`.
 
+**On the call:** `live-tips` (local transcription, tips in the chat while you talk, a
+Meetings DB page with the transcript after the call; requires a Mac with Apple Silicon,
+see `docs/en/17-live-tips.md`).
+
 ---
 
 ## Two rules worth knowing before you start
@@ -121,6 +126,7 @@ weeks of calibration for your own project, not an hour.
 | 1.5.0 | 2026-10-03 | Optional `bitbucket` MCP server for a self-hosted Bitbucket Server / Data Center: a block in `.mcp.json` (placeholders `~~bitbucket-base-url`, `~~bitbucket-mcp-path`), `BITBUCKET_TOKEN` in the secrets template, a section in `CONNECTORS.md` (clone and build `n11techhub/mcp-bitbucket`, token only, read-only rights recommended; no skill of the plugin uses it yet), rows in documents `01`, `05`, `10` and `16`. Skills are unchanged |
 | 1.5.1 | 2026-10-05 | Fix to 1.4.0: the meanings of `Awaiting Reply` and `Need Follow-up` were swapped by mistake and are restored. `Awaiting Reply` (🔴) = a reply or action is owed by us; `Need Follow-up` (⏳) = we asked, the ball is on their side and we have to nudge them with a follow-up. Corrected in `projects/_standards.md` section 11, `slack-collector`, `project-lifecycle`, the glossary and the public Notion template |
 | 1.5.2 | 2026-10-10 | Focus desk documented (the inline dashboard at the top of the public Notion template: My day with Do next, Reply & follow up, Risks needing attention, Recent reports; Overdue), Meeting type options `Client Sync` and `Retro`, a note on relation names without emoji in document `02`. `Restricted internal sources`: a generalized rule in `projects/SKILL.md` and a `restricted_sources` block in `_template.md` (candid internal channels are context only and never reach the client, not even by paraphrase), optional config keys `scope_jql` and `instructions_doc`, documents `03` and `11` (lesson 24). Hygiene: stale notes about `_projects/`, CLAUDE.md, the retired Gmail collector and the author's local linter removed; `plugin/README.md` status refreshed; `Notion/` added to `.gitignore`. Skills logic unchanged |
+| 1.6.0 | 2026-10-11 | Live tips: a co-pilot on the call. New skill `live-tips` (local transcription of the call, Live Brief of the project, tips in the chat on triggers: CR-like asks, promised dates and estimates, contradictions with decisions, the PM's own inaccurate or incomplete answers, side talk in another language; three ways to end the meeting; after the stop a page in the project's Meetings DB with a generated name and a date mention in the title, `Date`, `Project`, `Workspace`, the transcript in an AI Meeting Notes block and a wrap-up). New folder `tools/live-transcriber/`: the local recorder (Swift `audiocap` for microphone and system audio via a Core Audio process tap, Whisper large-v3-turbo on MLX, VAD, echo and hallucination filters, a LaunchAgent, `install.sh`), LaunchAgent name configurable via `launchd_label`. Document `17` in two languages: architecture, install from scratch, running a call, ending it, the Notion API limit on meeting-notes transcripts, troubleshooting, a checklist for a colleague |
 
 Open questions and the technical backlog: `docs/en/13-open-questions.md`.
 

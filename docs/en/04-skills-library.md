@@ -6,7 +6,7 @@ A skill = a folder with a `SKILL.md` file (plus, if needed, `README.md`, `script
 
 Skills are synced between Claude Desktop (Cowork) and cloud sessions. Two different numbers that should not be confused:
 
-- **The handover package** (the `pm-control-tower` plugin): **21 skills**, all of type E (engines) plus the infrastructure skill `projects`. This is what a colleague receives.
+- **The handover package** (the `pm-control-tower` plugin): **22 skills**, all of type E (engines) plus the infrastructure skill `projects`. This is what a colleague receives.
 - **The author's instance**: about 50 entries in the synced folder: the same engines, project adapters (P), frozen adapters (H), other-domain skills (X) and stock Anthropic skills (S). No exact count is kept, because it goes stale every week. In the catalog below, types P/H/X/S are not part of the package and are shown as examples of what the 20% of adapters looks like.
 
 ## Anatomy of a PM skill (an engine)
@@ -85,6 +85,7 @@ The practical consequence for Slack, **resolved**: the Claude connector holds on
 
 | Skill | Type | What it does | Schedule |
 |---|---|---|---|
+| `live-tips` | E | Co-pilot during a call: starts the local recorder (`tools/live-transcriber`), builds a Live Brief of the project, reads only new transcript lines and posts a tip only when a trigger fires (CR-like ask, a promised date or estimate, a contradiction with a decision, an inaccurate or partial answer by the PM, side talk in another language). Ends on "стоп", Ctrl+C or idle; then a wrap-up and one page in the Meetings DB with the transcript. Details: `17-live-tips.md` | on-demand: "live tips <project>" |
 | `notion-meeting-topics` | E | Turns a Notion meeting page into a detailed bilingual report (decisions, action items, topics) and appends it to the same page | on-demand: "meeting <url>" |
 | `topic-manager` | E | Meetings + Threads (and Gmail when the config sets `gmail.client_search_filter`) for a period to created/updated Topics DB pages with a relation to the sources; on-demand and weekly mode in one skill (the merge of `topic-analyzer` + `weekly-topics-db-update`) | on-demand + Mon 06:32 |
 | `risk-register` | E | RAID register: scans Jira/Slack/Meetings/Threads/Sentry and the early warning signals from `_standards.md`, groups them, creates/updates the Risks DB with `Kind` (Risk / Assumption / Issue / Dependency), generates two reports (Internal UA / External EN with "Decisions needed from you"). Card v0.7.1: Kind, the corrected title field name `Name`, signals and bus factor | Fri (before the review) |

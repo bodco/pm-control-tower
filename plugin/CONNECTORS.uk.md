@@ -19,7 +19,7 @@ Notion, ні твоїх шляхів, тому всі такі місця поз
 
 | Позначка | Де вона | Що це | Де взяти |
 |---|---|---|---|
-| `~~home-folder` | `.mcp.json`, `projects/_template.md`, `mac-mail-collector` | твоя домашня папка | `/Users/ivan` |
+| `~~home-folder` | `.mcp.json`, `projects/_template.md`, `mac-mail-collector`, `live-tips/settings.yaml` | твоя домашня папка | `/Users/ivan` |
 | `~~notion-reports-db`, `~~notion-threads-db`, `~~notion-meetings-db`, `~~notion-topics-db`, `~~notion-knowledge-base-db`, `~~notion-risks-db`, `~~notion-decisions-db`, `~~notion-tasks-tracker-db` | `projects/_template.md` | ID data source баз у **твоєму** продубльованому шаблоні Notion | відкрий базу як окрему сторінку, ID в URL. Скіли використовують форму `collection://<id>` |
 | `~~jira-base-url` | `.mcp.json` | URL твого Jira Server | напр. `https://jira.your-company.com` |
 | `~~jira-mcp-path` | `.mcp.json` | куди склонований локальний MCP-сервер Jira | див. нижче |

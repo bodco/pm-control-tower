@@ -24,3 +24,4 @@ Read in this order. Documents 00 to 02 explain what the framework is, 10 is the 
 | 14 | [PM Toolkit integration](14-pm-toolkit-integration.md) | PM standards wired into the skills, from pre-start to closure |
 | 15 | [Document templates](15-document-templates.md) | Catalog of the documents the skills generate, and how to plug in company or personal templates |
 | 16 | [Step by step: setup and a new project](16-runbook.md) | What to click and which prompts to type: setup from scratch and a new project start, with the list of manual steps |
+| 17 | [Live tips: a co-pilot on the call](17-live-tips.md) | Local call transcription, tips in the chat, how to end a meeting, the Meetings DB page; install from scratch and troubleshooting |

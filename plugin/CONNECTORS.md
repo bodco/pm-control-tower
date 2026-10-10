@@ -20,7 +20,7 @@ start, open the files listed below and replace the placeholders by hand.)
 
 | Placeholder | Where it is | What it is | Where to get it |
 |---|---|---|---|
-| `~~home-folder` | `.mcp.json`, `projects/_template.md`, `mac-mail-collector` | your home folder | `/Users/ivan` |
+| `~~home-folder` | `.mcp.json`, `projects/_template.md`, `mac-mail-collector`, `live-tips/settings.yaml` | your home folder | `/Users/ivan` |
 | `~~notion-reports-db`, `~~notion-threads-db`, `~~notion-meetings-db`, `~~notion-topics-db`, `~~notion-knowledge-base-db`, `~~notion-risks-db`, `~~notion-decisions-db`, `~~notion-tasks-tracker-db` | `projects/_template.md` | data source IDs of the databases in **your** duplicated Notion template | open the database as a full page; the ID is in the URL. Skills use the `collection://<id>` form |
 | `~~jira-base-url` | `.mcp.json` | the URL of your Jira Server | e.g. `https://jira.your-company.com` |
 | `~~jira-mcp-path` | `.mcp.json` | where the local Jira MCP server is cloned | see below |

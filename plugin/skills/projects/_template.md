@@ -181,6 +181,7 @@ automation, a human should confirm); Topics progress lives in the status propert
 data source, write with the real name, and fix this file the same day.
 
 ## Local Paths
+- **project_root**: {the project's own folder on the Mac, e.g. `~~home-folder/work/<Project>`; `live-tips` writes call transcripts to `<project_root>/live/`. Optional: when absent, skills use the parent of `repos_root` / `reports_root`}
 - **aws_logs**: {path to CloudWatch/other log exports or "none"}
 - **time_reports**: {path to Tempo/time-tracking exports or "none"}
 - **repos_root**: {path to the local git clones or "none"}
