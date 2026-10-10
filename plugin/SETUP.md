@@ -101,6 +101,34 @@ in Claude Desktop → Scheduled Tasks. Start with one, for example
 `daily-team-prep` an hour before your sync. The prompt names the project
 explicitly and refers to the skill; it never repeats the skill's instructions.
 
+## Step 7 (optional). Live tips on calls
+
+`live-tips` is the only skill that needs a local program on your Mac: the call recorder
+`tools/live-transcriber` from the repository (it is not inside the plugin). Without it the
+skill only explains what is missing. Requirements: an Apple Silicon Mac, macOS 14.2+,
+Python 3.10+.
+
+1. Copy the recorder: `mkdir -p ~/work/Tools && cp -R <repo clone>/tools/live-transcriber ~/work/Tools/`.
+2. In Terminal: `bash ~/work/Tools/live-transcriber/install.sh` (5-10 min, downloads a
+   ~1.6 GB speech model). When macOS asks, allow Terminal the **microphone** and **System
+   Audio Recording**. When the script asks, play any sound for 5 s.
+3. Check the end of `~/work/Tools/live-transcriber/logs/install.log`: `install OK`, and the
+   `mic` and `sys` peaks above zero. If `sys` is zero, play YouTube and run
+   `~/work/Tools/live-transcriber/bin/audiocap --source system --seconds 5 | wc -c`:
+   a number above zero means it works.
+4. `live-tips/settings.yaml` in the plugin: `~~home-folder` is filled in by Step 3; check
+   the call languages (`languages`), the labels and, if you put the recorder elsewhere,
+   `paths.tool_root`.
+5. The project config needs `project_root` in `Local Paths` (where `live/` transcripts
+   go), and `notion.meetings_db`, `notion.project_page_id`, `notion.workspace_page_id` for
+   the meeting page after the call.
+6. In Cowork, the task must have the `~/work` folder connected and the Notion connector on.
+7. Test: `live tips <project>` → a "Live transcriber" Terminal window opens by itself →
+   talk for a minute → `стоп` → check the wrap-up and the new page in Meetings.
+
+Everything about how it works, the tip format, the interview mode and troubleshooting:
+`docs/en/17-live-tips.md`.
+
 ---
 
 ## If something does not work
@@ -112,4 +140,6 @@ explicitly and refers to the skill; it never repeats the skill's instructions.
 | The report says "source unavailable" or the first line lists a source as SKIPPED / FAILED | That is by design: the skill does not fail, it writes into the report what exactly is missing |
 | Records do not land in the right project | The Project and Workspace relations are empty, or the database IDs are wrong |
 | A Jira skill cannot find its tools | The server name in `jira.mcp_write` / `jira.mcp_read` does not match `.mcp.json` (default `jira`), or Claude Desktop was not restarted |
+| `live tips`: "Recording did not start" | The recorder is not installed (`install.sh`), or `paths.tool_root` in `live-tips/settings.yaml` points elsewhere |
+| `live tips`: tips about you only, nothing about the other side | Terminal has no System Audio Recording permission (Privacy & Security → Screen & System Audio Recording) |
 | A write to Notion "succeeds" but the field stays empty | The property name in your database differs from the plugin's expectation (see "Notion relation property names" in `_template.md`); the skill should report the discrepancy |

@@ -63,6 +63,12 @@ Settings → Cowork → global instructions: paste a block from `templates/cowor
 
 From here it is scenario 2, starting at step 2. **Do not** create the project pages in Notion by hand. `plugin/SETUP.md` used to ask for that; the kickoff does it now.
 
+### Step 8 (optional). Live tips on calls
+
+Only if you want a co-pilot on calls: install the local recorder and grant Terminal the
+microphone and System Audio Recording, see `plugin/SETUP.md` step 7 (15 min, mostly the
+model download).
+
 ### By hand in scenario 1, the full list
 
 | What | Why not Claude |
@@ -73,6 +79,7 @@ From here it is scenario 2, starting at step 2. **Do not** create the project pa
 | Paste tokens into `secrets.env` | by rule, secrets never pass through Claude |
 | Restart Claude Desktop | otherwise local MCP servers do not see the secrets |
 | Paste the global instructions | Claude has no access to account settings |
+| Live tips: run `install.sh`, allow Terminal the microphone and System Audio Recording | macOS permissions are granted only by the person at the Mac |
 
 ---
 

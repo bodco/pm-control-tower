@@ -94,6 +94,33 @@ Scheduled Tasks. Починай з одного, наприклад `daily-team-
 свого синку. Промпт називає проєкт явно і посилається на скіл, а не переказує
 його.
 
+## Крок 7 (за бажанням). Live tips на дзвінках
+
+`live-tips` - єдиний скіл, якому потрібна локальна програма на Маку: записувач дзвінків
+`tools/live-transcriber` з репозиторію (у плагін він не входить). Без нього скіл лише
+пояснить, чого бракує. Вимоги: Мак на Apple Silicon, macOS 14.2+, Python 3.10+.
+
+1. Скопіюй записувач: `mkdir -p ~/work/Tools && cp -R <клон репозиторію>/tools/live-transcriber ~/work/Tools/`.
+2. У Terminal: `bash ~/work/Tools/live-transcriber/install.sh` (5-10 хв, качає модель
+   розпізнавання ~1.6 ГБ). Коли macOS спитає, дозволь Terminal **мікрофон** і **запис
+   системного звуку** (System Audio Recording). Коли скрипт попросить, увімкни будь-який
+   звук на 5 с.
+3. Перевір кінець `~/work/Tools/live-transcriber/logs/install.log`: `install OK`, піки
+   `mic` і `sys` більші за нуль. Якщо `sys` нуль, увімкни YouTube і запусти
+   `~/work/Tools/live-transcriber/bin/audiocap --source system --seconds 5 | wc -c`:
+   число більше нуля означає, що все працює.
+4. `live-tips/settings.yaml` у плагіні: `~~home-folder` підставиться на кроці 3; перевір
+   мови дзвінків (`languages`), мітки і, якщо записувач лежить в іншому місці,
+   `paths.tool_root`.
+5. У конфігу проєкту потрібні `project_root` у `Local Paths` (куди писати транскрипти
+   `live/`), а для сторінки мітингу після дзвінка `notion.meetings_db`,
+   `notion.project_page_id`, `notion.workspace_page_id`.
+6. У Cowork у таску має бути підключена папка `~/work` і увімкнений конектор Notion.
+7. Тест: `live tips <проєкт>` → само відкривається вікно Terminal "Live transcriber" →
+   поговори хвилину → `стоп` → перевір підсумок і нову сторінку в Meetings.
+
+Як це влаштовано, формат підказок, режим інтерв'ю і траблшутінг: `docs/uk/17-live-tips.md`.
+
 ---
 
 ## Якщо щось не працює
@@ -106,3 +133,5 @@ Scheduled Tasks. Починай з одного, наприклад `daily-team-
 | Записи не потрапляють у потрібний проєкт | Не заповнені звʼязки Project і Workspace, або не ті ID баз |
 | Jira-скіл не знаходить інструментів | Імʼя сервера в `jira.mcp_write` / `jira.mcp_read` не збігається з `.mcp.json` (за замовчуванням `jira`), або Claude Desktop не перезапущений |
 | Запис у Notion «пройшов», але поле порожнє | Назва властивості у твоїй базі відрізняється від очікуваної плагіном (див. «Notion relation property names» у `_template.md`); скіл має повідомити про розбіжність |
+| `live tips`: "Запис не стартував" | Записувач не встановлений (`install.sh`) або `paths.tool_root` у `live-tips/settings.yaml` вказує не туди |
+| `live tips`: підказки лише про тебе, про співрозмовників нічого | У Terminal немає дозволу на запис системного звуку (Privacy & Security → Screen & System Audio Recording) |
