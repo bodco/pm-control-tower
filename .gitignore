@@ -27,6 +27,7 @@ reviews/
 prompts/
 scripts/
 Claude outputs/
+Notion/
 _to_delete/
 *.zip
 

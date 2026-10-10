@@ -4,13 +4,13 @@
 
 Until August 2026, project facts (team, channels, database IDs, transition IDs) were scattered across skill bodies. When the Acme team shrank from 9 people to 3 in two months and access to half of the repositories disappeared, it turned out that dozens of skills kept "knowing" the old reality. Hence the config registry: one file per project that every skill reads, and a hard rule that the config wins.
 
-The registry lives as a synced skill `projects/` (a folder next to all the other skills). It is not a user-facing skill, it is never invoked on its own, it is infrastructure. Historically it was `_projects/` in CLAUDE.md; that name is obsolete.
+The registry lives as a synced skill `projects/` (a folder next to all the other skills). It is not a user-facing skill, it is never invoked on its own, it is infrastructure.
 
 Folder contents:
 
 | File | Purpose |
 |---|---|
-| `SKILL.md` | registry rules: Rule Zero, Default Project Rule, Naming Convention, how skills read the config, how to add a project |
+| `SKILL.md` | registry rules: Rule Zero, Default Project Rule, Restricted internal sources, Naming Convention, how skills read the config, how to add a project |
 | `_standards.md` | standards that are identical for all projects (the machine-readable version of the PM Toolkit, `14`) |
 | `_template.md` | empty config template |
 | `_templates.md` | house registry of document templates: keys, built-in formats, where each document is saved, lookup order (`15`) |
@@ -45,7 +45,7 @@ If the config is not found: "Project config not found. Available projects: [...]
 ## Anatomy of a config (per `_template.md`, with comments from `acme.md`)
 
 ### General
-`project_name`, `project_slug`, `status` (active / archived), `description`, `board_type` (Kanban / Scrum), `default_language` (language of internal reports), `client_language`.
+`project_name`, `project_slug`, `status` (active / archived), `description`, `board_type` (Kanban / Scrum), `default_language` (language of internal reports), `client_language`. Optional `instructions_doc` points to a sibling `{slug}.instructions.md` with working rules for the project (research rules, language, where things live), read after the config.
 
 ### Access Matrix (READ THIS FIRST)
 A table: resource, access (✅/❌), since which date, notes. Every resource the skills touch: repositories, databases, monitoring, communication tools. On Acme it records that the MO/CP/Mobile repos are client-owned, and that the local clones and knowledge bases are frozen snapshots as of 2026-07-31, read-only institutional memory rather than current code.
@@ -68,7 +68,7 @@ task_tracker:
 On Acme: `jira_server`, `api_access: true`. On a project where the client only granted a login to their Jira Cloud: `jira_cloud`, `api_access: false`, `browser_access: true`, `fallback_source: manual_export`. Engines read this section right after Step 0 and, when `api_access: false`, switch to the fallback without an error (the graceful degradation rule in `04`).
 
 ### Jira
-Filled in if `task_tracker.type` is jira_server or jira_cloud with `api_access: true`. `server_url`, `server_version`, `project_key`, `mcp_write`, `mcp_read`, `known_bug` (on Jira Server 7.13 both connectors return "Unexpected end of JSON input" on writes: this is cosmetic, HTTP 204, the updates go through, verify by reading back).
+Filled in if `task_tracker.type` is jira_server or jira_cloud with `api_access: true`. `server_url`, `server_version`, `project_key`, `mcp_write`, `mcp_read`, `known_bug` (on Jira Server 7.13 both connectors return "Unexpected end of JSON input" on writes: this is cosmetic, HTTP 204, the updates go through, verify by reading back). Optional `scope_jql` narrows a shared Jira project to this initiative; the JQL Isolation Validator appends it to the mandatory `project = {KEY}` filter.
 
 Subsections:
 - **Labels Taxonomy**: labels and their purpose (feature, enhancement, bug-fix, ops-support, security, external-dev marked HISTORICAL with a date).
@@ -79,7 +79,10 @@ Subsections:
 - **External-Dev Workflow**: if there are client developers whose PRs we review (on Acme this ended 2026-07-31, kept as history).
 
 ### Slack
-`workspace`, `channels_dev`, `channels_stability`, `channels_all`.
+`workspace`, `slack_access`, `channels_dev`, `channels_stability`, `channels_all`, `channel_ids`.
+
+### Restricted internal sources
+The `restricted_sources` block (since 1.5.2): candid internal channels, mailboxes or lists that skills may read for context but that never reach the client in any form. Each entry says how to recognise the source (channel, ID, workspace, the Knowledge Base record the Threads rows point to) and which collector, if any, writes it. The rules (exclude from client deliverables, context only, no leaks by paraphrase, the PM-only header may mention it) live in `projects/SKILL.md` and beat any skill text. An empty list means the project has none. A restricted channel is never listed in `channels_all`.
 
 ### Sentry
 `url`, `token`, `org_slug`, `projects_in_scope`, `projects_out_of_scope` (with dates and reason), the full list of projects on the instance. If there is no Sentry: `url: none`, skills skip it.

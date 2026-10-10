@@ -10,7 +10,7 @@ description: "Collects Slack channel/thread messages into the project's Notion T
 **Step 0 - always run first:**
 
 1. Determine the project from the user's request. If the project is NOT explicitly named, do not guess and do not default: ask the user which project (list the configs in `projects/`). See the Default Project Rule in projects/SKILL.md.
-2. Read the project config `../projects/{project_slug}.md` relative to this skill's folder (the `projects` skill folder sits next to this one). If the relative read fails, locate it with Glob: `**/projects/{project_slug}.md` under the skills directory. (Legacy note: `_projects/` no longer exists.)
+2. Read the project config `../projects/{project_slug}.md` relative to this skill's folder (the `projects` skill folder sits next to this one). If the relative read fails, locate it with Glob: `**/projects/{project_slug}.md` under the skills directory.
 3. All values below marked as `{config.xxx}` come from the config file. Where the config carries the same information as a markdown table rather than a scalar value (the team roster, the Labels Taxonomy), this skill says so explicitly and reads the table - it does not invent a fake key for it.
 4. Read `../projects/SKILL.md` for the cross-cutting rules (Default Project Rule, JQL Isolation Validator, Data Completeness header, the 5-minute rule) and `../projects/_standards.md` section 11, the canonical Threads DB status and icon table this skill writes by.
 5. Check `{config.task_tracker.api_access}` right after this step: Step 4 writes tickets, so when it is `false` (or `{config.task_tracker.type}` is `none`), Step 4 produces the ticket text as a draft in the channel summary instead of writing, and the summary says so.

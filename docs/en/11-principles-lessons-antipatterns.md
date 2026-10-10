@@ -3,7 +3,7 @@
 ## Lessons from a year (what I would tell myself in summer 2025)
 
 1. **Start small, iterate.** One skill (daily prep), then the next one once the first delivered value. Trying to automate everything at once gives you ten reports nobody trusts.
-2. **Global memory + configs = superpower.** CLAUDE.md / global instructions for "who I am and how to work", the `projects/` registry for "what is true about the project right now". Skills are reusable across projects only thanks to that split.
+2. **Global memory + configs = superpower.** Global instructions for "who I am and how to work", the `projects/` registry for "what is true about the project right now". Skills are reusable across projects only thanks to that split.
 3. **Natural language ≫ commands.** "Prep me for the daily" works, `/daily-prep --project acme` never catches on.
 4. **Keep the context alive.** Project state changes every week; a config that was not updated the same day makes every report untrue a month later. Hence the Changelog, "as of" dates, the Decisions DB and the monthly Automation Health Check.
 5. **Separate the engines from the project facts.** This is the lesson of August 2026: when the team shrank from 9 to 3 and half the repos went to the client, we had to rewrite dozens of skills that "knew" the old reality. Once the facts moved into the config, a change of state = one file.
@@ -25,6 +25,8 @@
 21. **A library with no wiring is dead.** The PM Toolkit sat in Notion next to the system for a year and influenced not a single report. The value appeared once the standard got one machine-readable home (`_standards.md`) and a rule that the engines read it at Step 0 (`14`).
 22. **General work stays general.** While building the framework, do not sort out project-specific discrepancies along the way (contracts, people's hours): they go into their own project context, otherwise the general work dissolves.
 23. **A time marker is not a filter.** The mail collector took only files newer than `.last_cowork_scan` and silently lost messages exported later (Mail.app had been closed, a slow sync): their files turned out older than the marker. On a real project three client threads went missing this way. The queue is defined by location (`incoming/` = unprocessed), not by time; the marker is informational only. The same goes for the prep window: a stale previous report is not an anchor, the window comes from the calendar.
+
+24. **An internal channel never goes to the client, not even by paraphrase.** Candid internal discussion (account strategy, staffing, who is to blame for an incident) is useful context and poison in a client report. Marking such sources `restricted_sources` in the config and filtering them out of every client-facing output at Step 0 is cheaper than one leaked sentence (`03`, `projects/SKILL.md`).
 
 ## Antipatterns (what breaks the system most often)
 

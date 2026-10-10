@@ -14,6 +14,7 @@
 - **board_type**: Kanban | Scrum
 - **default_language**: Ukrainian | English   (language of internal reports and preps)
 - **client_language**: English   (language of everything that goes to the client)
+- **instructions_doc**: none   (optional: a sibling file `projects/{slug}.instructions.md` with working rules for this project, such as research rules or where things live; skills read it after this config when it is set)
 
 ## Access Matrix - READ THIS FIRST (as of {YYYY-MM-DD})
 
@@ -75,6 +76,7 @@ tracker with `api_access: false`.
 - **mcp_write**: jira      (name of the MCP server used for writes; `jira` is the server shipped in the plugin's .mcp.json)
 - **mcp_read**: jira       (name of the MCP server used for reads; the same server unless you run a second one)
 - **known_bug**: none      (e.g. "Jira Server 7.x returns a cosmetic JSON error on writes; HTTP 204, the update lands - verify by re-reading")
+- **scope_jql**: none      (optional: an extra JQL clause when this project is a slice of a shared Jira project, e.g. `labels = "my-initiative"`; the JQL Isolation Validator appends it to `project = {KEY}` on every query)
 
 ### Labels Taxonomy
 | Label | Purpose | Status |
@@ -119,6 +121,25 @@ in JQL exactly as written here.)
 - **channels_all**: {comma-separated list of all channels to scan}
 - **channel_ids**: {#channel: C0123456789, #other: C0987654321}   (needed for permalinks and for a local MCP server)
 - **json_output_folder**: none   (optional local copy of collected messages, e.g. ~/work/{slug}/slack-json/)
+
+### Restricted internal sources (read by every skill; rules in `projects/SKILL.md`)
+
+Candid internal channels that skills may read for context but that must never reach the
+client in any form. Leave the list empty when the project has none. Never put a restricted
+channel into `channels_all`: it is collected, if at all, by a dedicated collector into
+Threads rows that the rules below filter out of client deliverables.
+
+```yaml
+restricted_sources: []
+# restricted_sources:
+#   - kind: slack_channel          # slack_channel | mailbox | mailing_list | other
+#     name: "#internal-account-channel"
+#     id: C0000000000               # channel ID; Threads rows with this ID in Slack Link are excluded
+#     workspace: internal           # which Slack workspace it lives in
+#     knowledge_base_record: "#internal-account-channel"   # KB page the Threads rows relate to, if any
+#     collected_by: none            # name of the dedicated collector skill, or none
+#     note: internal account discussion, context only
+```
 
 ## Sentry
 - **url**: {sentry URL or "none"}

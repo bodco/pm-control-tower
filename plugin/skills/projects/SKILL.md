@@ -35,6 +35,41 @@ another) is the worst failure mode of this system.
 
 A project is **active** unless its config contains `status: archived`.
 
+## Restricted internal sources - NEVER client-facing (applies to every skill)
+
+Some sources hold candid internal communication of our own company: an internal
+account channel, a management chat, an internal mailing list. They may be read for
+CONTEXT, so the PM understands what is going on, but nothing from them may reach the
+client in any form.
+
+Each project config lists its own restricted sources in the `restricted_sources` block
+(see `_template.md`): how to recognise the source (channel, channel ID, mailbox, domain,
+a Knowledge Base record the Threads row points to, a URL fragment) and the project it
+belongs to. An empty block means the project has none.
+
+Rules for every skill that produces anything the client sees or may see:
+
+1. **Exclude the source from client deliverables.** Client reports (weekly, monthly,
+   steering), client meeting preps and talking points, status updates, emails and
+   Slack messages to the client, client-facing tracker comments, change requests,
+   decision texts that go to the client, the sanitized external risk report,
+   satisfaction or sentiment summaries shown to the client. Filter the rows out when
+   querying the Threads DB (drop rows matching the block).
+2. **Context only.** The source may inform the PM's own understanding and internal
+   documents (internal analyses, RCA, internal prep, internal risk entries with
+   `Visibility` = Internal). Even there, say plainly in the output that a point comes
+   from a restricted source, so it is never copied onward by mistake.
+3. **No leaks by paraphrase.** Do not quote, paraphrase, summarise, cite, link or name
+   the source or its threads in client-facing text, and do not use it as the only
+   evidence for a client-facing claim. If a fact is known only from a restricted
+   source, leave it out and tell the PM that it needs an independent, client-safe
+   source first.
+4. **The PM-only Data Completeness header may mention it** (for example
+   `restricted source excluded`), the client text never does.
+5. A conflict between this section and a skill's own text is resolved in favour of
+   this section. New restricted sources are added to the config block, never to a
+   skill body.
+
 ## Naming Convention for skills
 
 - `{project}-...` prefix (e.g. `acme-debug`, `acme-data-audit`) = the skill is
@@ -64,8 +99,6 @@ thread-ticket-sync, jira-management, jira-board-health, sentry-assistant) starts
      (the `projects` folder sits next to every other skill folder);
    - if that fails, locate it with Glob: `**/projects/{project_slug}.md` under the
      skills directory.
-   - Note: the legacy `_projects/` directory does not exist any more; older skill
-     copies that mention it are stale.
 3. Use values from the config instead of hardcoded constants
 4. Read the "Access Matrix", "Task Tracker" and "Engagement Status" sections
    FIRST when the task touches repos, tickets, scope, capacity or reporting -
@@ -75,6 +108,7 @@ thread-ticket-sync, jira-management, jira-board-health, sentry-assistant) starts
    section of the config (see "PM standards and PM Profile" below)
 6. If the task produces a document listed in `projects/_templates.md`, resolve its
    template first (see "Document templates" below)
+7. Apply "Restricted internal sources" above to everything addressed to the client
 
 If the config file doesn't exist, tell the user: "Project config not found.
 Available projects: [list files in projects/]"

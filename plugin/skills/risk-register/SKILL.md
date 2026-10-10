@@ -39,7 +39,6 @@ client, tracker changes) is a draft for the PM.
 2. Read the project config `../projects/{project_slug}.md` relative to this skill's
    folder; if that fails, Glob `**/projects/{project_slug}.md` under the skills directory.
 3. All Notion DB IDs (including `risks_db`) and the team roster live in that config.
-   There is no separate CLAUDE.md - do not look for one.
 4. All `{config.xxx}` placeholders below come from that file.
 5. Read `../projects/_standards.md` (sections 1, 7, 8) and `../projects/SKILL.md`
    (cross-cutting rules: Default Project Rule, JQL Isolation Validator, Data

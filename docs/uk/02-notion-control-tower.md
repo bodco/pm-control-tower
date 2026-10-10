@@ -13,6 +13,13 @@ Notion тут - не вікі і не сховище документів, а с
 
 Операційний центр ПМа: сторінка, на яку заходиш вранці і перед кожним мітом, і бачиш повну картину. Структура зверху вниз:
 
+**Focus desk** (з 1.5.2 у публічному шаблоні)
+Вбудована dashboard-база на самому верху сторінки, побудована над Tasks Tracker, Threads, Risks і Reports. Дві вкладки:
+- **My day** з чотирма віджетами: **Do next** (незавершені задачі, що просрочені, на сьогодні чи на цей тиждень, або з пріоритетом High; Done і On Hold виключені), **Reply & follow up** (треди в `Awaiting Reply` = твій хід, і `Need Follow-up` = їхній хід, найстаріша відповідь першою), **Risks needing attention** (`Open`, `Monitoring`, `Realized`, `AI Review`), **Recent reports** (звіти за останній тиждень, найновіші першими).
+- **Overdue**: незавершені задачі з датою в минулому.
+
+Це в'юшки оригінальних записів, а не другий список задач: відкриваєш запис і редагуєш його на місці, статусами тредів далі керують колектори. Фільтри по відносних датах зсуваються самі. Після дублювання шаблону перевір, що в'юшки Focus desk дивляться на продубльовані бази, а не на вихідні. Під Focus desk стоять посилання швидкого захоплення (Inbox, Meetings, Decisions) і сітка з одинадцяти баз.
+
 **Секція "Мій день"**
 - **Inbox** - parking lot для швидких думок. Одним рядком, без деталей. Обробляється раз на день: Route у Tasks Tracker або видалити.
 - **Today / This Week** - канбан і список активних задач. Головна робоча в'юшка.
@@ -71,10 +78,10 @@ Notion тут - не вікі і не сховище документів, а с
 |---|---|---|
 | `Meeting Name` | title | має містити впізнаваний суфікс ("Acme Internal Daily", "SG Weekly Thursday Sync"), бо пошук по назві - основний спосіб знайти мітинг без SQL |
 | `Date` | date | з часом |
-| `Meeting type` | multi_select | Product Discussions, Daily Sync, Sprint Planning, Weekly Team Sync, Internal Daily |
+| `Meeting type` | multi_select | Product Discussions, Daily Sync, Sprint Planning, Weekly Team Sync, Internal Daily, Client Sync, Retro |
 | `Summary` | text | |
 | `Project`, `Workspace` | relation | |
-| `Topics`, `Tasks Tracker` | relation | |
+| `Topics`, `Tasks Tracker` | relation | без емодзі в назві (див. "Назви relation" вище). У публічному шаблоні з боку Meetings relation на Topics досі має емодзі (`🧵 Topics`); коли скіл пише з боку Meetings, спершу зчитай data source і використай назву, яку він повертає |
 | `Parent item`, `Sub-item` | relation (self) | серії мітингів |
 
 Транскрипт підтягується лише коли потрібні цитати (client-satisfaction, Gemini-бріфи).

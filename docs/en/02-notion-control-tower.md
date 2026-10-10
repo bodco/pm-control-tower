@@ -13,6 +13,13 @@ The main architectural choice: **databases are shared across all projects, separ
 
 The PM's operations center: the page you open in the morning and before every meeting, where you see the full picture. Structure from top to bottom:
 
+**Focus desk** (since 1.5.2 in the public template)
+An inline dashboard database at the very top of the page, built over Tasks Tracker, Threads, Risks and Reports. It has two tabs:
+- **My day** with four widgets: **Do next** (unfinished tasks that are overdue, due today or this week, or High priority; Done and On Hold are excluded), **Reply & follow up** (threads in `Awaiting Reply` = your turn, and `Need Follow-up` = their turn, oldest reply first), **Risks needing attention** (`Open`, `Monitoring`, `Realized`, `AI Review`), **Recent reports** (reports dated within the past week, newest first).
+- **Overdue**: unfinished tasks whose due date is in the past.
+
+These are views of the original records, not a second task list: open any record and you edit it in place, and the collectors keep managing thread statuses. The relative-date filters roll forward on their own. After duplicating the template, check that the Focus desk views point to the duplicated databases, not to the source ones. Below the Focus desk sit the quick-capture links (Inbox, Meetings, Decisions) and the grid of the eleven databases.
+
 **The "My day" section**
 - **Inbox** - a parking lot for quick thoughts. One line, no details. Processed once a day: Route into Tasks Tracker or delete.
 - **Today / This Week** - a kanban and a list of active tasks. The main working view.
@@ -71,10 +78,10 @@ Written by Notion AI Meeting Notes (transcript + summary + action items). Then `
 |---|---|---|
 | `Meeting Name` | title | must contain a recognizable suffix ("Acme Internal Daily", "SG Weekly Thursday Sync"), because searching by name is the main way to find a meeting without SQL |
 | `Date` | date | with the time |
-| `Meeting type` | multi_select | Product Discussions, Daily Sync, Sprint Planning, Weekly Team Sync, Internal Daily |
+| `Meeting type` | multi_select | Product Discussions, Daily Sync, Sprint Planning, Weekly Team Sync, Internal Daily, Client Sync, Retro |
 | `Summary` | text | |
 | `Project`, `Workspace` | relation | |
-| `Topics`, `Tasks Tracker` | relation | |
+| `Topics`, `Tasks Tracker` | relation | no emoji in the name (see "Relation names" above). In the public template the Meetings side of the Topics relation still carries the emoji (`🧵 Topics`); when a skill writes from the Meetings side, fetch the data source first and use the name it reports |
 | `Parent item`, `Sub-item` | relation (self) | meeting series |
 
 The transcript is pulled only when quotes are needed (client-satisfaction, Gemini briefs).

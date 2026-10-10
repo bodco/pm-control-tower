@@ -4,13 +4,13 @@
 
 До серпня 2026 факти про проєкт (команда, канали, ID баз, transition ID) були розкидані по тілах скілів. Коли команда Acme за два місяці зменшилась з 9 до 3 людей, а доступ до половини репозиторіїв зник, з'ясувалось, що десятки скілів продовжують "знати" стару реальність. Звідси реєстр конфігів: один файл на проєкт, який читають усі скіли, і жорстке правило, що конфіг перемагає.
 
-Реєстр живе як синхронізований скіл `projects/` (папка поруч з усіма іншими скілами). Це не користувацький скіл, він ніколи не викликається сам, це інфраструктура. Історично був `_projects/` у CLAUDE.md; ця назва застаріла.
+Реєстр живе як синхронізований скіл `projects/` (папка поруч з усіма іншими скілами). Це не користувацький скіл, він ніколи не викликається сам, це інфраструктура.
 
 Вміст папки:
 
 | Файл | Призначення |
 |---|---|
-| `SKILL.md` | правила реєстру: Rule Zero, Default Project Rule, Naming Convention, як скіли читають конфіг, як додати проєкт |
+| `SKILL.md` | правила реєстру: Rule Zero, Default Project Rule, Restricted internal sources, Naming Convention, як скіли читають конфіг, як додати проєкт |
 | `_standards.md` | стандарти, однакові для всіх проєктів (машинна версія PM Toolkit, `14`) |
 | `_template.md` | порожній шаблон конфігу |
 | `_templates.md` | house-реєстр шаблонів документів: ключі, вбудовані формати, куди що зберігається, порядок пошуку (`15`) |
@@ -45,7 +45,7 @@
 ## Анатомія конфігу (по `_template.md`, з коментарями з `acme.md`)
 
 ### General
-`project_name`, `project_slug`, `status` (active / archived), `description`, `board_type` (Kanban / Scrum), `default_language` (мова внутрішніх звітів), `client_language`.
+`project_name`, `project_slug`, `status` (active / archived), `description`, `board_type` (Kanban / Scrum), `default_language` (мова внутрішніх звітів), `client_language`. Опційний `instructions_doc` вказує на сусідній `{slug}.instructions.md` з робочими правилами проєкту (правила дослідження, мова, де що лежить), який читається після конфігу.
 
 ### Access Matrix (READ THIS FIRST)
 Таблиця: ресурс, доступ (✅/❌), з якої дати, примітки. Кожен ресурс, якого торкаються скіли: репозиторії, БД, моніторинг, комунікаційні інструменти. На Acme тут зафіксовано, що MO/CP/Mobile репо - клієнтські, локальні клони і knowledge bases - заморожені снапшоти на 2026-07-31, read-only інституційна пам'ять, а не поточний код.
@@ -68,7 +68,7 @@ task_tracker:
 На Acme: `jira_server`, `api_access: true`. На проєкті, де клієнт дав лише логін у свою Jira Cloud: `jira_cloud`, `api_access: false`, `browser_access: true`, `fallback_source: manual_export`. Двигуни читають цю секцію одразу після Step 0 і при `api_access: false` переходять на fallback без помилки (правило graceful degradation у `04`).
 
 ### Jira
-Заповнюється, якщо `task_tracker.type` = jira_server або jira_cloud з `api_access: true`. `server_url`, `server_version`, `project_key`, `mcp_write`, `mcp_read`, `known_bug` (на Jira Server 7.13 обидва конектори повертають "Unexpected end of JSON input" на записі: це косметика, HTTP 204, оновлення проходять, перевіряти повторним читанням).
+Заповнюється, якщо `task_tracker.type` = jira_server або jira_cloud з `api_access: true`. `server_url`, `server_version`, `project_key`, `mcp_write`, `mcp_read`, `known_bug` (на Jira Server 7.13 обидва конектори повертають "Unexpected end of JSON input" на записі: це косметика, HTTP 204, оновлення проходять, перевіряти повторним читанням). Опційний `scope_jql` звужує спільний Jira-проєкт до цієї ініціативи; JQL Isolation Validator дописує його до обов'язкового фільтра `project = {KEY}`.
 
 Підсекції:
 - **Labels Taxonomy** - лейбли і призначення (feature, enhancement, bug-fix, ops-support, security, external-dev з позначкою HISTORICAL і датою).
@@ -79,7 +79,10 @@ task_tracker:
 - **External-Dev Workflow** - якщо є клієнтські розробники, чиї PR ми перевіряємо (на Acme завершено 2026-07-31, збережено як історія).
 
 ### Slack
-`workspace`, `channels_dev`, `channels_stability`, `channels_all`.
+`workspace`, `slack_access`, `channels_dev`, `channels_stability`, `channels_all`, `channel_ids`.
+
+### Restricted internal sources
+Блок `restricted_sources` (з 1.5.2): відверті внутрішні канали, поштові скриньки чи списки, які скіли можуть читати для контексту, але які ніколи й ні в якій формі не потрапляють клієнту. Кожен запис каже, як розпізнати джерело (канал, ID, workspace, запис Knowledge Base, на який посилаються рядки Threads) і який колектор, якщо є, його пише. Правила (виключити з клієнтських результатів, лише контекст, жодних витоків через переказ, PM-only header може згадати) живуть у `projects/SKILL.md` і перемагають текст будь-якого скіла. Порожній список означає, що в проєкту таких джерел немає. Restricted-канал ніколи не стоїть у `channels_all`.
 
 ### Sentry
 `url`, `token`, `org_slug`, `projects_in_scope`, `projects_out_of_scope` (з датами і причиною), повний список проєктів на інстансі. Якщо Sentry немає: `url: none`, скіли пропускають.
