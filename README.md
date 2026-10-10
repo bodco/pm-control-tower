@@ -82,7 +82,10 @@ steering), `client-satisfaction-tracker`, `change-request`.
 
 **On the call:** `live-tips` (local transcription, tips in the chat while you talk, a
 Meetings DB page with the transcript after the call; requires a Mac with Apple Silicon,
-see `docs/en/17-live-tips.md`).
+see `docs/en/17-live-tips.md`). Typical use: in one Cowork session, prep the meeting first
+(meeting details, Notion pages or a folder to focus on), then say `live tips` right before
+the call; a client interview gets its own mode that tracks the planned questions. Model:
+Sonnet 5.5 for everyday calls, Opus 5.5 for interviews and high-stakes calls.
 
 ---
 
