@@ -28,7 +28,8 @@ Below the Focus desk, in this order:
 - **Awaiting Reply** (Threads): the tabs Awaiting Reply, Email, Slack, Other (Signal, Zoom and Other threads) and the chart Threads by Status.
 - **Four quick action buttons** in two columns.
 - **Reports and project health**: Latest reports (Reports, newest first), Task health (a chart of tasks by status), Overdue tasks, Open risks (`Open`, `Monitoring`, `Realized`, `AI Review`).
-- **How to use** at the bottom: what the template is, the table of databases, the daily workflow, the capture rule, thread statuses, the optional AI-ready section and Getting started.
+- **How to use** at the bottom: what the template is, a link to the Skills cheat sheet, the table of databases, the daily workflow, the capture rule, thread statuses, the optional AI-ready section and Getting started.
+- **🧰 Skills cheat sheet**, a child page at the very bottom: the Notion copy of [18. Skills cheat sheet](18-skills-cheatsheet.md) (which skill for which job, the phrase that starts it, rhythm and needs, in six groups). The two are kept identical.
 
 There is no separate Inbox view or "Today's Reports" block on the page: the Inbox lives in the database grid, and Today's Reports and This Week's Reports are views inside the Reports database.
 

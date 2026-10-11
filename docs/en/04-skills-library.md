@@ -1,5 +1,7 @@
 # 04. Skills library
 
+> Looking for the short version (which skill for which job and the phrase that starts it)? See [18. Skills cheat sheet](18-skills-cheatsheet.md). This document is the full reference.
+
 ## What a skill is
 
 A skill = a folder with a `SKILL.md` file (plus, if needed, `README.md`, `scripts/`, `references/`, `inputs/`) that Claude reads and executes. `SKILL.md` has frontmatter (`name`, `description` up to 1024 characters, because sync rejects longer ones) and a body with instructions. The description is both a description and a trigger: Claude decides to apply the skill when the request matches the description (trigger words in two languages).

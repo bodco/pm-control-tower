@@ -2,12 +2,17 @@
 
 **An AI framework and personal operating system for a project manager.**
 
-[Українською](README.uk.md) · [Notion template](https://bodco.notion.site/pm-control-tower) · [Documentation](docs/en/)
+[Українською](README.uk.md) · [Website](https://tower.bodco.pm) · [Notion template](https://bodco.notion.site/pm-control-tower) · [Documentation](docs/en/)
 
 Built over a year on a real fintech delivery project and cleaned up for public use.
 Routine work (collecting context, preparing for meetings, writing reports, tracking
 risks, keeping the board honest) runs on a schedule in the background. The project
 manager spends the day on judgement, not on repackaging information.
+
+Built and tested on macOS. Cowork also runs on Windows: `mac-mail-collector` and
+`live-tips` need a Mac, a few skills need your computer on any OS, the rest use cloud
+connectors only. Windows itself is not tested yet. The per-skill list is on the
+[website](https://tower.bodco.pm/skills/#where) and in the [skills cheatsheet](docs/en/18-skills-cheatsheet.md).
 
 ---
 
@@ -62,28 +67,37 @@ usable on its own, with none of the automation in this repository.
 Step by step with prompts: `docs/en/16-runbook.md`. Full instructions: `plugin/SETUP.md`. Placeholder reference: `plugin/CONNECTORS.md`.
 
 **Start with four skills.** `projects` (infrastructure, read by everything else),
-`daily-team-prep`, `weekly-overview`, `mac-mail-collector`. The rest connects when
-you need it.
+`daily-team-prep`, `weekly-overview` and one collector (`slack-collector`, or
+`mac-mail-collector` if your work lives in mail). The rest connects when you need it.
 
 ---
 
 ## The skill library
 
-**Client and reporting:** `client-meeting-prep`, `client-report` (weekly, monthly,
-steering), `client-satisfaction-tracker`, `change-request`.
+Twenty-two skills in six groups. Which phrase starts each one, how often to run it and what
+it needs: [docs/en/18-skills-cheatsheet.md](docs/en/18-skills-cheatsheet.md).
 
-**Tracker:** `jira-management`, `jira-board-health`, `velocity-report`.
+**Foundation:** `projects` (the config registry every other skill reads first),
+`project-lifecycle` (kickoff, handover, health check, closure).
 
-**Communication:** `slack-collector`, `inbox-responder`, `thread-ticket-sync`,
-`notion-meeting-topics`, `topic-manager`.
+**Collect and sort:** `slack-collector`, `mac-mail-collector`, `inbox-responder`,
+`thread-ticket-sync`, `topic-manager`.
 
-**Risk and state:** `risk-register`, `stability-scan`, `sentry-assistant`,
-`deploy-analysis`, `project-lifecycle`.
+**Prepare and call:** `daily-team-prep`, `client-meeting-prep`, `live-tips`,
+`notion-meeting-topics`.
 
-**On the call:** `live-tips` (local transcription, tips in the chat while you talk, a
-Meetings DB page with the transcript after the call; requires a Mac with Apple Silicon,
-see `docs/en/17-live-tips.md`). Typical use: in one Cowork session, prep the meeting first
-(meeting details, Notion pages or a folder to focus on), then say `live tips` right before
+**Report:** `weekly-overview`, `client-report` (weekly, monthly, steering),
+`velocity-report`, `client-satisfaction-tracker`.
+
+**Scope and risk:** `change-request`, `risk-register`.
+
+**Tracker and stability:** `jira-management`, `jira-board-health`, `stability-scan`,
+`sentry-assistant`, `deploy-analysis`.
+
+About `live-tips`: local transcription, tips in the chat while you talk, a Meetings DB page
+with the transcript after the call; requires a Mac with Apple Silicon, see
+`docs/en/17-live-tips.md`. Typical use: in one Cowork session, prep the meeting first
+(meeting details, Notion pages or a folder to focus on), then say `live tips <project>` right before
 the call; a client interview gets its own mode that tracks the planned questions. Model:
 Sonnet 5.5 for everyday calls, Opus 5.5 for interviews and high-stakes calls.
 

@@ -25,3 +25,4 @@ Read in this order. Documents 00 to 02 explain what the framework is, 10 is the 
 | 15 | [Document templates](15-document-templates.md) | Catalog of the documents the skills generate, and how to plug in company or personal templates |
 | 16 | [Step by step: setup and a new project](16-runbook.md) | What to click and which prompts to type: setup from scratch and a new project start, with the list of manual steps |
 | 17 | [Live tips: a co-pilot on the call](17-live-tips.md) | Local call transcription, tips in the chat, how to end a meeting, the Meetings DB page; install from scratch and troubleshooting |
+| 18 | [Skills cheat sheet](18-skills-cheatsheet.md) | Which skill for which job, the phrase that starts it, the rhythm and what it needs, in six groups |

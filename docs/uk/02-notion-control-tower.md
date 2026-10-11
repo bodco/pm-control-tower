@@ -28,7 +28,8 @@ Notion тут - не вікі і не сховище документів, а с
 - **Awaiting Reply** (Threads): вкладки Awaiting Reply, Email, Slack, Other (треди Signal, Zoom і Other) і чарт Threads by Status.
 - **Чотири кнопки швидких дій** у дві колонки.
 - **Reports and project health**: Latest reports (Reports, найновіші першими), Task health (чарт задач за статусом), Overdue tasks, Open risks (`Open`, `Monitoring`, `Realized`, `AI Review`).
-- **How to use** унизу: що таке шаблон, таблиця баз, щоденний workflow, правило запису, статуси тредів, опційний розділ AI-ready і Getting started.
+- **How to use** унизу: що таке шаблон, посилання на Skills cheat sheet, таблиця баз, щоденний workflow, правило запису, статуси тредів, опційний розділ AI-ready і Getting started.
+- **🧰 Skills cheat sheet**, дочірня сторінка в самому низу: Notion-копія [18. Шпаргалки скілів](18-skills-cheatsheet.md) англійською (який скіл для якої роботи, фраза, що його запускає, ритм і що потрібно, у шести групах). Обидві тримаються однаковими.
 
 Окремої в'юшки Inbox чи блоку "Today's Reports" на сторінці немає: Inbox живе в сітці баз, а Today's Reports і This Week's Reports - це в'юшки всередині бази Reports.
 

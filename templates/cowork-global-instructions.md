@@ -3,10 +3,11 @@
 Paste one of the blocks below into Claude Desktop → Settings → Cowork (global
 instructions). Keep it short: every project fact lives in `projects/<slug>.md`, not here.
 Claude adds a row to the projects table for you at the end of every project kickoff;
-you only paste it.
+you only paste it. Fill in or delete the lines in angle brackets.
 
 Встав один з блоків нижче в Claude Desktop → Settings → Cowork (глобальні інструкції).
 Тримай його коротким: усі факти про проєкт живуть у `projects/<slug>.md`, а не тут.
+Рядки в кутових дужках заповни або видали.
 
 ## Українською
 
@@ -28,7 +29,7 @@ you only paste it.
 1. Rule Zero: конфіг `projects/<slug>.md` перемагає будь-який скіл, звіт чи документ.
 2. Ніколи не вгадуй проєкт. Якщо він не названий і не видно з ключа тікета, спитай.
 3. Мова: внутрішнє українською, усе для клієнта англійською.
-4. Ніколи не використовуй довге тире.
+4. <опційно: твої правила стилю, наприклад тон або слова, яких уникати>
 5. Секрети лише у `~/work/Secrets/secrets.env`; у конфігах тільки назва змінної; ніколи не друкувати.
 6. Нічого не відправляй клієнту сам. Драфти так, відправка завжди я.
 ```
@@ -53,7 +54,7 @@ Every project fact lives in the `projects` skill, one file per project.
 1. Rule Zero: the config `projects/<slug>.md` beats any skill, report or document.
 2. Never guess the project. If it is not named and not visible from a ticket key, ask.
 3. Language: internal in <my language>, everything client-facing in English.
-4. Never use an em dash.
+4. <optional: your style rules, for example tone or words to avoid>
 5. Secrets only in `~/work/Secrets/secrets.env`; configs hold variable names only; never print them.
 6. Never send anything to the client yourself. Drafts yes, sending is always me.
 ```

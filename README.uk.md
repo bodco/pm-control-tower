@@ -2,11 +2,16 @@
 
 **AI-фреймворк і персональна операційна система проєктного менеджера.**
 
-[In English](README.md) · [Шаблон Notion](https://bodco.notion.site/pm-control-tower) · [Документація](docs/uk/)
+[In English](README.md) · [Сайт](https://tower.bodco.pm/uk/) · [Шаблон Notion](https://bodco.notion.site/pm-control-tower) · [Документація](docs/uk/)
 
 Зібраний за рік на реальному фінтех-проєкті і знеособлений для публічного використання.
 Рутина (збір контексту, підготовка до мітингів, звіти, ризики, гігієна борди) виконується
 за розкладом у фоні. ПМ витрачає день на судження, а не на перепаковування інформації.
+
+Зроблено й перевірено на macOS. Cowork працює і на Windows: `mac-mail-collector` і
+`live-tips` потребують Мака, кілька скілів потребують твого компʼютера на будь-якій ОС,
+решта працює лише з хмарними конекторами. Саму Windows ще не тестували. Список по скілах
+є на [сайті](https://tower.bodco.pm/uk/skills/#where) і в [шпаргалці скілів](docs/uk/18-skills-cheatsheet.md).
 
 ---
 
@@ -61,28 +66,38 @@ Projects, Workspaces.
 Покроково з промптами: `docs/uk/16-runbook.md`. Повна інструкція: `plugin/SETUP.md`. Довідник позначок: `plugin/CONNECTORS.md`.
 
 **Починай з чотирьох скілів.** `projects` (інфраструктура, її читають усі інші),
-`daily-team-prep`, `weekly-overview`, `mac-mail-collector`. Решта підключається за потреби.
+`daily-team-prep`, `weekly-overview` і один колектор (`slack-collector` або
+`mac-mail-collector`, якщо твоя робота живе в пошті). Решта підключається за потреби.
 
 ---
 
 ## Бібліотека скілів
 
-**Клієнт і звітність:** `client-meeting-prep`, `client-report` (тижневий, місячний,
-steering), `client-satisfaction-tracker`, `change-request`.
+Двадцять два скіли в шести групах. Яка фраза запускає кожен, як часто його запускати і що
+йому потрібно: [docs/uk/18-skills-cheatsheet.md](docs/uk/18-skills-cheatsheet.md).
 
-**Трекер:** `jira-management`, `jira-board-health`, `velocity-report`.
+**Основа:** `projects` (реєстр конфігів, який кожен інший скіл читає першим),
+`project-lifecycle` (kickoff, прийом проєкту, health check, закриття).
 
-**Комунікації:** `slack-collector`, `inbox-responder`, `thread-ticket-sync`,
-`notion-meeting-topics`, `topic-manager`.
+**Збір і розбір:** `slack-collector`, `mac-mail-collector`, `inbox-responder`,
+`thread-ticket-sync`, `topic-manager`.
 
-**Ризики і стан:** `risk-register`, `stability-scan`, `sentry-assistant`,
-`deploy-analysis`, `project-lifecycle`.
+**Підготовка і дзвінок:** `daily-team-prep`, `client-meeting-prep`, `live-tips`,
+`notion-meeting-topics`.
 
-**На дзвінку:** `live-tips` (локальна транскрипція, підказки в чаті під час розмови,
-сторінка в Meetings DB з транскриптом після дзвінка; потрібен Мак на Apple Silicon,
-див. `docs/uk/17-live-tips.md`). Типовий сценарій: в одній сесії Cowork спершу prep мітингу
+**Звіти:** `weekly-overview`, `client-report` (тижневий, місячний, steering),
+`velocity-report`, `client-satisfaction-tracker`.
+
+**Скоуп і ризики:** `change-request`, `risk-register`.
+
+**Трекер і стабільність:** `jira-management`, `jira-board-health`, `stability-scan`,
+`sentry-assistant`, `deploy-analysis`.
+
+Про `live-tips`: локальна транскрипція, підказки в чаті під час розмови, сторінка в
+Meetings DB з транскриптом після дзвінка; потрібен Мак на Apple Silicon, див.
+`docs/uk/17-live-tips.md`. Типовий сценарій: в одній сесії Cowork спершу prep мітингу
 (деталі, сторінки Notion чи папка, які взяти першими), а безпосередньо перед дзвінком
-`live tips`; для інтерв'ю з клієнтом є окремий режим, що відстежує заплановані питання.
+`live tips <проєкт>`; для інтерв'ю з клієнтом є окремий режим, що відстежує заплановані питання.
 Модель: Sonnet 5.5 для звичайних дзвінків, Opus 5.5 для інтерв'ю і важливих розмов.
 
 ---
