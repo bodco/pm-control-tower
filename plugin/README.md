@@ -59,7 +59,7 @@ plugin customization flow fills in the `~~` placeholders), add the config for
 your own project inside the plugin and run the first skills by hand.
 
 Status: beta. Every release since 1.1.0 is reviewed end to end against the Notion
-template and the config template (current: 1.6.1), but the plugin has not yet been
+template and the config template (current: 1.6.2), but the plugin has not yet been
 installed by anyone except the author. Expect rough edges and report them.
 
 ## What is deliberately missing

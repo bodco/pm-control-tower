@@ -123,7 +123,10 @@ Python 3.10+.
    go), and `notion.meetings_db`, `notion.project_page_id`, `notion.workspace_page_id` for
    the meeting page after the call.
 6. In Cowork, the task must have the `~/work` folder connected and the Notion connector on.
-7. Test: `live tips <project>` → a "Live transcriber" Terminal window opens by itself →
+7. Test the tips window first: `~/work/Tools/live-transcriber/bin/prompter --demo` (move it,
+   minimise it, type a question; then share your entire screen in your meeting app and check
+   from another device whether participants see it).
+8. Test: `live tips <project>` → a "Live transcriber" Terminal window and the tips window open by themselves →
    talk for a minute → `стоп` → check the wrap-up and the new page in Meetings.
 
 Everything about how it works, the tip format, the interview mode and troubleshooting:
