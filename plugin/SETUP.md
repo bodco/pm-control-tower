@@ -144,5 +144,6 @@ Everything about how it works, the tip format, the interview mode and troublesho
 | Records do not land in the right project | The Project and Workspace relations are empty, or the database IDs are wrong |
 | A Jira skill cannot find its tools | The server name in `jira.mcp_write` / `jira.mcp_read` does not match `.mcp.json` (default `jira`), or Claude Desktop was not restarted |
 | `live tips`: "Recording did not start" | The recorder is not installed (`install.sh`), or `paths.tool_root` in `live-tips/settings.yaml` points elsewhere |
+| `live tips`: the tips window was closed by accident | Write "відкрий суфлер" (open the prompter) in the chat, or `touch ~/work/Tools/live-transcriber/control/prompter`; it reopens with every tip so far |
 | `live tips`: tips about you only, nothing about the other side | Terminal has no System Audio Recording permission (Privacy & Security → Screen & System Audio Recording) |
 | A write to Notion "succeeds" but the field stays empty | The property name in your database differs from the plugin's expectation (see "Notion relation property names" in `_template.md`); the skill should report the discrepancy |

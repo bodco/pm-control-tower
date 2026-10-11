@@ -137,4 +137,5 @@ Scheduled Tasks. Починай з одного, наприклад `daily-team-
 | Jira-скіл не знаходить інструментів | Імʼя сервера в `jira.mcp_write` / `jira.mcp_read` не збігається з `.mcp.json` (за замовчуванням `jira`), або Claude Desktop не перезапущений |
 | Запис у Notion «пройшов», але поле порожнє | Назва властивості у твоїй базі відрізняється від очікуваної плагіном (див. «Notion relation property names» у `_template.md`); скіл має повідомити про розбіжність |
 | `live tips`: "Запис не стартував" | Записувач не встановлений (`install.sh`) або `paths.tool_root` у `live-tips/settings.yaml` вказує не туди |
+| `live tips`: вікно-суфлер випадково закрили | Напиши в чат "відкрий суфлер" або `touch ~/work/Tools/live-transcriber/control/prompter`; воно відкриється з усіма підказками від початку дзвінка |
 | `live tips`: підказки лише про тебе, про співрозмовників нічого | У Terminal немає дозволу на запис системного звуку (Privacy & Security → Screen & System Audio Recording) |
