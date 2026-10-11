@@ -376,7 +376,7 @@ Use `notion-create-pages`:
       "Owner": "[name from the config's Team or Client Team section]",
       "date:First Seen:start": "YYYY-MM-DD",
       "date:Last Updated:start": "YYYY-MM-DD",
-      "Source": "Jira, Slack",
+      "Source": "[\"Jira\", \"Slack\"]",
       "Summary": "1-2 sentence summary of the risk and its potential impact.",
       "Mitigation": "Proposed mitigation plan or current action.",
       "Project": "[\"https://app.notion.com/p/{config.notion.project_page_id without dashes}\"]",
@@ -390,7 +390,9 @@ Use `notion-create-pages`:
 
 Relation properties need full page URLs, not bare UUIDs: always the
 `["https://app.notion.com/p/<id-without-dashes>"]` form, for `Project`, `Workspace` and
-`Topics` alike.
+`Topics` alike. `Source` is a multi_select: pass a JSON array of option names
+(`["Jira", "Slack"]`), never a comma-separated string, and when updating an existing
+risk send the full merged array (old sources plus new ones).
 
 ### B. Update an existing risk
 

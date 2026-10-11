@@ -18,23 +18,19 @@ An inline dashboard database at the very top of the page, built over Tasks Track
 - **My day** with four widgets: **Do next** (unfinished tasks that are overdue, due today or this week, or High priority; Done and On Hold are excluded), **Reply & follow up** (threads in `Awaiting Reply` = your turn, and `Need Follow-up` = their turn, oldest reply first), **Risks needing attention** (`Open`, `Monitoring`, `Realized`, `AI Review`), **Recent reports** (reports dated within the past week, newest first).
 - **Overdue**: unfinished tasks whose due date is in the past.
 
-These are views of the original records, not a second task list: open any record and you edit it in place, and the collectors keep managing thread statuses. The relative-date filters roll forward on their own. After duplicating the template, check that the Focus desk views point to the duplicated databases, not to the source ones. Below the Focus desk sit the quick-capture links (Inbox, Meetings, Decisions) and the grid of the eleven databases.
+These are views of the original records, not a second task list: open any record and you edit it in place, and the collectors keep managing thread statuses. The relative-date filters roll forward on their own. After duplicating the template, check that the Focus desk views point to the duplicated databases, not to the source ones. The callout above the Focus desk gives the order: start with **My day** (pick the next task, clear replies, scan risks and recent reports), then check the **Overdue** tab for anything slipping.
 
-**The "My day" section**
-- **Inbox** - a parking lot for quick thoughts. One line, no details. Processed once a day: Route into Tasks Tracker or delete.
-- **Today / This Week** - a kanban and a list of active tasks. The main working view.
-- **Awaiting Reply** - threads (Email, Slack, Other) waiting for a reply, split by type.
+Below the Focus desk, in this order:
+- **Quick capture**: links to Inbox, Meetings and Decisions for a one-line capture.
+- A toggle **What appears here?** that explains the four My day widgets and their filters.
+- **The grid of the eleven databases** in two columns: Inbox, Tasks Tracker, Meetings, Threads, Topics, Knowledge Base on the left; Risks, Decisions, Reports, Projects, Workspaces on the right. The full databases, for a deep dive.
+- **Today / This Week** (Tasks Tracker): a board by status plus the tabs Not Ready, Today, This Week, Next Week, Past Week. The main working view of tasks.
+- **Awaiting Reply** (Threads): the tabs Awaiting Reply, Email, Slack, Other (Signal, Zoom and Other threads) and the chart Threads by Status.
+- **Four quick action buttons** in two columns.
+- **Reports and project health**: Latest reports (Reports, newest first), Task health (a chart of tasks by status), Overdue tasks, Open risks (`Open`, `Monitoring`, `Realized`, `AI Review`).
+- **How to use** at the bottom: what the template is, the table of databases, the daily workflow, the capture rule, thread statuses, the optional AI-ready section and Getting started.
 
-**The "Fresh reports" section**
-- Today's Reports - everything generated today. Come here before a meeting.
-- This Week's Reports - the week in review.
-
-**The "Project health" section**
-- Tasks by Status / Priority (charts), Threads by Status (chart), Overdue, Open Risks.
-
-**Navigation** - the full databases for a deep dive.
-
-Quick action buttons (Quick Add into Inbox, Tasks) are placed in two columns at the top.
+There is no separate Inbox view or "Today's Reports" block on the page: the Inbox lives in the database grid, and Today's Reports and This Week's Reports are views inside the Reports database.
 
 ## Databases
 
@@ -42,7 +38,7 @@ Quick action buttons (Quick Add into Inbox, Tasks) are placed in two columns at 
 
 ### Relation names
 
-In all databases the relation to Projects DB is called `Project`, and the one to Workspaces DB is `Workspace` (singular, no emoji). Cross-relations between databases also carry no emoji: `Meetings`, `Threads`, `Topics`, `Knowledge Base`, `Inbox`, `Tasks Tracker`. Verified against the live schemas of Risks, Decisions and Tasks Tracker. The earlier table with four naming variants (`Projects`, `Workspaces`, `🏛️ Workspaces`, names with emoji) is historical; a skill or template that still uses it is out of date. From Projects DB itself the back-relations do carry emoji (`💬 Meetings`, `📨 Threads`, `🧵 Topics`, `📚 Knowledge Base`), but skills write from the side of the child databases.
+In all databases the relation to Projects DB is called `Project`, and the one to Workspaces DB is `Workspace` (singular, no emoji). Cross-relations between databases also carry no emoji: `Meetings`, `Threads`, `Topics`, `Knowledge Base`, `Inbox`, `Tasks Tracker`. Verified against the live schemas of all eleven databases of the public template. The earlier table with four naming variants (`Projects`, `Workspaces`, `🏛️ Workspaces`, names with emoji) is historical; a skill or template that still uses it is out of date. From Projects DB itself the back-relations are `Workspace`, `Tasks`, `Inbox` and, with emoji, `💬 Meetings`, `📨 Threads`, `🧵 Topics`, `📚 Knowledge Base` (Workspaces DB has the same set with `Projects` in place of `Workspace`); skills write from the side of the child databases.
 
 ### 📨 Threads
 Inbound communications from every channel. One page = one thread.
@@ -62,8 +58,8 @@ Inbound communications from every channel. One page = one thread.
 | `Reported at` | date | the first message |
 | `Last Reply Date` | date | the last comment (updated by the collector and its review pass) |
 | `Jira Key`, `Jira Sync`, `Jira Sync Checked` | text, select, date | the link to a ticket: key, sync state (Created, Matched, Skipped (info), Rejected by PM, Error), check date; maintained by `slack-collector` Step 4 or a cloud threads-to-tickets task |
-| `Follow-Up Check` | formula | an "all good" checkbox; unchecked = a follow-up is needed |
-| `ID` | auto-increment | |
+| `Follow-Up Check` | formula | checked when the last reply is at most 2 days old; unchecked = a follow-up is needed |
+| `ID` | auto-increment | no prefix in the template; set your own (for example `THR`, cite as THR-n) if it is free in your workspace |
 | `Project`, `Workspace` | relation | mandatory |
 | `Topics`, `Knowledge Base`, `Tasks Tracker`, `Inbox` | relation | links to the other databases |
 | Page icon | by status | set by the status, not by the last author (`projects/_standards.md` section 11; for Email 📤 when every message is outgoing with no reply). This is the page icon, not a property |
@@ -101,7 +97,7 @@ Cross-cutting themes that run through several meetings and threads.
 | `Project`, `Workspace` | relation | |
 | `Parent item`, `Sub-item` | relation (self) | topic hierarchy |
 
-Filled by: `topic-manager` (on-demand and weekly mode), Gemini `notion-project-brief`. A special page in Topics: **Claude Skills & Prompts** (the README of the skills library and the schedule, with child documentation pages).
+Filled by: `topic-manager` (on-demand and weekly mode), Gemini `notion-project-brief`. Optionally, a special page in Topics: **Claude Skills & Prompts** (the README of the skills library and the schedule, with child documentation pages). It is not part of the public template; you create it yourself if you want one.
 
 ### Decisions (the decision log)
 
@@ -112,7 +108,7 @@ Filled by: `topic-manager` (on-demand and weekly mode), Gemini `notion-project-b
 | `Area` | select | Access, Scope, Process, Tech, Team, Client |
 | `Context` | text | why exactly this way |
 | `Source` | url | the meeting or the thread |
-| `Status` | select | Active, Superseded, Cancelled |
+| `Status` | select | Active, Superseded, Cancelled, Historical |
 | `Superseded By` | relation (self, DUAL) | the new decision that replaced this one |
 | `Supersedes` | relation (self, DUAL) | the reverse side of the same pair |
 | `Alternatives rejected` | text | what was rejected and why |
@@ -122,7 +118,7 @@ Filled by: `topic-manager` (on-demand and weekly mode), Gemini `notion-project-b
 | `Stated by` | text | who said it (text, not person: the client's people are not Notion users) |
 | `Project`, `Workspace` | relation | |
 
-What the database has: `Alternatives rejected` and `Stated by` were added, and `Superseded By` went from a text field to a self-relation paired with `Supersedes`. Deliberate deviations from CONTRACT: `Rationale` is not added (`Context` plays its role), there is no `Disputed` status (a disagreement is captured in a comment, not in a state). The one text value of `Superseded By` that existed before the conversion is preserved in the `Context` of that decision with a note about the restore. `Trade-off`, `Review trigger` and `Door` were added from the Decision Log and from the "Technical start" of the PM Toolkit; a separate Decision Log page per project is no longer needed (the standard is in `projects/_standards.md` section 9, and skills do not invent a trade-off when the source does not name one). Rules: decisions are never deleted, only Superseded/Cancelled; any change in the state of the project = a row here on the same day; the Monthly Memory Digest appends the decisions missed in meetings.
+What the database has: `Alternatives rejected` and `Stated by` were added, and `Superseded By` went from a text field to a self-relation paired with `Supersedes`. Deliberate deviations from CONTRACT: `Rationale` is not added (`Context` plays its role), there is no `Disputed` status (a disagreement is captured in a comment, not in a state). The one text value of `Superseded By` that existed before the conversion is preserved in the `Context` of that decision with a note about the restore. `Trade-off`, `Review trigger` and `Door` were added from the Decision Log and from the "Technical start" of the PM Toolkit; a separate Decision Log page per project is no longer needed (the standard is in `projects/_standards.md` section 9, and skills do not invent a trade-off when the source does not name one). Rules: decisions are never deleted, only Superseded / Cancelled / Historical (Historical = a one-off decision that was carried out and is no longer in force, but was neither replaced nor cancelled); any change in the state of the project = a row here on the same day; the Monthly Memory Digest appends the decisions missed in meetings.
 
 ### 🐳 Reports
 The archive of everything generated.
@@ -136,6 +132,7 @@ The archive of everything generated.
 | `Visibility` | select | Internal, External |
 | `Summary` | text | 2-3 sentences |
 | `Project`, `Workspace` | relation | |
+| `Topics` | relation | optional, one-way: the topic a report is about |
 | `ID` | auto-increment | |
 
 The `Monthly Digest` and `Automation Health Check` options were created automatically on the first write from the cloud routines: Notion creates a new select option by itself, so new report types do not have to be set up by hand.
@@ -171,7 +168,7 @@ This is not "one more task tracker" and not a duplicate of Jira. The axiom:
 | Why not merge them | the PM's personal and cross-project tasks do not belong on a team board | tasks scattered across 3-5 client trackers plus a notebook make the total time limit impossible to see; the result is an illusion of free time and then overload |
 
 Three consequences:
-1. Skills (`daily-team-prep`, `risk-register`, `jira-board-health`) put their recommendations ("check the branch", "remind about the invoice") exactly here with the `Source` field, not into Jira.
+1. The PM's follow-ups land here, not in Jira. The prep and scan skills (`daily-team-prep`, `risk-register`, `jira-board-health`) do not create tasks: they write a report into Reports (`risk-register` also maintains the Risks DB), and the PM turns the recommendations they want to act on ("check the branch", "remind about the invoice") into tasks here. In this repository only `project-lifecycle` and `change-request` create Tasks Tracker rows themselves, with their own `Source` value; the other `Source` options are reserved for your own automations and for manual tagging.
 2. The link to Jira is reference only: an optional text field `Jira Issue Key` (the PM's call), with no synchronization. The PM runs their day in Notion, the team delivers in Jira.
 3. On a project with no API to the client's tracker, Tasks Tracker becomes the only place where the PM sees their commitments on that project.
 
@@ -194,16 +191,57 @@ Three consequences:
 `Source` is the key: it is the filter of "what the skills threw at me" against "what I set myself". The capture rule: < 2 min, do it right away; > 2 min with no deadline, into Inbox; > 2 min with a deadline or context, straight here. The link to Jira is a reference through the `Jira Issue Key` text field. Two-way synchronization is deliberately absent: the PM runs their day in Notion, the team delivers in Jira.
 
 ### Inbox
-Quick capture (Inbox DB, data source `~~inbox-db`). Processed every day: Route (it becomes a task, Inbox Status = Routed) or delete. These are the PM's own thoughts and ideas; external inbound lives in Threads. Two different entities, not worth merging.
+Quick capture (Inbox DB, data source `~~inbox-db`). Processed every day: Route (it becomes a task; in Inbox `Status` = Routed, in Tasks Tracker the field is `Inbox Status`) or delete. These are the PM's own thoughts and ideas; external inbound lives in Threads. Two different entities, not worth merging.
+
+| Property | Type | Options |
+|---|---|---|
+| `Inbox Name` | title | one line |
+| `Type` | select | Task, Meeting Note, Email, Slack, Decision, Info, Idea |
+| `Status` | select | New, Routed |
+| `Notes` | text | |
+| `Due Date` | date | |
+| `Route` | button | turns the item into a task |
+| `Project`, `Workspace` | relation | |
+| `Tasks Tracker`, `Knowledge Base`, `Threads`, `Topics` | relation | no emoji |
+| `Parent item`, `Sub-item` | relation (self) | |
 
 ### 📚 Knowledge Base
-Documentation: Acme Documentation (component documentation, Scheduled Jobs), Project Management (PM Toolkit: metrics, templates, meetings, senior practices, KT/Handover Checklist), CV, learning. The human part; skills almost never write here. The exception: the PM Toolkit has a machine-readable version in `projects/_standards.md` that the skills work from (see `14`); the Toolkit pages carry callouts linking to it and to the databases that replace the templates.
+Documentation, the human part; skills almost never write here. An example of how it fills up: project documentation (components, scheduled jobs), a Project Management section (a PM Toolkit: metrics, templates, meetings, senior practices, a KT / Handover checklist), a CV, learning notes. The public template ships only four demo docs; the PM Toolkit is not part of it (you add your own, and `project-lifecycle` falls back to `pm_toolkit_page_id: none` when there is none). When a PM Toolkit exists, it has a machine-readable version in `projects/_standards.md` that the skills work from (see `14`); the Toolkit pages carry callouts linking to it and to the databases that replace the templates.
+
+| Property | Type | Options |
+|---|---|---|
+| `Doc name` | title | |
+| `Created time` | created_time | |
+| `Last updated time` | last_edited_time | |
+| `Due date` | date | |
+| `Project`, `Workspace` | relation | |
+| `Tasks Tracker`, `Inbox`, `Topics` | relation | no emoji; there is no back-relation to Threads (Threads links to Knowledge Base one way) |
 
 ### Projects and Workspaces
-Anchor pages. Projects DB: one page per project. Workspaces DB: one per client/company (client Acme, our company, ...). The IDs are written into the config and used as relations in all the other databases.
+Anchor pages. Projects DB: one page per project. Workspaces DB: one per client, company or personal area (client Acme, our company, ...). The IDs are written into the config and used as relations in all the other databases.
+
+Projects:
+
+| Property | Type | Options |
+|---|---|---|
+| `Project name` | title | |
+| `Status` | status | Not started, In progress, On Hold, Done (`project-lifecycle` sets In progress at kickoff) |
+| `Start date`, `End date` | date | |
+| `Workspace` | relation | paired with `Projects` in Workspaces |
+| `Tasks`, `Inbox`, `💬 Meetings`, `📚 Knowledge Base`, `📨 Threads`, `🧵 Topics` | relation | back-relations; Risks, Decisions and Reports link here one way |
+
+Workspaces:
+
+| Property | Type | Options |
+|---|---|---|
+| `Workspace Name` | title | |
+| `Type` | select | Personal, Company, Client |
+| `Status` | select | Active, Inactive, Archived |
+| `Notes` | text | |
+| `Projects`, `Tasks`, `Inbox`, `💬 Meetings`, `📚 Knowledge Base`, `📨 Threads`, `🧵 Topics` | relation | back-relations |
 
 ### The Current State page (per project)
-A distillation of "what is happening right now": open questions, planned deploys, unresolved threads, recent decisions. Updated every day incrementally (`daily-current-state-distillation`, the last 2 days). The first thing an agent or a human reads after a break.
+A distillation of "what is happening right now": open questions, planned deploys, unresolved threads, recent decisions. Updated every day incrementally (`daily-current-state-distillation`, the last 2 days). The first thing an agent or a human reads after a break. Not part of the public template: you create it per project (by hand or with `project-lifecycle`) together with your own distillation routine.
 
 ### The three time scales of memory (so that Current State, Topics and Digest do not get mixed up)
 
@@ -215,19 +253,24 @@ A distillation of "what is happening right now": open questions, planned deploys
 
 ## The daily workflow with Control Tower
 
-**Morning (~09:00, after daily-work-report):**
-1. Inbox: any new items? Process them in 2 min.
-2. Today's Reports: what has already been generated (the daily report, draft replies, prep).
-3. Today / This Week: the plan for the day.
-4. Overdue: is anything past due?
+The day runs around the Focus desk.
 
-**Before a meeting (~16:00, the prep skills have already run):**
-1. Today's Reports: open the fresh prep.
-2. The new tasks from the prep are already in Tasks Tracker.
+**Morning:**
+1. Focus desk, **My day**: Do next (the plan for the day), Reply & follow up (`Awaiting Reply` first, it is your turn), Risks needing attention, Recent reports (what the scheduled skills generated: the daily report, draft replies, prep).
+2. The **Overdue** tab: is anything past due?
+3. Inbox: any new items? Process them in 2 min.
 
-**During the day:** a thought or a task goes into Inbox; the skills run, and tasks appear with the Source field set.
+**Before a meeting (the prep skills have already run):**
+1. Recent reports on the Focus desk, or ask for the prep in the chat. The prep skills write a report into Reports, not tasks.
+2. Turn the recommendations you accept into tasks in Tasks Tracker.
+
+**During the day:** a thought or a task goes into Inbox; the skills run and their reports land in Reports.
 
 **End of day:** Inbox triage; close what is done; one line on "tomorrow's #1". No analysis, that is work for the morning.
+
+## Keeping the template, your Notion and git in sync
+
+There are three copies of this structure: git (the source of truth for the documentation and the schema in this document), the public Notion template (must match git exactly) and your own working Notion (a copy of the template that lives on). A structural change in any of them reaches the other two on the same day. The order, the reconciliation checklist and how to keep deliberate differences of your own Notion: `16-runbook.md`, section "Keeping the template, your own Notion and git in sync".
 
 ## Technical details you need to know
 

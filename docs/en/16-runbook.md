@@ -5,7 +5,7 @@ This document says what to click and what to type. Two scenarios:
 - **Scenario 1.** A colleague has duplicated the Notion template and downloaded the repository. The system does not exist yet.
 - **Scenario 2.** The system is already running (as for the author) and a new project starts.
 
-The principle of both: **you do by hand only what Claude technically cannot do.** Notion pages, relations, the config, local folders, project registration and the schedule are done by Claude. The PM answers questions and presses confirmation buttons. Each scenario ends with the full list of manual steps.
+The principle of both: **you do by hand only what Claude technically cannot do.** Notion pages, relations, the config, local folders, project registration and the schedule are done by Claude. The PM answers questions and presses confirmation buttons. Each scenario ends with the full list of manual steps. A separate section at the end covers keeping the template, your own Notion and git in sync.
 
 Where this comes from: scenario 1 condenses `plugin/SETUP.md` and `10`, scenario 2 runs `08` through the `kickoff` mode of the `project-lifecycle` skill. Those documents describe what is done and why. This one only describes how to start it.
 
@@ -144,6 +144,34 @@ The `Project` / `Workspace` relations, views and tags are done by Claude. Nothin
 | Paste the row into the global instructions | K6 |
 | "Yes" on the scheduled tasks | K7 |
 | Switch on AI Meeting Notes for the project's meetings and give them a recognizable suffix | before the first meeting (in Notion, outside Claude) |
+
+## Keeping the template, your own Notion and git in sync
+
+The Notion structure exists in three copies:
+
+| Copy | Role |
+|---|---|
+| git (this repository) | the source of truth for the documentation and the schema: `02-notion-control-tower.md` lists every database, property, option and relation name |
+| The public Notion template | must match git exactly; it is what a colleague duplicates |
+| Your own working Notion | a copy of the template that lives on, with your projects and your data |
+
+**Rule 1. Same day.** A structural change in any copy (a database, a property, a select option, a view, a page block, a page template) is carried into the other two on the same day. A change left in one copy for a week turns into a silent divergence that a skill hits later.
+
+**Rule 2. Order.** First `02-notion-control-tower.md` in git (both languages), then the public template, then your own Notion. If the idea was born in your own Notion, go the other way: your Notion, then git, then the template, and anonymize before carrying it over (no client names, people, real IDs, links or project-specific options).
+
+**Rule 3. Deliberate differences stay in your own config.** Your own Notion may differ on purpose: your own name for a status in place of `AI Review`, extra project-specific databases, private views. Write each such difference down in your own configuration (your project config or private notes next to it), never in the public template or in the git docs. Then a reconciliation does not "fix" them and does not leak them.
+
+**Rule 4. Renames go through the skills first.** Before renaming a property or an option, search the skills that write it (`grep -rn '"Property name"' plugin/skills`) and change them in the same commit. Notion silently ignores a property name it does not know: the write succeeds, the value is lost, and nobody sees an error.
+
+**Reconciliation checklist** (after any structural change, and once a month):
+
+- [ ] Schemas of all eleven databases: property names and types match `02` verbatim.
+- [ ] Select, multi_select and status options: the same set and the same spelling (an option that a skill created on first write counts too; carry it into `02` and the template).
+- [ ] Relation names: `Project`, `Workspace` and cross-relations without emoji in the child databases; the back-relations of Projects and Workspaces as listed in `02`.
+- [ ] Views on the CONTROL TOWER page: Focus desk tabs and widgets, Today / This Week, Awaiting Reply, Reports and project health, and the AI Review Queue views in Threads, Topics and Risks; filters point to the right databases.
+- [ ] Page templates: New Thread (the status and icon rules match `projects/_standards.md` section 11), New task, Meeting Notes, New doc, New project; no stray empty templates.
+- [ ] The How to use and Getting started texts on the main page: database list, skill names, `Source` options.
+- [ ] Threads statuses and their meaning: the template, `_standards.md` section 11 and `02` say the same thing.
 
 ---
 

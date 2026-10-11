@@ -22,9 +22,9 @@
 | **Transcript Alias Map** | Як транскрипти перекручують імена → реальні люди |
 | **Cultural Profile** | Позиції культур за Erin Meyer (Culture Map) і індивідуальна калібровка учасників клієнта |
 | **Downgrader multiplier** | Коефіцієнт серйозності для непрямих формулювань клієнта |
-| **Threads** | База вхідних комунікацій (Slack, Email, Other) зі статусами |
+| **Threads** | База вхідних комунікацій (Email, Slack, Signal, Zoom, Other) зі статусами |
 | **Awaiting Reply / Need Follow-up / Spectator Mode / Replied / Closed / AI Review** | Статуси тредів |
-| **AI Review** | У Threads: правила колектора не вирішили статус, потрібне око людини (не дефолт і не маркер черги). У Tasks Tracker, Inbox і Risks: запис створено або оновлено автоматикою, людина підтверджує. У старій схемі називався `Claude` |
+| **AI Review** | У Threads: правила колектора не вирішили статус, потрібне око людини (не дефолт і не маркер черги). У Topics і Risks: запис створено або оновлено автоматикою, людина підтверджує. У шаблоні кожна з баз Threads, Topics і Risks має в'юшку AI Review Queue. У Tasks Tracker та Inbox такого статусу немає. У старій схемі називався `Claude` |
 | **Червона крапка (🔴)** | Іконка треду зі статусом Awaiting Reply: відповіді або дії чекають від нас (`projects/_standards.md` розділ 11) |
 | **Topics** | База наскрізних тем через мітинги і треди |
 | **Decisions DB / Decision Log** | Журнал рішень; джерело constraints для брифів |

@@ -220,7 +220,8 @@ on every run, by the canonical table in `_standards.md` section 11 (the only cop
 skills and docs point there). In Threads `AI Review` means "the rules could not
 decide, a human has to look", never a default or a queue marker. Topics and Risks:
 `AI Review` = the item was created or updated by a skill and a human should confirm
-it; the template's "AI Review Queue" view filters on it. Topics progress is the status
+it. Each of Threads, Topics and Risks has an "AI Review Queue" view in the template
+that filters on `Status = AI Review`. Topics progress is the status
 property `Progress`. Reports `Type` and `Skill`, Tasks Tracker `Source`: the
 skill creates a missing select option on first write (Notion allows it).
 

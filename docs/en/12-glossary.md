@@ -22,9 +22,9 @@
 | **Transcript Alias Map** | How transcripts mangle names → the real people |
 | **Cultural Profile** | Culture positions per Erin Meyer (Culture Map) and individual calibration of the client's people |
 | **Downgrader multiplier** | A severity coefficient for the client's indirect phrasing |
-| **Threads** | The database of inbound communications (Slack, Email, Other) with statuses |
+| **Threads** | The database of inbound communications (Email, Slack, Signal, Zoom, Other) with statuses |
 | **Awaiting Reply / Need Follow-up / Spectator Mode / Replied / Closed / AI Review** | Thread statuses |
-| **AI Review** | In Threads: the collector's rules could not decide the status, a human has to look (never a default or a queue marker). In Tasks Tracker, Inbox and Risks: the record was created or updated by an automation, a human confirms it. Called `Claude` in the old schema |
+| **AI Review** | In Threads: the collector's rules could not decide the status, a human has to look (never a default or a queue marker). In Topics and Risks: the record was created or updated by an automation, a human confirms it. Each of Threads, Topics and Risks has an AI Review Queue view in the template. Tasks Tracker and Inbox have no such status. Called `Claude` in the old schema |
 | **Red dot (🔴)** | The icon of a thread with the status Awaiting Reply: the reply or action is owed by us (`projects/_standards.md` section 11) |
 | **Topics** | The database of cross-cutting themes across meetings and threads |
 | **Decisions DB / Decision Log** | The log of decisions; the source of constraints for briefs |
