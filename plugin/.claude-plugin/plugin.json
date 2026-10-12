@@ -1,6 +1,6 @@
 {
   "name": "pm-control-tower",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Control Tower: a config-driven PM automation library. Twenty-two project-agnostic skills for meeting preps, a live co-pilot on calls, client reports, risk register, board hygiene, mail and Slack collection, backed by a Notion memory hub. All project facts live in one config file per project, never inside the skills.",
   "author": {
     "name": "Bohdan Neymet"
