@@ -116,9 +116,17 @@ Python 3.10+.
    `mic` and `sys` peaks above zero. If `sys` is zero, play YouTube and run
    `~/work/Tools/live-transcriber/bin/audiocap --source system --seconds 5 | wc -c`:
    a number above zero means it works.
+3a. Optional, speaker names: `bash ~/work/Tools/live-transcriber/bin/install-voices.sh`
+   (also offered at the end of `install.sh`; ~26 MB, everything stays on the Mac).
+3b. Optional, search by meaning: install Ollama (`brew install ollama` or the app from
+   ollama.com), run `ollama pull bge-m3` (~1.2 GB) and pre-index each project once:
+   `~/work/Tools/live-transcriber/bin/lt index "$HOME/work/<project folder>"`.
+3c. Updating from an older version: re-run `install.sh` (it rebuilds the recorder and the
+   tips window).
 4. `live-tips/settings.yaml` in the plugin: `~~home-folder` is filled in by Step 3; check
-   the call languages (`languages`), the labels and, if you put the recorder elsewhere,
-   `paths.tool_root`.
+   the call languages (`languages`), the labels, `user.name_aliases` (how people call you)
+   and, if you put the recorder elsewhere, `paths.tool_root`. The skill is `SKILL.md` plus
+   the `references/` folder; keep them together.
 5. The project config needs `project_root` in `Local Paths` (where `live/` transcripts
    go), and `notion.meetings_db`, `notion.project_page_id`, `notion.workspace_page_id` for
    the meeting page after the call.
@@ -127,7 +135,7 @@ Python 3.10+.
    minimise it, type a question; then share your entire screen in your meeting app and check
    from another device whether participants see it).
 8. Test: `live tips <project>` → a "Live transcriber" Terminal window and the tips window open by themselves →
-   talk for a minute → `стоп` → check the wrap-up and the new page in Meetings.
+   talk for a minute, try 🆘 and ⏸ → `стоп` → check the wrap-up and the new page in Meetings.
 
 Everything about how it works, the tip format, the interview mode and troubleshooting:
 `docs/en/17-live-tips.md`.
@@ -146,4 +154,7 @@ Everything about how it works, the tip format, the interview mode and troublesho
 | `live tips`: "Recording did not start" | The recorder is not installed (`install.sh`), or `paths.tool_root` in `live-tips/settings.yaml` points elsewhere |
 | `live tips`: the tips window was closed by accident | Write "відкрий суфлер" (open the prompter) in the chat, or `touch ~/work/Tools/live-transcriber/control/prompter`; it reopens with every tip so far |
 | `live tips`: tips about you only, nothing about the other side | Terminal has no System Audio Recording permission (Privacy & Security → Screen & System Audio Recording) |
+| `live tips`: red "mic is not recording" in the window | The headset mic stream froze. The recorder restarts it and switches to the Mac mic after 2 failures; "Use Mac mic" in the alert switches at once |
+| `live tips`: no "Who is speaking?" card, or `semantic: off` | The optional layer is not installed or not running: `bin/install-voices.sh` for speakers; Ollama running with `bge-m3` for search by meaning. `lt status` shows the reason |
+| `live tips`: a module is missing | The skill was uploaded without its `references/` folder; upload the whole `live-tips/` folder again |
 | A write to Notion "succeeds" but the field stays empty | The property name in your database differs from the plugin's expectation (see "Notion relation property names" in `_template.md`); the skill should report the discrepancy |
