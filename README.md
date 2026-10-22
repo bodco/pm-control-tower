@@ -105,6 +105,8 @@ the call; audience and type are detected automatically, presentations and interv
 their own prep. Model: Sonnet 5.5 for everyday calls, Opus 5.5 for interviews and
 high-stakes calls.
 
+**New, beta:** the Live Tips app, a native macOS menu bar app that runs the same tips without a Cowork chat, with your own Claude API key: [download LiveTips-0.4.0-beta.dmg](https://github.com/bodco/pm-control-tower/releases/download/live-tips-app-v0.4.0/LiveTips-0.4.0-beta.dmg) (macOS 14.4+, Apple Silicon, not notarized yet, so open it the first time with right-click > Open; see `tools/live-tips-app/README.md`).
+
 ---
 
 ## Two rules worth knowing before you start
