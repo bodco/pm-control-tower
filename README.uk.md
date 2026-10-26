@@ -106,7 +106,7 @@ Meetings DB з транскриптом після дзвінка; потріб�
 підготовку. Модель: Sonnet 5.5 для звичайних дзвінків, Opus 5.5 для інтерв'ю і важливих
 розмов.
 
-**Нове, бета:** застосунок Live Tips, нативний застосунок macOS у рядку меню, що дає ті самі підказки без чату Cowork, з вашим власним API-ключем Claude: [завантажити LiveTips-0.5.6-beta.dmg](https://github.com/bodco/pm-control-tower/releases/download/live-tips-app-v0.5.6/LiveTips-0.5.6-beta.dmg) (macOS 14.4+, Apple Silicon, ще не нотаризований, тож першого разу відкривайте через правий клік > Open; див. `tools/live-tips-app/README.md`).
+**Нове, бета:** застосунок Live Tips, нативний застосунок macOS у рядку меню, що дає ті самі підказки без чату Cowork, з вашим власним API-ключем Claude: [завантажити LiveTips-0.5.7-beta.dmg](https://github.com/bodco/pm-control-tower/releases/download/live-tips-app-v0.5.7/LiveTips-0.5.7-beta.dmg) (macOS 14.4+, Apple Silicon, ще не нотаризований, тож першого разу відкривайте через правий клік > Open; див. `tools/live-tips-app/README.md`).
 
 ---
 
