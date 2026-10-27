@@ -158,7 +158,7 @@ Open questions and the technical backlog: `docs/en/13-open-questions.md`.
 
 ## Licence
 
-MIT. Use it, change it, ship it.
+MIT. Use it, change it, ship it. [Privacy policy](PRIVACY.md) and [terms of use](TERMS.md).
 
 Made by a project manager with 6+ years in software delivery, used daily on real
 client projects.
