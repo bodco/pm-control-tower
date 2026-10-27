@@ -47,10 +47,7 @@ period), `change-request` (sorting client asks into scope and hours).
 **Risks and status:** `risk-register`, `stability-scan`, `sentry-assistant`,
 `deploy-analysis`, `project-lifecycle`.
 
-**On the call:** `live-tips` (facts and ready phrases in a small window while you talk,
-🆘 HELP NOW, pause, optional speaker naming and search by meaning that stay on the Mac, a
-Meetings DB page with the transcript afterwards). Needs the local recorder from
-`tools/live-transcriber/` in the repository, see `docs/en/17-live-tips.md`.
+**On the call:** the call co-pilot is a separate product now, [Live Tips](https://github.com/bodco/live-tips) (a macOS app or its own skill).
 
 ## Installation
 
@@ -60,7 +57,7 @@ plugin customization flow fills in the `~~` placeholders), add the config for
 your own project inside the plugin and run the first skills by hand.
 
 Status: beta. Every release since 1.1.0 is reviewed end to end against the Notion
-template and the config template (current: 1.8.5), but the plugin has not yet been
+template and the config template (current: 1.9.0), but the plugin has not yet been
 installed by anyone except the author. Expect rough edges and report them.
 
 ## What is deliberately missing

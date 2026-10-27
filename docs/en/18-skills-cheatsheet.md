@@ -3,7 +3,7 @@
 [Українською](../uk/18-skills-cheatsheet.md) · [Back to contents](README.md)
 
 A one-page answer to "which skill do I have for this, and how do I start it?". It covers
-the 22 skills of the `pm-control-tower` plugin, grouped by the job they do in a PM's week.
+the 21 skills of the `pm-control-tower` plugin, grouped by the job they do in a PM's week.
 How each skill works inside, what it reads and how it degrades:
 [04. Skills library](04-skills-library.md).
 
@@ -29,7 +29,7 @@ template duplicated into your workspace, and one project config file `projects/<
    Notion link of a meeting.
 4. **To run it on a schedule, use the same sentence** in a scheduled task, with the project
    and period written out ([05. Autopilot](05-autopilot.md)). Skills that need your Mac
-   (mail, live tips, local repos, log files on disk) or a browser run only from a task
+   (mail, local repos, log files on disk) or a browser run only from a task
    that runs on your computer, and only while it is awake.
 5. **Results land in Notion or in the chat, nothing reaches the client without you.**
    Skills write pages and rows, prepare drafts and may create items you can undo within 5
@@ -67,7 +67,6 @@ for the Orbit team sync" an hour before the sync.
 | Morning | see what needs my reply, with drafts | `inbox-responder` | "draft replies for Orbit" |
 | Before a meeting | be ready for the standup or internal sync | `daily-team-prep` | "prep me for the Orbit standup" |
 | Before a meeting | be ready for a client call | `client-meeting-prep` | "client prep for the Orbit planning" |
-| During a call | get hints while I talk | `live-tips` | "live tips Orbit", at the end "end live" |
 | After a meeting | turn the notes into decisions and action items | `notion-meeting-topics` | "meeting <Notion link>" |
 | After a meeting | log "can you just add one more thing" | `change-request` | "the client asks to add a CSV export on Orbit" |
 | Weekly | see last week across all projects | `weekly-overview` | "weekly overview for all projects" |
@@ -111,7 +110,6 @@ for the Orbit team sync" an hour before the sync.
 |---|---|---|---|---|
 | `daily-team-prep` | Prep for the internal sync: who works on what, board movement, blockers, Slack topics, open action items, points to raise. Covers the time since the previous prep | "prep me for the Orbit team sync" | before each internal sync | tracker, Slack, Meetings DB |
 | `client-meeting-prep` | Prep for the client meeting types in the config (planning, status, 1-1, review): progress, blockers, risks, what to ask | "client prep for the Orbit review" | before each client meeting | the meeting schedule in the config, tracker |
-| `live-tips` | Short tips in the chat during the call (a CR-like ask, a promised date, a contradiction with a decision), then a Meetings DB page with the transcript | "live tips Orbit", to end: "end live" | during a call | a Mac with Apple Silicon, see [17. Live tips](17-live-tips.md) |
 | `notion-meeting-topics` | A bilingual (EN and UK) report of one meeting, appended to the same Notion page: decisions, action items, topics | "meeting <Notion link>" | after a meeting | the meeting page in Notion |
 
 ### 4. Report

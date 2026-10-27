@@ -31,3 +31,7 @@ Notion/
 _to_delete/
 *.zip
 
+
+__pycache__/
+*.pyc
+.pytest_cache/

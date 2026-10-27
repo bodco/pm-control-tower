@@ -9,8 +9,8 @@ Routine work (collecting context, preparing for meetings, writing reports, track
 risks, keeping the board honest) runs on a schedule in the background. The project
 manager spends the day on judgement, not on repackaging information.
 
-Built and tested on macOS. Cowork also runs on Windows: `mac-mail-collector` and
-`live-tips` need a Mac, a few skills need your computer on any OS, the rest use cloud
+Built and tested on macOS. Cowork also runs on Windows: `mac-mail-collector` needs
+a Mac, a few skills need your computer on any OS, the rest use cloud
 connectors only. Windows itself is not tested yet. The per-skill list is on the
 [website](https://tower.bodco.pm/skills/#where) and in the [skills cheatsheet](docs/en/18-skills-cheatsheet.md).
 
@@ -31,10 +31,8 @@ library works with the new reality a second later. Nothing is hardcoded anywhere
 
 | Folder | What it is |
 |---|---|
-| `plugin/` | A Claude plugin: 22 project-agnostic PM skills plus MCP server config. Source files |
+| `plugin/` | A Claude plugin: 21 project-agnostic PM skills plus MCP server config. Source files |
 | `dist/pm-control-tower.plugin` | The same plugin, packed and ready to install in one click |
-| `tools/live-transcriber/` | The local call recorder for `live-tips`: microphone + system audio, Whisper on the Mac, the tips window, a LaunchAgent and an installer (`docs/en/17-live-tips.md`) |
-| `tools/live-tips-app/` | Live Tips for macOS (beta): the same tips as a menu bar app with your own Claude API key, no Cowork chat during the call (`tools/live-tips-app/README.md`, `docs/en/17-live-tips.md` section 14) |
 | `tools/notion-mirror/` | A read-only Markdown copy of your Control Tower Notion on the Mac, used for facts and local search; set up from the Live Tips app or by hand (`tools/notion-mirror/README.md`) |
 | `docs/en/` | Framework documentation in English |
 | `docs/uk/` | The same documentation in Ukrainian |
@@ -85,7 +83,7 @@ it needs: [docs/en/18-skills-cheatsheet.md](docs/en/18-skills-cheatsheet.md).
 **Collect and sort:** `slack-collector`, `mac-mail-collector`, `inbox-responder`,
 `thread-ticket-sync`, `topic-manager`.
 
-**Prepare and call:** `daily-team-prep`, `client-meeting-prep`, `live-tips`,
+**Prepare and call:** `daily-team-prep`, `client-meeting-prep`,
 `notion-meeting-topics`.
 
 **Report:** `weekly-overview`, `client-report` (weekly, monthly, steering),
@@ -96,18 +94,7 @@ it needs: [docs/en/18-skills-cheatsheet.md](docs/en/18-skills-cheatsheet.md).
 **Tracker and stability:** `jira-management`, `jira-board-health`, `stability-scan`,
 `sentry-assistant`, `deploy-analysis`.
 
-About `live-tips`: local transcription, tips while you talk in a small always-on-top window
-under the camera (with a fact search and a field for questions, 🆘 HELP NOW for the next
-sentence to say, pause, hidden from screen sharing by default) or in the chat, optional
-speaker naming and search by meaning that stay on the Mac, a Meetings DB page
-with the transcript after the call; requires a Mac with Apple Silicon, see
-`docs/en/17-live-tips.md`. Typical use: in one Cowork session, prep the meeting first
-(meeting details, Notion pages or a folder to focus on), then say `live tips <project>` right before
-the call; audience and type are detected automatically, presentations and interviews get
-their own prep. Model: Sonnet 5.5 for everyday calls, Opus 5.5 for interviews and
-high-stakes calls.
-
-**New, beta:** the Live Tips app, a native macOS menu bar app that runs the same tips without a Cowork chat, with your own Claude API key: [download LiveTips-0.5.8-beta.dmg](https://github.com/bodco/pm-control-tower/releases/download/live-tips-app-v0.5.8/LiveTips-0.5.8-beta.dmg) (macOS 14.4+, Apple Silicon, not notarized yet, so open it the first time with right-click > Open; see `tools/live-tips-app/README.md`).
+**Live Tips moved to its own product.** The call co-pilot (the macOS app and the `live-tips` skill, with the local recorder) now lives in [bodco/live-tips](https://github.com/bodco/live-tips): downloads, docs and releases are there. It still reads the project configs of this framework when you have them.
 
 ---
 
@@ -162,6 +149,7 @@ weeks of calibration for your own project, not an hour.
 | 1.8.3 | 2026-10-23 | Live tips: `lt digest` (the last calls of the project: questions to the PM with answers, promises, typed lines, action items) feeds the prep and the app; plan-aware presentation tracker, `qa` per slide answered locally, an entry card before the PM's slide, one time line; the wrap-up can add a blind judge line; app 0.5.2 beta with meeting types in code and a judge after every call |
 | 1.8.4 | 2026-10-23 | Live tips: a question to anyone on the call (not only to the PM) gets a fact tip when the brief, the cards or Current State answer it; "Your turn" only when the PM is addressed, never predicted from the order of a round; tips window opacity fades the cards, the title bar stays solid. App 0.5.4 beta: a running picture of the call (status line, "On me" panel, speech points struck through, a call summary card), red tips only for the PM, "Prepare now" with Claude Code and a progress bar, project folder search, a transcript pane with speaker fixes, speakers as first name + initial remembered per meeting series, the speech as the first card, workspace calls with the member projects' Current State, a visible "Call ended" |
 | 1.8.5 | 2026-10-27 | Live tips (skill): the call picture in the skill window too (topic, whose it is, "Your turn", speech points struck through once said); red only when the PM is addressed, the same answer at most once in 10 min, tips in the call's language. App 0.5.5 beta: a welcome tour (permissions, work folder, active projects, Claude, Notion, install), projects from plain folders without Notion, Notion meeting pages in any database (pick one or create "Meetings"), recording consent (off by default), the Notion title date from Start call, the last call's cost in the menu, one look for Start call, Settings, Setup and the tips window, "Add folder" in Start call |
+| 1.9.0 | 2026-10-27 | Live Tips moved to its own product and repository, [bodco/live-tips](https://github.com/bodco/live-tips): the macOS app, the `live-tips` skill, the recorder and its guide, with their history. The plugin has 21 skills; `docs/en/17-live-tips.md` points to the new home. |
 
 Open questions and the technical backlog: `docs/en/13-open-questions.md`.
 

@@ -101,46 +101,9 @@ in Claude Desktop → Scheduled Tasks. Start with one, for example
 `daily-team-prep` an hour before your sync. The prompt names the project
 explicitly and refers to the skill; it never repeats the skill's instructions.
 
-## Step 7 (optional). Live tips on calls
+## Step 7 (optional). Live Tips on calls
 
-`live-tips` is the only skill that needs a local program on your Mac: the call recorder
-`tools/live-transcriber` from the repository (it is not inside the plugin). Without it the
-skill only explains what is missing. Requirements: an Apple Silicon Mac, macOS 14.2+,
-Python 3.10+.
-
-1. Copy the recorder: `mkdir -p ~/work/Tools && cp -R <repo clone>/tools/live-transcriber ~/work/Tools/`.
-2. In Terminal: `bash ~/work/Tools/live-transcriber/install.sh` (5-10 min, downloads a
-   ~1.6 GB speech model). When macOS asks, allow Terminal the **microphone** and **System
-   Audio Recording**. When the script asks, play any sound for 5 s.
-3. Check the end of `~/work/Tools/live-transcriber/logs/install.log`: `install OK`, and the
-   `mic` and `sys` peaks above zero. If `sys` is zero, play YouTube and run
-   `~/work/Tools/live-transcriber/bin/audiocap --source system --seconds 5 | wc -c`:
-   a number above zero means it works.
-3a. Optional, speaker names: `bash ~/work/Tools/live-transcriber/bin/install-voices.sh`
-   (also offered at the end of `install.sh`; ~26 MB, everything stays on the Mac).
-3b. Optional, search by meaning: install Ollama (`brew install ollama` or the app from
-   ollama.com), run `ollama pull bge-m3` (~1.2 GB) and pre-index each project once:
-   `~/work/Tools/live-transcriber/bin/lt index "$HOME/work/<project folder>"`.
-3c. Updating from an older version: re-run `install.sh` (it rebuilds the recorder and the
-   tips window).
-4. `live-tips/settings.yaml` in the plugin: `~~home-folder` is filled in by Step 3; check
-   the call languages (`languages`), the labels, `user.name_aliases` (how people call you)
-   and, if you put the recorder elsewhere, `paths.tool_root`. The skill is `SKILL.md` plus
-   the `references/` folder; keep them together.
-5. The project config needs `project_root` in `Local Paths` (where `live/` transcripts
-   go), and `notion.meetings_db`, `notion.project_page_id`, `notion.workspace_page_id` for
-   the meeting page after the call.
-6. In Cowork, the task must have the `~/work` folder connected and the Notion connector on.
-7. Test the tips window first: `~/work/Tools/live-transcriber/bin/prompter --demo` (move it,
-   minimise it, type a question; then share your entire screen in your meeting app and check
-   from another device whether participants see it).
-8. Test: `live tips <project>` → a "Live transcriber" Terminal window and the tips window open by themselves →
-   talk for a minute, try 🆘 and ⏸ → `стоп` → check the wrap-up and the new page in Meetings.
-
-Everything about how it works, the tip format, the interview mode and troubleshooting:
-`docs/en/17-live-tips.md`.
-
----
+The call co-pilot is a separate product: [Live Tips](https://github.com/bodco/live-tips). Install the macOS app or its `live-tips` skill from there; it reads the project configs from Step 4 when they exist.
 
 ## If something does not work
 
@@ -151,10 +114,4 @@ Everything about how it works, the tip format, the interview mode and troublesho
 | The report says "source unavailable" or the first line lists a source as SKIPPED / FAILED | That is by design: the skill does not fail, it writes into the report what exactly is missing |
 | Records do not land in the right project | The Project and Workspace relations are empty, or the database IDs are wrong |
 | A Jira skill cannot find its tools | The server name in `jira.mcp_write` / `jira.mcp_read` does not match `.mcp.json` (default `jira`), or Claude Desktop was not restarted |
-| `live tips`: "Recording did not start" | The recorder is not installed (`install.sh`), or `paths.tool_root` in `live-tips/settings.yaml` points elsewhere |
-| `live tips`: the tips window was closed by accident | Write "відкрий суфлер" (open the prompter) in the chat, or `touch ~/work/Tools/live-transcriber/control/prompter`; it reopens with every tip so far |
-| `live tips`: tips about you only, nothing about the other side | Terminal has no System Audio Recording permission (Privacy & Security → Screen & System Audio Recording) |
-| `live tips`: red "mic is not recording" in the window | The headset mic stream froze. The recorder restarts it and switches to the Mac mic after 2 failures; "Use Mac mic" in the alert switches at once |
-| `live tips`: no "Who is speaking?" card, or `semantic: off` | The optional layer is not installed or not running: `bin/install-voices.sh` for speakers; Ollama running with `bge-m3` for search by meaning. `lt status` shows the reason |
-| `live tips`: a module is missing | The skill was uploaded without its `references/` folder; upload the whole `live-tips/` folder again |
 | A write to Notion "succeeds" but the field stays empty | The property name in your database differs from the plugin's expectation (see "Notion relation property names" in `_template.md`); the skill should report the discrepancy |
