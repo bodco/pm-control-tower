@@ -4,7 +4,7 @@
       "command": "/bin/sh",
       "args": [
         "-c",
-        "CONFLUENCE_PERSONAL_TOKEN=$(grep '^CONFLUENCE_TOKEN=' ~~home-folder/work/Secrets/secrets.env | cut -d= -f2-) CONFLUENCE_URL=~~confluence-base-url CONFLUENCE_SSL_VERIFY=true exec uvx mcp-atlassian"
+        "CONFLUENCE_PERSONAL_TOKEN=$(grep '^CONFLUENCE_TOKEN=' ~~home-folder/work/Secrets/secrets.env | cut -d= -f2-) CONFLUENCE_URL=~~confluence-base-url CONFLUENCE_SSL_VERIFY=true exec uvx --from mcp-atlassian==0.23.1 mcp-atlassian"
       ]
     },
     "jira": {

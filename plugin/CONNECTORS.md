@@ -49,10 +49,13 @@ tools (`cosmix/jira-mcp` on GitHub at the time of writing; check that the tool
 names match before you rely on it). Any server with the same operations works:
 write its name into `jira.mcp_write` / `jira.mcp_read` in the project config
 and map the operation names in `jira.known_bug` if they differ. Jira Cloud users
-can use the official Atlassian connector instead.
+can use the official Atlassian connector instead. Third-party servers run with your tokens, so check out a
+reviewed commit rather than the moving default branch (`git checkout <commit>` after the
+clone), use `npm ci` where a lockfile exists, and update on purpose, not by habit.
 
 **Confluence** (server name `confluence`) works right away, all it needs is `uv`
-(`brew install uv`), which runs `mcp-atlassian`, and a token in
+(`brew install uv`), which runs `mcp-atlassian` at a pinned version (`0.23.1`; a new
+release is picked up only when you change the pin in `.mcp.json`), and a token in
 `CONFLUENCE_TOKEN`. No skill in this release writes to Confluence yet; the
 server is here for ad-hoc search and for the use cases listed in the docs.
 
