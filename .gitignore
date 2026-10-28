@@ -35,3 +35,8 @@ _to_delete/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# quality gates (ub-mode: crapper, dryer, mutator)
+.metrics/
+target/
+.coverage
