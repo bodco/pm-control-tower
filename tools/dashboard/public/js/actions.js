@@ -42,10 +42,19 @@ export function snoozePicker(x) {
     { value: nextWeekday(td, 1), label: t('sMonday') },
     { value: addDays(td, 7), label: t('sNextWeek') },
   ];
-  const date = h('input.input', { type: 'date', 'aria-label': t('sPickDate'), min: td });
-  date.addEventListener('change', () => { if (date.value) { closeSheet(); taskSnooze(x, date.value); } });
+  // A picked date is applied only with the button: iPhone fills the field and
+  // fires "change" while the wheel is still open, so a change is not a choice.
+  const date = h('input.input', { type: 'date', 'aria-label': t('sPickDate'), min: addDays(td, 1) });
+  const apply = btn(t('sSetDate'), { primary: true, disabled: true, onclick: () => {
+    if (!date.value || date.value < td) return;
+    closeSheet(); taskSnooze(x, date.value);
+  } });
+  const sync = () => { apply.disabled = !date.value || date.value < td; };
+  date.addEventListener('input', sync);
+  date.addEventListener('change', sync);
   openSheet(t('aSnooze'), h('div.stackS', optionList(opts.map((o) => ({ ...o, hint: fmtDue(o.value).text })), null, (v) => { closeSheet(); taskSnooze(x, v); }),
-    h('label.fieldl', h('span', t('sPickDate')), date)));
+    h('div.fieldl', h('label', { for: 'snoozedate' }, t('sPickDate')), h('div.footrow', date, apply))));
+  date.id = 'snoozedate';
 }
 
 // ---------- descriptors ----------

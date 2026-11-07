@@ -1,6 +1,6 @@
 // Service worker: app shell offline, API network-first with the last good
 // response as an offline fallback (marked with X-CT-Cached-At).
-const VERSION = 'ct-dash-v4';
+const VERSION = 'ct-dash-v5';
 const SHELL = ['/', '/index.html', '/styles.css', '/manifest.webmanifest',
   '/js/app.js', '/js/core.js', '/js/i18n.js', '/js/dates.js', '/js/logic.js', '/js/net.js', '/js/ui.js', '/js/actions.js', '/js/views.js',
   '/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-maskable-512.png', '/icons/apple-touch-icon.png', '/icons/favicon-32.png', '/icons/favicon-16.png'];

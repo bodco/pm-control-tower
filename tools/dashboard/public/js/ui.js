@@ -56,7 +56,9 @@ export function openSheet(title, body, { foot, kind = 'sheet', label } = {}) {
   trap(box);
   $('#sheet-root').replaceChildren(scrim);
   document.body.classList.add('has-sheet');
-  setTimeout(() => (box.querySelector('[autofocus], input, textarea') || box.querySelector('.sheetbody button, .sheetbody a') || box.querySelector('button'))?.focus(), 30);
+  // Only text fields get the first focus: focusing a date field opens the
+  // system picker on iPhone and closes it again with today's date filled in.
+  setTimeout(() => (box.querySelector('[autofocus], input[type="text"], input[type="search"], textarea') || box.querySelector('.sheetbody button, .sheetbody a') || box.querySelector('button'))?.focus(), 30);
   return box;
 }
 

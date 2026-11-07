@@ -83,7 +83,7 @@ const EN = {
   tStatus: 'Status: {s}', tSaved: 'Saved', tCreated: 'Created', tRouted: 'Moved to Tasks', tClosed: 'Closed', tKept: 'Kept for context',
   tRelevant: 'Back in the queue', tClosedN: { one: 'Closed {n} thread', other: 'Closed {n} threads' },
   // snooze
-  sToday: 'Today', sTomorrow: 'Tomorrow', sMonday: 'Monday', sNextWeek: 'Next week', sPickDate: 'Pick a date',
+  sToday: 'Today', sTomorrow: 'Tomorrow', sMonday: 'Monday', sNextWeek: 'Next week', sPickDate: 'Pick a date', sSetDate: 'Snooze',
   // stale review
   staleTitle: 'Stale threads', reviewProgress: '{i} of {n}', lastActivity: 'last activity {d}', reviewDone: 'Review finished',
   rvClose: 'Close', rvKeep: 'Keep for context', rvRelevant: 'Still relevant', rvSkip: 'Skip',
@@ -187,7 +187,7 @@ const UK = {
   tDone: 'Позначено Done', tReopened: 'Відкрито знову', tSnoozed: 'Відкладено на {d}', tReplied: 'Позначено Replied', tReviewed: 'Позначено як переглянутий',
   tStatus: 'Статус: {s}', tSaved: 'Збережено', tCreated: 'Створено', tRouted: 'Перенесено в задачі', tClosed: 'Закрито', tKept: 'Залишено для контексту',
   tRelevant: 'Повернуто в чергу', tClosedN: { one: 'Закрито {n} тред', few: 'Закрито {n} треди', many: 'Закрито {n} тредів', other: 'Закрито {n} треду' },
-  sToday: 'Сьогодні', sTomorrow: 'Завтра', sMonday: 'Понеділок', sNextWeek: 'Наступний тиждень', sPickDate: 'Вибрати дату',
+  sToday: 'Сьогодні', sTomorrow: 'Завтра', sMonday: 'Понеділок', sNextWeek: 'Наступний тиждень', sPickDate: 'Вибрати дату', sSetDate: 'Відкласти',
   staleTitle: 'Застарілі треди', reviewProgress: '{i} з {n}', lastActivity: 'остання активність {d}', reviewDone: 'Розбір завершено',
   rvClose: 'Закрити', rvKeep: 'Лишити для контексту', rvRelevant: 'Ще актуальний', rvSkip: 'Пропустити',
   rvHint: '"Ще актуальний" повертає тред у чергу і перезапускає 30-денний таймер.',
