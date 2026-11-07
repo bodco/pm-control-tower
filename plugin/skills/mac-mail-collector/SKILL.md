@@ -307,6 +307,7 @@ subject from outside cannot quietly change a client thread.
   copy of the rules here. `AI Review` is only for a thread the rules genuinely cannot
   classify; it is NOT the default on create. Sender side for those rules: a sender in
   that project's `team_emails` is internal, anyone else is external.
+- `Collector Status` = the same value as `Status` (rule 4 of `_standards.md` section 11)
 - `Knowledge Base` = KB relation (optional, the page named in `{config.email_routing.knowledge_base}`, or none)
 - Icon = derived from the computed `Status` via the same table in section 11, with ONE
   Email-specific override:
@@ -374,11 +375,14 @@ Query Threads DB, filter by `Thread Name` (normalized subject) AND `Project`.
   body. A late-arriving older message goes into its chronological place and does
   not move `Last Reply Date` backwards.
   **`Status` and the icon are always recomputed from the thread as it now stands**,
-  including when `Last Reply Date` did not move. There are no immutable statuses:
-  `Replied`, `Closed` and `Spectator Mode` used to be treated as final, which left
-  rows stuck on a stale status long after the thread had moved on. The collector owns
-  these two fields; a status a human set by hand is overwritten too, so if a human
-  decision has to stick, it belongs in the body or in `Description`, not in `Status`.
+  including when `Last Reply Date` did not move. Without a manual mark there are no
+  immutable statuses: `Replied`, `Closed` and `Spectator Mode` used to be treated as
+  final, which left rows stuck on a stale status long after the thread had moved on.
+  A status a human set (by hand in Notion or from the dashboard) is held until the
+  thread gets a message newer than `Manual Status At`: apply rule 4 of
+  `../projects/_standards.md` section 11 (compare `Status` with `Collector Status`,
+  keep or recompute, clear `Manual Status At` on recompute). Every time you write
+  `Status`, write the same value to `Collector Status`.
 
 ### Step 5 - Move to processed
 

@@ -1,0 +1,49 @@
+{
+  "_comment": "Copy to dashboard.config.json (git-ignored) and fill in your own IDs. The values here are placeholders. notion.* are data source IDs (collection://...), the same keys as in projects/<slug>.md. automation_db and runs_db are optional (read-only Automation page). app.turn maps thread statuses to whose turn it is.",
+  "app": {
+    "title": "PM Control Tower",
+    "locale": "en",
+    "timezone": "Europe/Kyiv",
+    "turn": {
+      "mine": [
+        "Awaiting Reply"
+      ],
+      "theirs": [
+        "Need Follow-up"
+      ],
+      "ai": [
+        "AI Review"
+      ]
+    }
+  },
+  "notion": {
+    "tasks_db": "collection://00000000-0000-0000-0000-000000000001",
+    "threads_db": "collection://00000000-0000-0000-0000-000000000002",
+    "meetings_db": "collection://00000000-0000-0000-0000-000000000003",
+    "decisions_db": "collection://00000000-0000-0000-0000-000000000004",
+    "risks_db": "collection://00000000-0000-0000-0000-000000000005",
+    "reports_db": "collection://00000000-0000-0000-0000-000000000006",
+    "inbox_db": "collection://00000000-0000-0000-0000-000000000007",
+    "automation_db": "collection://00000000-0000-0000-0000-000000000008",
+    "runs_db": "collection://00000000-0000-0000-0000-000000000009"
+  },
+  "projects": [
+    {
+      "slug": "orbit",
+      "name": "Orbit SaaS Launch",
+      "color": "#3b6fd8",
+      "project_page_id": "00000000000000000000000000000011",
+      "workspace_page_id": "00000000000000000000000000000021",
+      "current_state_page_id": "00000000000000000000000000000031"
+    },
+    {
+      "slug": "playbook",
+      "name": "Internal Delivery Playbook",
+      "color": "#2f9e6b",
+      "project_page_id": "00000000000000000000000000000012",
+      "workspace_page_id": "00000000000000000000000000000021",
+      "current_state_page_id": ""
+    }
+  ],
+  "schema": {}
+}

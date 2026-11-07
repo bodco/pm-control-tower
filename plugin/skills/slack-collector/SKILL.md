@@ -181,6 +181,7 @@ Properties:
 - Project (relation): `["https://app.notion.com/p/{config.notion.project_page_id without dashes}"]`
 - Workspace (relation): `["https://app.notion.com/p/{config.notion.workspace_page_id without dashes}"]`
 - Status: as computed above (`AI Review` only when the rules genuinely cannot decide)
+- Collector Status: the same value as Status (rule 4 of `_standards.md` section 11)
 - Knowledge Base (relation): the page for `message.knowledge_base`, if one exists
 - Icon: as determined above
 
@@ -216,7 +217,7 @@ This rule applies to BOTH `main_message.text` and each `comment.text`.
 **If FOUND → reconcile the row with the thread as just read.** Three things are decided independently; do NOT gate the second and third on the first:
 
 1. **Last Reply Date** - set it if it differs from the thread's real last reply (compare to the minute).
-2. **Status and icon** - **always** recompute them from the thread content and write them if they differ from what the row holds. This happens on every pass, including when `Last Reply Date` did not move: a thread can be resolved by the very reply that is already recorded, so a row can sit on `Awaiting Reply` long after the work shipped and the client confirmed. There are no immutable statuses (`_standards.md` section 11): a status set by hand is overwritten too.
+2. **Status and icon** - **always** recompute them from the thread content and write them if they differ from what the row holds. This happens on every pass, including when `Last Reply Date` did not move: a thread can be resolved by the very reply that is already recorded, so a row can sit on `Awaiting Reply` long after the work shipped and the client confirmed. A status a human set (by hand in Notion or from the dashboard) is held until the thread gets a message newer than `Manual Status At`: apply rule 4 of `_standards.md` section 11 (compare `Status` with `Collector Status`, keep or recompute, clear `Manual Status At` on recompute). Every time you write `Status`, write the same value to `Collector Status`.
 3. **Page body** - rewrite it only when the set of messages actually changed (new replies, or edited text). An unchanged body is left alone: a pointless rewrite burns calls and churns the page's edit history.
 
 Log the result per message as one of: `created`, `updated (date)`, `updated (status)`, `updated (date+status)`, `skipped (no change)`.

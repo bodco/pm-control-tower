@@ -1,0 +1,25 @@
+# Copy to wrangler.toml (git-ignored) and fill in your values.
+name = "pm-control-tower-dashboard"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+
+# The PWA is served by the same Worker. run_worker_first makes the Access check
+# run for static files too, not only for /api.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[vars]
+# From Zero Trust > Access > Applications > your app > Overview.
+ACCESS_TEAM_DOMAIN = "your-team.cloudflareaccess.com"
+ACCESS_AUD = "paste-the-application-audience-tag"
+# Optional second gate on top of the Access policy, comma separated.
+ALLOWED_EMAILS = "you@example.com"
+
+# Option 1 (no DNS changes): use the workers.dev URL and enable Access on it
+# in the Worker settings. Option 2: a custom domain on a zone you host in
+# Cloudflare, for example:
+# routes = [{ pattern = "dashboard.example.com", custom_domain = true }]
+
+# Secret, never in this file:  npx wrangler secret put NOTION_TOKEN

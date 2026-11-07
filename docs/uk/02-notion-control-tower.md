@@ -50,7 +50,9 @@ Notion тут - не вікі і не сховище документів, а с
 |---|---|---|
 | `Thread Name` | title | тема треду |
 | `Type` | multi_select | Email, Slack, Signal, Zoom, Other |
-| `Status` | select | `Closed`, `Need Follow-up`, `Awaiting Reply`, `Replied`, `Spectator Mode`, `AI Review`. Значення, правила і відповідні іконки описані в одному місці: `projects/_standards.md` розділ 11. Пише тільки колектор |
+| `Status` | select | `Closed`, `Need Follow-up`, `Awaiting Reply`, `Replied`, `Spectator Mode`, `AI Review`. Значення, правила і відповідні іконки описані в одному місці: `projects/_standards.md` розділ 11. Пише колектор або людина (руками чи з дашборда) |
+| `Collector Status` | text | статус, який колектор записав останнім; `Status`, що від нього відрізняється, змінила людина. Пише тільки колектор |
+| `Manual Status At` | date | коли людина поставила статус; колектори тримають цей статус, доки не прийде новіше повідомлення, тоді перераховують і очищають дату |
 | `Category` | select | ставить inbox-responder: Error/Bug, Data Question, Scope Change, Blocker, Status Update, FYI |
 | `Context Sources` | multi_select | Sentry, AWS Logs, Jira Board, Topics DB, Knowledge Base, LLM Only (що використав inbox-responder) |
 | `Draft Response` | text | чернетка відповіді мовою треду |
@@ -66,7 +68,7 @@ Notion тут - не вікі і не сховище документів, а с
 | Іконка сторінки | за статусом | визначається статусом, а не останнім автором (`projects/_standards.md` розділ 11; для Email 📤, коли всі листи вихідні і без відповіді). Це іконка сторінки, не властивість |
 | Тіло сторінки | блоки | повний текст треду блоками по 2000 символів |
 
-Таблиця статусів та іконок живе тільки в `projects/_standards.md` розділ 11, скіли й документи посилаються на неї. Колектори (`slack-collector`, `mac-mail-collector`) перераховують `Status` і іконку на кожному проході, навіть коли `Last Reply Date` не змінився; незмінних статусів немає, тому рішення людини, яке мусить триматись, пишуть у тіло сторінки або в `Description`. Review pass у `slack-collector` (Step 3B) щодня перечитує всі non-Closed Slack-треди проєкту без вікна дат. `inbox-responder` статус і іконку не пише.
+Таблиця статусів та іконок живе тільки в `projects/_standards.md` розділ 11, скіли й документи посилаються на неї. Колектори (`slack-collector`, `mac-mail-collector`) перераховують `Status` і іконку на кожному проході, навіть коли `Last Reply Date` не змінився; статус, поставлений людиною (у Notion або з дашборда, `tools/dashboard`), тримається, доки в треді не зʼявиться повідомлення, новіше за `Manual Status At` (правило 4 розділу 11); без цієї позначки незмінних статусів немає. Review pass у `slack-collector` (Step 3B) щодня перечитує всі non-Closed Slack-треди проєкту без вікна дат. `inbox-responder` статус і іконку не пише.
 
 ### 💬 Meetings
 Пишуться Notion AI Meeting Notes (транскрипт + summary + action items). Далі `notion-meeting-topics` дописує на ту ж сторінку двомовний звіт.

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Control Tower</title>
+  <meta name="description" content="PM Control Tower dashboard">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1e1e20" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Control Tower">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="side" id="side" aria-label="Navigation"></aside>
+    <div class="content">
+      <header class="appbar" id="appbar">
+        <span class="mark" aria-hidden="true">🗼</span>
+        <span class="brandname" id="app-title">Control Tower</span>
+        <span class="spacer"></span>
+        <span class="sync" id="sync-state" aria-live="polite"></span>
+        <button class="iconbtn" id="btn-refresh" type="button" aria-label="Refresh"></button>
+        <a class="iconbtn phone-only" id="btn-settings" href="#/settings" aria-label="Settings"></a>
+      </header>
+      <div class="ptr" id="ptr" aria-hidden="true"></div>
+      <main id="app" tabindex="-1">
+        <div class="page"><div class="list" style="margin-top:12px"><div class="skrow"><div class="sk" style="width:60%"></div><div class="sk" style="width:35%"></div></div></div></div>
+      </main>
+    </div>
+  </div>
+  <nav class="bnav" id="bnav" aria-label="Navigation"></nav>
+  <div class="toastwrap" id="toastwrap" role="status" aria-live="polite"></div>
+  <div id="sheet-root"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
