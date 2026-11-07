@@ -35,29 +35,37 @@ await test('config lists only configured projects, no IDs', async () => {
 });
 
 let overview;
-await test('overview metrics per project', async () => {
+await test('overview returns full lists, metrics are computed by the client', async () => {
   const { status, body } = await get('/api/overview');
   assert.equal(status, 200, JSON.stringify(body));
   overview = body;
   assert.deepEqual(body.errors, []);
   assert.ok(!JSON.stringify(body).includes('dropped idea'), "Won't Do task counted as open");
-  const o = body.projects.find((p) => p.slug === 'orbit').metrics;
-  assert.equal(o.tasksOpen, 4);
-  assert.equal(o.overdue, 1);
-  assert.equal(o.dueToday, 1);
-  assert.equal(o.onHold, 1);
-  assert.equal(o.doneWeek, 1);
-  assert.equal(o.awaiting, 2);
-  assert.equal(o.followUp, 1);
-  assert.equal(o.risksActive, 2);
-  assert.equal(o.risksHigh, 1);
-  assert.equal(o.decisions30, 2);
-  assert.ok(o.lastMeeting.title.includes('Internal Daily'));
+  assert.ok(body.projects.every((p) => !('metrics' in p)), 'one definition of each metric: no server-side metrics');
+  const orbitTasks = body.tasks.filter((x) => x.project === 'orbit');
+  assert.equal(orbitTasks.length, 5, 'open tasks incl. On Hold');
+  assert.ok(body.threads.every((x) => x.status !== 'Closed'), 'no closed threads');
+  assert.ok(body.threads.some((x) => x.status === 'Replied'), 'all open threads come back, the client sorts them');
   const cred = body.threads.find((x) => x.title.includes('staging credentials'));
   assert.equal(cred.description, 'I asked for staging credentials on Monday, no answer yet.', 'ledger line hidden');
-  const pb = body.projects.find((p) => p.slug === 'playbook').metrics;
-  assert.equal(pb.aiReview, 1);
-  assert.equal(pb.risksHigh, 1);
+  const risk = body.risks.find((x) => x.title.includes('staging credentials'));
+  assert.ok(risk.triggerDate && risk.lastReviewed && risk.edited, 'optional risk dates and edit time are mapped');
+  assert.ok(body.meetings.some((m) => m.date > new Date().toISOString().slice(0, 10)) || body.meetings.length > 3, 'upcoming meetings are included');
+});
+
+await test('config: freshness thresholds, turn mapping and optional risk fields', async () => {
+  const { body } = await get('/api/config');
+  assert.deepEqual(body.freshness, { quiet_days: 14, stale_days: 30, nudge_days: 5, turn_sla_workdays: 2, stale_bulk_days: 90 });
+  assert.deepEqual(body.projects[0].turn.mine, ['Awaiting Reply']);
+  assert.equal(body.projects[0].freshness.stale_days, 30);
+  assert.deepEqual(body.riskFields, { trigger: true, reviewed: true });
+});
+
+await test('project Open in Notion is a redirect, not an ID in the config', async () => {
+  const r = await fetch(base + '/api/p/orbit/notion', { redirect: 'manual' });
+  assert.equal(r.status, 302);
+  assert.match(r.headers.get('location'), new RegExp(IDS.orbit));
+  assert.equal((await fetch(base + '/api/p/nope/notion', { redirect: 'manual' })).status, 404);
 });
 
 await test('nothing from an unconfigured project appears', async () => {
@@ -113,7 +121,33 @@ await test('cache is dropped after a write', async () => {
   const id = findPage('🧪 Demo: review staging deploy notes').id;
   await send('PATCH', `/api/tasks/${id}`, { status: 'Done' });
   const { body } = await get('/api/overview');
-  assert.equal(body.projects.find((p) => p.slug === 'orbit').metrics.doneWeek, 2);
+  assert.equal(body.done.filter((x) => x.project === 'orbit').length, 2);
+});
+
+await test('a newer edit in Notion wins: the action is refused with 409', async () => {
+  const id = findPage('🧪 Demo: update onboarding checklist').id;
+  const r = await send('PATCH', `/api/tasks/${id}`, { status: 'Done', expectEdited: '2000-01-01T00:00:00.000Z' });
+  assert.equal(r.status, 409);
+  assert.match(r.body.error, /Changed in Notion/);
+  const page = demo.mock.pages.get(id);
+  assert.equal(val(page, 'Status'), 'To Do', 'nothing written');
+  const ok = await send('PATCH', `/api/tasks/${id}`, { due: '2030-03-03', expectEdited: page.last_edited_time });
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+});
+
+await test('risk Reviewed writes the review date; thread "Still relevant" only moves the manual mark', async () => {
+  const risk = findPage('🧪 Demo: single reviewer for the playbook').id;
+  const r = await send('PATCH', `/api/risks/${risk}`, { reviewed: true });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.risk.lastReviewed, r.body.risk.lastUpdated);
+  const th = findPage('🧪 Demo: access to the analytics workspace').id;
+  const before = val(demo.mock.pages.get(th), 'Status');
+  const t2 = await send('PATCH', `/api/threads/${th}`, { touch: true });
+  assert.equal(t2.status, 200, JSON.stringify(t2.body));
+  const page = demo.mock.pages.get(th);
+  assert.equal(val(page, 'Status'), before, 'status unchanged');
+  assert.ok(page.properties['Manual Status At'].date.start);
+  assert.equal(page.icon.emoji, '🔴', 'icon unchanged');
 });
 
 await test('records outside the configured projects or databases are refused', async () => {
@@ -190,6 +224,21 @@ await test('without the manual-status property the API warns', async () => {
     const body = await r.json();
     assert.equal(r.status, 200, JSON.stringify(body));
     assert.match(body.warning, /Manual Status At/);
+    const touch = await fetch(`http://127.0.0.1:8792/api/threads/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-CT-Request': '1' }, body: JSON.stringify({ touch: true }) });
+    assert.equal(touch.status, 400, 'Still relevant needs the manual-status property');
+  } finally { d.close(); }
+});
+
+await test('without the optional risk dates the API says so and refuses Reviewed', async () => {
+  const d = await startDemo({ port: 8794, mockPort: 8795, withRiskDates: false });
+  try {
+    const cfg = await (await fetch('http://127.0.0.1:8794/api/config')).json();
+    assert.deepEqual(cfg.riskFields, { trigger: false, reviewed: false });
+    const id = [...d.mock.pages.values()].find((p) => p.properties.Name?.title?.[0]?.plain_text === '🧪 Demo: scope creep around export').id;
+    const r = await fetch(`http://127.0.0.1:8794/api/risks/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'X-CT-Request': '1' }, body: JSON.stringify({ reviewed: true }) });
+    assert.equal(r.status, 400);
+    const ov = await (await fetch('http://127.0.0.1:8794/api/overview')).json();
+    assert.deepEqual(ov.errors, []);
   } finally { d.close(); }
 });
 

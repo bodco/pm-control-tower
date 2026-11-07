@@ -19,14 +19,15 @@ const SCHEMAS = {
   threads: { 'Thread Name': 'title', Status: 'select', Type: 'multi_select', Category: 'select', Description: 'rich_text', 'Draft Response': 'rich_text', 'Email Link': 'url', 'Slack Link': 'url', 'Reported at': 'date', 'Last Reply Date': 'date', 'Jira Key': 'rich_text', Project: 'relation', Workspace: 'relation', 'Manual Status At': 'date' },
   meetings: { 'Meeting Name': 'title', Date: 'date', 'Meeting type': 'multi_select', Summary: 'rich_text', Project: 'relation' },
   decisions: { Decision: 'title', Date: 'date', Area: 'select', Context: 'rich_text', Source: 'url', Status: 'select', Door: 'select', 'Stated by': 'rich_text', 'Trade-off': 'rich_text', Project: 'relation', Workspace: 'relation' },
-  risks: { Name: 'title', Status: 'select', Severity: 'select', Likelihood: 'select', Category: 'select', Kind: 'select', Owner: 'rich_text', Summary: 'rich_text', Mitigation: 'rich_text', 'Last Updated': 'date', Project: 'relation' },
+  risks: { Name: 'title', Status: 'select', Severity: 'select', Likelihood: 'select', Category: 'select', Kind: 'select', Owner: 'rich_text', Summary: 'rich_text', Mitigation: 'rich_text', 'Last Updated': 'date', 'Trigger Date': 'date', 'Last Reviewed': 'date', Project: 'relation' },
   reports: { 'Report Name': 'title', Date: 'date', Type: 'select', Skill: 'select', Visibility: 'select', Summary: 'rich_text', Project: 'relation' },
   inbox: { 'Inbox Name': 'title', Status: 'select', Notes: 'rich_text', Type: 'select', 'Due Date': 'date', Project: 'relation', 'Tasks Tracker': 'relation' },
 };
 
-export function createMock({ withManualProp = true } = {}) {
+export function createMock({ withManualProp = true, withRiskDates = true } = {}) {
   const schemas = structuredClone(SCHEMAS);
   if (!withManualProp) delete schemas.threads['Manual Status At'];
+  if (!withRiskDates) { delete schemas.risks['Trigger Date']; delete schemas.risks['Last Reviewed']; }
   const pages = new Map();
   const log = [];
   const dsKey = (id) => Object.entries(DS).find(([, v]) => v === id.replace(/-/g, ''))?.[0];
@@ -84,18 +85,26 @@ export function createMock({ withManualProp = true } = {}) {
   add('threads', { 'Thread Name': '🧪 Demo: unclear request in #general', Status: 'AI Review', Type: ['Slack'], 'Last Reply Date': ts(-1), Project: P }, { icon: '🤖' });
   add('threads', { 'Thread Name': '🧪 Demo: playbook template feedback', Status: 'Replied', Type: ['Slack'], 'Last Reply Date': ts(-2), Project: P }, { icon: '💬' });
   add('threads', { 'Thread Name': '🧪 Demo: kickoff date confirmed', Status: 'Closed', Type: ['Email'], 'Last Reply Date': ts(-3), Project: O }, { edited: ts(-2) });
+  add('threads', { 'Thread Name': '🧪 Demo: QA sign-off for the export build', Status: 'Need Follow-up', Type: ['Slack'], Description: 'Mike: we asked for the QA sign-off on Monday.', 'Last Reply Date': ts(-6), Project: O }, { icon: '⏳' });
+  add('threads', { 'Thread Name': '🧪 Demo: billing contact for the new invoice address', Status: 'Replied', Type: ['Email'], 'Last Reply Date': ts(-2), Project: O }, { icon: '💬' });
+  add('threads', { 'Thread Name': '🧪 Demo: second reviewer for the playbook', Status: 'Awaiting Reply', Type: ['Slack'], Description: 'Josh asked who can review the playbook next week.', 'Last Reply Date': ts(-18), Project: P }, { icon: '🔴' });
+  add('threads', { 'Thread Name': '🧪 Demo: access to the analytics workspace', Status: 'Awaiting Reply', Type: ['Slack'], Description: 'We asked to add two people. No reply in the channel since.', 'Last Reply Date': ts(-41), Project: O }, { icon: '🔴' });
+  add('threads', { 'Thread Name': '🧪 Demo: old vendor NDA', Status: 'Need Follow-up', Type: ['Email'], 'Last Reply Date': ts(-120), Project: O }, { icon: '⏳' });
+  add('threads', { 'Thread Name': '🧪 Demo: holiday schedule question', Status: 'Replied', Type: ['Email'], 'Last Reply Date': ts(-95), Project: P }, { icon: '💬' });
 
   add('meetings', { 'Meeting Name': '🧪 Demo: Orbit Client Sync', Date: ts(-1, 13), 'Meeting type': ['Client Sync'], Summary: 'Client confirmed the launch scope. Export feature moves to a change request. Next sync on Thursday.', Project: O });
   add('meetings', { 'Meeting Name': '🧪 Demo: Orbit Internal Daily', Date: ts(0, 8), 'Meeting type': ['Internal Daily'], Summary: 'Staging deploy is green, waiting for credentials from the client.', Project: O });
   add('meetings', { 'Meeting Name': '🧪 Demo: Playbook Retro', Date: ts(-6, 14), 'Meeting type': ['Retro'], Summary: 'Agreed to shorten the onboarding checklist.', Project: P });
+  add('meetings', { 'Meeting Name': `🧪 Demo: Orbit weekly with the client ${day(0)}`, Date: ts(0, 21), 'Meeting type': ['Client Sync'], Project: O });
+  add('meetings', { 'Meeting Name': `🧪 Demo: Playbook planning ${day(1)}T08:00`, Date: ts(1, 8), 'Meeting type': ['Internal'], Project: P });
 
   add('decisions', { Decision: '🧪 Demo: export feature goes through a change request', Date: day(-1), Area: 'Scope', Status: 'Active', Door: 'Two-way', 'Stated by': 'Client PO', Context: 'Not in the original scope; estimate first.', Project: O });
   add('decisions', { Decision: '🧪 Demo: weekly report moves to Monday', Date: day(-12), Area: 'Process', Status: 'Active', Door: 'Two-way', Project: O });
   add('decisions', { Decision: '🧪 Demo: one shared retro board', Date: day(-20), Area: 'Process', Status: 'Superseded', Project: P });
 
-  add('risks', { Name: '🧪 Demo: staging credentials delay the launch', Status: 'Open', Severity: 'High', Likelihood: 'Likely', Category: 'Dependency', Kind: 'Risk', Owner: 'PM', Summary: 'No staging access for 4 days.', 'Last Updated': day(-1), Project: O });
-  add('risks', { Name: '🧪 Demo: scope creep around export', Status: 'Monitoring', Severity: 'Medium', Likelihood: 'Possible', Category: 'Scope', Kind: 'Risk', 'Last Updated': day(-3), Project: O });
-  add('risks', { Name: '🧪 Demo: single reviewer for the playbook', Status: 'Open', Severity: 'Critical', Likelihood: 'Possible', Category: 'Resource', Kind: 'Issue', 'Last Updated': day(-2), Project: P });
+  add('risks', { Name: '🧪 Demo: staging credentials delay the launch', Status: 'Open', Severity: 'High', Likelihood: 'Likely', Category: 'Dependency', Kind: 'Risk', Owner: 'PM', Summary: 'No staging access for 4 days.', 'Last Updated': day(-1), 'Trigger Date': day(2), 'Last Reviewed': day(-2), Project: O });
+  add('risks', { Name: '🧪 Demo: scope creep around export', Status: 'Monitoring', Severity: 'Medium', Likelihood: 'Possible', Category: 'Scope', Kind: 'Risk', 'Last Updated': day(-3), 'Trigger Date': day(20), 'Last Reviewed': day(-16), Project: O });
+  add('risks', { Name: '🧪 Demo: single reviewer for the playbook', Status: 'Open', Severity: 'Critical', Likelihood: 'Possible', Category: 'Resource', Kind: 'Issue', 'Last Updated': day(-2), 'Trigger Date': day(9), 'Last Reviewed': day(-15), Project: P });
   add('risks', { Name: '🧪 Demo: old vendor contract', Status: 'Closed', Severity: 'Low', Project: O });
 
   add('reports', { 'Report Name': '🧪 Demo: Daily Team Prep', Date: day(0), Type: 'Daily Team Prep', Skill: 'daily-team-prep', Visibility: 'Internal', Summary: 'Two blockers, one overdue task, client waits for the export ETA.', Project: O });
@@ -249,7 +258,7 @@ export function mockConfig() {
     notion: { tasks_db: c('tasks'), threads_db: c('threads'), meetings_db: c('meetings'), decisions_db: c('decisions'), risks_db: c('risks'), reports_db: c('reports'), inbox_db: c('inbox') },
     projects: [
       { slug: 'orbit', name: 'Orbit SaaS Launch', color: '#3b6fd8', project_page_id: IDS.orbit, workspace_page_id: IDS.ws, current_state_page_id: IDS.state },
-      { slug: 'playbook', name: 'Internal Delivery Playbook', color: '#2f9e6b', project_page_id: IDS.playbook, workspace_page_id: IDS.ws },
+      { slug: 'playbook', name: 'Internal Delivery Playbook', short_name: 'Playbook', color: '#2f9e6b', project_page_id: IDS.playbook, workspace_page_id: IDS.ws },
     ],
   };
 }

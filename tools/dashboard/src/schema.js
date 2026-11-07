@@ -85,6 +85,10 @@ export const DEFAULT_SCHEMA = {
     mitigation: 'Mitigation',
     lastUpdated: 'Last Updated',
     firstSeen: 'First Seen',
+    // Optional dates (dashboard v2). Without them the dashboard hides
+    // "in 2d", "not reviewed 15d" and the Reviewed action.
+    triggerDate: 'Trigger Date',
+    lastReviewed: 'Last Reviewed',
     visibility: 'Visibility',
     project: 'Project',
     statuses: ['AI Review', 'Open', 'Monitoring', 'Mitigated', 'Closed', 'Realized'],

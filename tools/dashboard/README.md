@@ -8,33 +8,43 @@ An installable web app (PWA) over your PM Control Tower Notion databases. It ope
 
 ## What you see
 
+The 2.1 layout is a "calm dashboard": one sentence per page, quiet numbers, at most one colored fact per row, actions hidden until you need them.
+
 | View | Content |
 |---|---|
-| **Home** | Four numbers (Overdue, Your turn, Critical risk, Due today), each opening its list; **Start here**, the most urgent items across projects (5 visible, the rest in a scrollable block); a row per project, worst first, with its health and the reason in one sentence; a quick task form (title, description, project, due date) |
-| **Project** | Tabs: Overview (four numbers, the open task mix, Needs you here, open risks, recent decisions, meetings, reports), Tasks, Threads, Risks, Decisions, Meetings, Reports, Automation, Current state |
-| **Tasks** | Filters: all open, overdue, due today, this week, High, on hold, done in 7 days. Tick to close; status, due date and priority from the status sheet |
-| **Threads** | Filters by whose turn it is (your turn, their turn, AI review), Replied, Spectator, all open, closed this week. A "Your turn · 3d" pill shows the turn and its age in working days above the Notion status |
-| **Automation** | Read-only: what needs a look (failed last run), what is running now, what comes next, recent runs, scheduled tasks and skills by project and general. Nothing is started or changed from here |
-| **Settings** | Projects shown on the board, language (English, Ukrainian), theme (system, dark, light), whose-turn swap, swipe left |
+| **Today** | A sentence ("2 replies and 3 tasks need you"), a strip of numbers that doubles as a filter (Needs you, Overdue, Your turn, Critical risk, Due today), a line when a scheduled task failed, the **Needs you** queue (5 rows on a phone, 7 on a laptop, then "N more"), quiet lines "N to nudge" and "N stale threads, Review", the **Next call** (the next meeting today or tomorrow with 2 or 3 things to raise) and **Projects** (one sentence and a health word each; quiet projects folded) |
+| **Inbox** | Notes captured with "+"; route each to a project as a task (project required, due date, priority) |
+| **Project** | Four tabs: Overview (Your move, to nudge, Risks to watch, Next call, Latest decision and report, Current state, the project's automation), Work (Tasks or Threads grouped by their Notion status, filters, a stale block), Log (meetings, decisions and reports in one stream), Risks (by trigger date, then severity). The "..." menu opens Current state, the project's Automation and the project in Notion. On a phone the project is one page plus "Everything in this project" |
+| **Automation** | Read-only: what needs a look, the schedule as a table (General first, then per project), skills with search. Everything runs from Cowork; nothing is started from the dashboard |
+| **Settings** | Language, theme, projects on the board, whose-turn swap, keyboard shortcuts |
+
+**One definition per number.** Every metric, the queue, health and freshness live in one module (`public/js/logic.js`). A click on a number opens exactly the rows it counted; the tooltip gives the formula. The Worker returns lists, not numbers.
+
+**Freshness.** Age counts from the last message on either side, or from your last manual change, whichever is later. 14 to 30 days: a gray "quiet" in the row. 30 days and more: stale, out of every number, badge and queue, collected in one line with a review (Close, Keep for context = Spectator Mode, Still relevant, Skip) and "Close all older than 90d" with one undo. Their turn shows as "to nudge" only after 5 days. The thresholds are in `app.freshness` (a project can override them).
 
 **Health** is a rule, not a score. Red "Needs you": a critical risk, an overdue High task, or a thread on your turn for more than 2 working days. Amber "Watch": anything overdue or due today, a high risk, or any thread on your turn. Green "On track" otherwise. Each state has its own shape and word, not only a color.
 
-**Whose turn** comes from `app.turn` in the config (which thread statuses mean your turn and their turn). The default follows `projects/_standards.md` section 11: `Awaiting Reply` is your turn, `Need Follow-up` is theirs. Settings has a switch to swap them on one device.
+**Whose turn** comes from `app.turn` in the config (a project can override it). The default follows `projects/_standards.md` section 11: `Awaiting Reply` is your turn, `Need Follow-up` is theirs. Settings has a switch to swap them on one device.
 
-**Gestures and keys.** Swipe right closes a task or marks a thread Replied; swipe left (off by default, Settings) moves a task to tomorrow or marks a thread Need Follow-up; long press opens the status sheet; every change shows Undo for 6 seconds; pull down to refresh. On a laptop: J and K move, X selects, D done, R Replied, S status, O open in Notion, N new task, ? help.
+**Dates follow one rule:** under 7 days relative ("today 15:00", "tomorrow", "Mon", "3d"), older "4 Nov", the year only when it differs, overdue "2d late". ISO timestamps are never shown, also not inside meeting titles.
 
-Every record carries its project. The dashboard reads and writes only the projects listed in its config and refuses records of any other project. When you create a task or a decision you pick the project explicitly: the dashboard never guesses it (Default Project Rule).
+**Risks** use two optional date properties, `Trigger Date` and `Last Reviewed`. With them a risk shows "in 2d", "not reviewed 15d" after 14 days, and has a Reviewed action. Without them these parts are hidden and risks sort by severity.
+
+**Gestures and keys.** Phone: swipe right is the main action (task Done, your-turn thread Replied, risk Reviewed); swipe left snoozes a task to tomorrow (a long swipe opens the date choice); tap opens the details sheet with every action as a button; long press opens the status menu; pull down to refresh. Laptop: actions appear on hover or focus; J and K move, Enter opens, E done, R replied, S snooze, N add, / filter, ⌘K search and jump, ? all keys. Every change shows Undo for 6 seconds and is written to Notion when the toast ends. Offline, changes wait in a queue (a clock mark on the row) and sync when the connection returns; if the record changed in Notion meanwhile, the change is dropped with "Changed in Notion, action not applied".
+
+Every record carries its project. The dashboard reads and writes only the projects listed in its config and refuses records of any other project. When you create a task or a decision you pick the project explicitly: the dashboard never guesses it (Default Project Rule). An Inbox note can have no project.
 
 ## What it can change
 
 | Database | Actions |
 |---|---|
-| Tasks Tracker | mark done or reopen, status, priority, due date, new task with description (`Source = manual`) |
-| Risks | status, severity (`Last Updated` = today) |
+| Tasks Tracker | done or reopen, snooze (moves the due date), status, priority, new task (`Source = manual`), a task made from a thread, a task routed from the Inbox (`Source = inbox`) |
+| Threads | status, with the matching page icon. A status set here is a human decision: it writes `Manual Status At`, and the collectors keep it until the thread gets a new message (`projects/_standards.md` section 11). "Still relevant" in the stale review writes only `Manual Status At` |
+| Risks | status, severity, Reviewed (`Last Reviewed` = today, only when the property exists); every change sets `Last Updated` = today |
 | Decisions | new decision (`Status = Active`), Superseded or Cancelled |
-| Threads | status, with the matching page icon. A status set here is a human decision: it writes `Manual Status At`, and the collectors keep it until the thread gets a new message (`projects/_standards.md` section 11) |
+| Inbox | new note (project optional), route to Tasks (`Status = Routed`) |
 
-Inbox is no longer shown in the app (the API routes stay for compatibility). Automation is read-only. Nothing is sent to anyone. The dashboard writes only to your Notion.
+A change that arrives while the record was edited in Notion after the dashboard loaded it is refused (HTTP 409) instead of overwriting the newer edit. Automation is read-only. Nothing is sent to anyone. The dashboard writes only to your Notion.
 
 ## How it works
 
@@ -85,7 +95,7 @@ The Threads database needs two properties (in the public template since 1.10.0):
 ```bash
 npm install
 npm run demo     # mock Notion with demo data on http://localhost:8787
-npm test         # API, safety and Access checks against the mock
+npm test         # API and Access checks, client rules, WCAG AA contrast of the tokens
 ```
 
 ## Continue development
@@ -96,13 +106,13 @@ npm test         # API, safety and Access checks against the mock
 
 | Path | What |
 |---|---|
-| `public/` | the PWA: `index.html`, `app.js`, `styles.css`, `sw.js`, manifest, icons |
+| `public/` | the PWA: `index.html`, `styles.css`, `sw.js`, manifest, icons, and `js/` (ES modules, no build step) |
 | `src/worker.js` | Worker entry: Access check, static files, `/api` |
 | `src/worker-inline.js`, `scripts/build-single.mjs` | the same Worker as one module with the PWA embedded |
-| `src/api.js` | queries, metrics and the allowed writes |
+| `src/api.js` | queries and the allowed writes (the numbers are counted in `public/js/logic.js`) |
 | `src/notion.js` | Notion REST client (API version 2025-09-03) |
 | `src/auth.js` | Cloudflare Access token verification |
 | `src/schema.js` | property names of the Control Tower databases |
 | `config/dashboard.config.example.json` | config template (your copy is git-ignored) |
 | `wrangler.example.toml` | Worker settings template (your copy is git-ignored) |
-| `test/` | mock Notion, demo server, smoke tests |
+| `test/` | mock Notion, demo server, API smoke tests, client rule tests (`logic.mjs`), contrast check (`contrast.mjs`) |

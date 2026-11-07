@@ -1,7 +1,9 @@
 // Service worker: app shell offline, API network-first with the last good
 // response as an offline fallback (marked with X-CT-Cached-At).
-const VERSION = 'ct-dash-v3';
-const SHELL = ['/', '/index.html', '/styles.css', '/app.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
+const VERSION = 'ct-dash-v4';
+const SHELL = ['/', '/index.html', '/styles.css', '/manifest.webmanifest',
+  '/js/app.js', '/js/core.js', '/js/i18n.js', '/js/dates.js', '/js/logic.js', '/js/net.js', '/js/ui.js', '/js/actions.js', '/js/views.js',
+  '/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-maskable-512.png', '/icons/apple-touch-icon.png', '/icons/favicon-32.png', '/icons/favicon-16.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -16,6 +18,8 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (url.origin !== location.origin || e.request.method !== 'GET') return;
 
+  // "Open in Notion" redirects go straight to the network.
+  if (url.pathname.startsWith('/api/') && url.pathname.endsWith('/notion')) return;
   if (url.pathname.startsWith('/api/')) {
     e.respondWith((async () => {
       const key = new Request(url.pathname + url.search.replace(/[?&]fresh=1/, ''));

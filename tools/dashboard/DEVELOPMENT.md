@@ -7,7 +7,7 @@ This is the handoff for whoever picks the dashboard up next, a person or an AI a
 ```bash
 cd tools/dashboard
 npm install
-npm test        # 17+ checks against a mock Notion: API, safety, Access
+npm test        # API, safety and Access against a mock Notion; client rules; WCAG AA contrast
 npm run demo    # http://localhost:8787 with neutral demo data, no Notion, no Cloudflare
 ```
 
@@ -29,15 +29,23 @@ and start the mock separately: `node -e "import('./test/mock-notion.mjs').then(m
 | `src/worker-inline.js` | entry for the single-module build (PWA embedded by `scripts/build-single.mjs`) | same as above, keep both in step |
 | `src/headers.js` | security headers and CSP for both entries | you load anything from another origin (avoid it) |
 | `src/auth.js` | Cloudflare Access JWT check, fails closed | the gate changes |
-| `src/api.js` | queries, metrics, the allowed writes, the router; `/api/config` also returns option colors and the turn mapping | you add a view, a metric or an action |
+| `src/api.js` | queries, the allowed writes (with the 409 conflict check on `expectEdited`), the router; `/api/config` also returns option colors, the turn mapping and freshness thresholds (per project too) and which optional risk dates exist | you add a view or an action |
 | `src/automation.js` | `AutomationSource`: the Notion reader for `automation_db` and `runs_db`, and the fixture source for demo and tests | the Automation databases change |
 | `src/notion.js` | REST client (API version 2025-09-03), property readers and builders | Notion changes its API |
-| `src/schema.js` | property names and default options of the Control Tower databases | document `02` changes |
-| `public/app.js` | the whole UI: i18n (en, uk), health rule, Start here, views, rows in 6 states, sheets, gestures, keys, settings, routing | anything the user sees |
-| `public/styles.css` | 2.0 design tokens (dark-first, light, `data-theme` override, 1.x names kept as aliases), `.o-{color}` option classes and components | the look changes |
+| `src/schema.js` | property names and default options of the Control Tower databases, including the optional `Trigger Date` and `Last Reviewed` of Risks | document `02` changes |
+| `public/js/logic.js` | every rule: whose turn, freshness and stale, the metrics (`METRICS`, one definition each), the queue, health, risks to watch, the next call. Pure functions, tested in `test/logic.mjs` | a number, a list or a rule changes |
+| `public/js/dates.js` | the one date rule (`fmtDue`, `fmtAge`, `fmtIn`, `fmtWhen`) and `cleanTitle`, which cuts ISO dates out of titles | dates look different |
+| `public/js/i18n.js` | English and Ukrainian strings with plural forms | any text |
+| `public/js/net.js` | reads with a local cache, deferred writes with undo, the offline outbox, conflicts | how data moves |
+| `public/js/ui.js` | the row (anatomy, hover actions, swipe, long press), quiet rows, metric strip, sheets and the side panel, toast | a component changes |
+| `public/js/actions.js` | per entity: what a row shows and its actions; the details sheet, status menu, snooze, stale review, quick add, Inbox routing, ⌘K | an action changes |
+| `public/js/views.js`, `public/js/app.js` | the pages; navigation, routing, keys, boot | a page or the shell changes |
+| `public/styles.css` | v2 tokens (dark main, light, `data-theme` override, 2.0 names kept as aliases) and components | the look changes; then run `node test/contrast.mjs` |
+| `scripts/make-icons.mjs` | renders the PWA icons from 🗼 (needs Playwright) | the icon changes |
 | `public/sw.js` | offline shell and last-good API data | you add a static file (add it to `SHELL`, bump `VERSION`) |
 | `test/mock-notion.mjs` | in-memory Notion with demo data and the same filter rules as Notion | the API starts using a new endpoint or filter |
-| `test/smoke.mjs` | end-to-end checks | every new behaviour gets a check |
+| `test/smoke.mjs` | end-to-end API checks | every new API behaviour gets a check |
+| `test/logic.mjs`, `test/contrast.mjs` | client rules and strings; WCAG AA of the token pairs in both themes | rules, strings or tokens change |
 
 ## Rules the code keeps
 
@@ -47,18 +55,18 @@ and start the mock separately: `node -e "import('./test/mock-notion.mjs').then(m
 4. **Values from the live schema.** `optionsOf()` reads select and status options from Notion; validation and the UI menus use them.
 5. **Threads.** A status written here also writes `Manual Status At` and the icon from `schema.threads.icons`. Never write `Collector Status`: only collectors do.
 6. **No secrets in code or config files in git.** The token is a Worker secret; IDs live in the git-ignored config.
-7. **Colors come from Notion.** Status and select pills use the option color name from the live schema (`.o-{color}`); never hard-code a status color.
-8. **Health and turn are rules in one place** (`health()`, `turnOf()` in `app.js`). The turn mapping comes from `app.turn` in the config; the Settings swap only changes this device.
+7. **Colors come from Notion, as dots.** A Notion option color is an 8px dot (`--o-{color}`) in a group header or a sheet, never a pill or a fill; never hard-code a status color. Semantic colors (`--danger`, `--warn`, `--ok`) are text or dots only.
+8. **Every rule in one place** (`public/js/logic.js`): one definition per metric, and a click on a number opens the same list. Stale threads (no activity for `stale_days`) are counted nowhere. The turn mapping and thresholds come from the config; the Settings swap only changes this device.
 9. **Automation is read-only.** There is no write route for it, and the UI has no run buttons.
 10. **Text.** No em dash anywhere (the repository linter rejects it). Example names in demo data and screenshots are neutral or American (Mike, Emily).
 
 ## Recipes
 
-**A new read view (for example Topics).** Add the database key to the config example and `schema.js`, a mapper and a query in `api.js`, a `case` in `projectSection`, a tab in `TABS` and a view in `TAB_VIEWS` in `app.js`, i18n strings in both languages, data in the mock, a check in `smoke.mjs`.
+**A new read view (for example Topics).** Add the database key to the config example and `schema.js`, a mapper and a query in `api.js`, a `case` in `projectSection`, a page in `views.js` and its route in `app.js`, a `describe()` case in `actions.js`, strings in both languages, data in the mock, a check in `smoke.mjs`.
 
-**A new write action.** Add the route in `handle()`, build values with `buildProps(schemaProps(...))`, validate with `pick(value, await optionsOf(...))`, guard with `guardedPage` and `assertProjectPage`, call it from the UI through `patch()` or `api()` (the `X-CT-Request` header is added for you), add a check for both the allowed and the refused case.
+**A new write action.** Add the route in `handle()`, build values with `buildProps(schemaProps(...))`, validate with `pick(value, await optionsOf(...))`, guard with `guardedPage` and `assertProjectPage`, call it from the UI through `act()` in `net.js` (undo, offline queue and the conflict check come with it) or `api()` (the `X-CT-Request` header is added for you), add a check for both the allowed and the refused case.
 
-**A new metric.** Compute it in `metricsFor()` from data the overview already loads; add a `kpi()` in `projectCard` or the Today tab. Avoid new Notion queries per project: the overview makes one query per database for all projects.
+**A new metric.** Add an entry to `METRICS` in `public/js/logic.js` (label, formula string, `items()` returning queue entries) from data the overview already loads, strings in both languages, and a check in `test/logic.mjs`. Avoid new Notion queries per project: the overview makes one query per database for all projects.
 
 ## Automation bridge
 
@@ -85,7 +93,6 @@ After any deploy: open `/api/config` through the gate and check that every proje
 ## Roadmap
 
 - Read the project list from the Projects DB (`Slug`, `Current State` properties) instead of the config.
-- Upcoming meetings from the calendar next to the last ones, with a link to the matching prep report.
 - Topics and Knowledge Base views; global search.
 - Push notifications for new 🔴 threads (Web Push from a Cron Trigger).
 - Upcoming meetings next to the last ones (the Pacenote module, deferred).

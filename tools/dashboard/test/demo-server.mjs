@@ -10,8 +10,8 @@ import { createApi } from '../src/api.js';
 const ROOT = fileURLToPath(new URL('../public/', import.meta.url));
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 
-export async function startDemo({ port = 8787, mockPort = 8788, withManualProp = true } = {}) {
-  const mock = createMock({ withManualProp });
+export async function startDemo({ port = 8787, mockPort = 8788, withManualProp = true, withRiskDates = true } = {}) {
+  const mock = createMock({ withManualProp, withRiskDates });
   await new Promise((r) => mock.server.listen(mockPort, '127.0.0.1', r));
   const api = createApi(mockConfig(), { NOTION_TOKEN: 'test-token', NOTION_API_BASE: `http://127.0.0.1:${mockPort}` });
 

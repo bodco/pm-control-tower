@@ -57,6 +57,20 @@ export function createApi(config, env) {
     theirs: config.app?.turn?.theirs || ['Need Follow-up'],
     ai: config.app?.turn?.ai || ['AI Review'],
   };
+  // Freshness thresholds (days). Project config can override any of them.
+  const FRESH_DEFAULTS = { quiet_days: 14, stale_days: 30, nudge_days: 5, turn_sla_workdays: 2, stale_bulk_days: 90 };
+  function freshnessFor(p) {
+    const out = { ...FRESH_DEFAULTS, ...(config.app?.freshness || {}), ...(p?.freshness || {}) };
+    for (const k of Object.keys(FRESH_DEFAULTS)) {
+      const n = Number(out[k]);
+      out[k] = Number.isFinite(n) && n >= 0 ? n : FRESH_DEFAULTS[k];
+    }
+    return out;
+  }
+  function turnFor(p) {
+    const o = p?.turn || {};
+    return { mine: o.mine || turn.mine, theirs: o.theirs || turn.theirs, ai: o.ai || turn.ai };
+  }
   const cache = new Map();
 
   function requireDb(key) {
@@ -163,6 +177,7 @@ export function createApi(config, env) {
     area: prop(pg, S.decisions.area), status: prop(pg, S.decisions.status),
     door: prop(pg, S.decisions.door), statedBy: prop(pg, S.decisions.statedBy),
     context: short(prop(pg, S.decisions.context), 400), source: prop(pg, S.decisions.source),
+    edited: pg.last_edited_time,
   });
   const mapRisk = (pg) => ({
     id: pg.id, url: pg.url, project: slugOf(pg, S.risks.project),
@@ -171,6 +186,8 @@ export function createApi(config, env) {
     category: prop(pg, S.risks.category), kind: prop(pg, S.risks.kind),
     owner: prop(pg, S.risks.owner), summary: short(prop(pg, S.risks.summary), 300),
     mitigation: short(prop(pg, S.risks.mitigation), 300), lastUpdated: prop(pg, S.risks.lastUpdated),
+    triggerDate: prop(pg, S.risks.triggerDate), lastReviewed: prop(pg, S.risks.lastReviewed),
+    edited: pg.last_edited_time,
   });
   const mapReport = (pg) => ({
     id: pg.id, url: pg.url, project: slugOf(pg, S.reports.project),
@@ -280,52 +297,6 @@ export function createApi(config, env) {
     return cached('automation', async () => ({ configured: true, ...(await src.list()) }), fresh);
   }
 
-  // ---------- metrics ----------
-  function metricsFor(slug, d, today) {
-    const mine = (arr) => arr.filter((x) => x.project === slug);
-    const t = mine(d.tasks);
-    const th = mine(d.threads);
-    const r = mine(d.risks);
-    const weekEnd = addDays(today, 7);
-    const activeTasks = t.filter((x) => x.status !== S.tasks.holdValue);
-    const lastMeeting = mine(d.meetings)[0] || null;
-    const lastReport = mine(d.reports)[0] || null;
-    return {
-      tasksOpen: activeTasks.length,
-      overdue: activeTasks.filter((x) => x.due && x.due.slice(0, 10) < today).length,
-      dueToday: activeTasks.filter((x) => x.due && x.due.slice(0, 10) === today).length,
-      dueWeek: activeTasks.filter((x) => x.due && x.due.slice(0, 10) > today && x.due.slice(0, 10) <= weekEnd).length,
-      highOpen: activeTasks.filter((x) => x.priority === 'High').length,
-      onHold: t.length - activeTasks.length,
-      doneWeek: mine(d.done).length,
-      byStatus: countBy(t, 'status'),
-      awaiting: th.filter((x) => x.status === 'Awaiting Reply').length,
-      followUp: th.filter((x) => x.status === 'Need Follow-up').length,
-      aiReview: th.filter((x) => x.status === 'AI Review').length,
-      oldestAwaiting: th.filter((x) => x.status === 'Awaiting Reply').map((x) => x.lastReply).filter(Boolean).sort()[0] || null,
-      risksActive: r.length,
-      risksHigh: r.filter((x) => x.severity === 'Critical' || x.severity === 'High').length,
-      riskBySeverity: countBy(r, 'severity'),
-      decisions30: mine(d.decisions).filter((x) => x.date && x.date.slice(0, 10) >= addDays(today, -30)).length,
-      lastMeeting: lastMeeting && { title: lastMeeting.title, date: lastMeeting.date, url: lastMeeting.url },
-      lastReport: lastReport && { title: lastReport.title, date: lastReport.date, url: lastReport.url, type: lastReport.type },
-    };
-  }
-
-  function countBy(arr, key) {
-    const out = {};
-    for (const x of arr) { const k = x[key] || '(none)'; out[k] = (out[k] || 0) + 1; }
-    return out;
-  }
-
-  function focusTasks(tasks, today) {
-    const weekEnd = addDays(today, 7);
-    return tasks
-      .filter((x) => x.status !== S.tasks.holdValue)
-      .filter((x) => (x.due && x.due.slice(0, 10) <= weekEnd) || x.priority === 'High')
-      .sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
-  }
-
   // ---------- read endpoints ----------
   async function overview(fresh) {
     return cached('overview', async () => {
@@ -336,7 +307,9 @@ export function createApi(config, env) {
       const parts = await Promise.all([
         settle('tasks', openTasks(projects)),
         settle('done', doneThisWeek(projects)),
-        settle('threads', threads(projects, [...new Set([...turn.mine, ...turn.theirs, ...turn.ai, 'Awaiting Reply', 'Need Follow-up'])])),
+        // Every thread that is not Closed: the client sorts them into your turn,
+        // their turn and stale with one set of rules (public/js/logic.js).
+        settle('threads', threads(projects)),
         settle('risks', risks(projects)),
         settle('decisions', decisions(projects, 30)),
         settle('meetings', meetings(projects, 30, 60)),
@@ -346,8 +319,9 @@ export function createApi(config, env) {
       const errors = parts.filter((p) => p.error).map((p) => ({ source: p.name, error: p.error }));
       return {
         generatedAt: new Date().toISOString(), today, errors,
-        projects: projects.map((p) => ({ slug: p.slug, name: p.name, color: p.color, metrics: metricsFor(p.slug, d, today) })),
-        // Full lists: the client computes health, tiles and "Start here" from them.
+        projects: projects.map((p) => ({ slug: p.slug, name: p.name, color: p.color })),
+        // Full lists: the client computes every metric, the queue and health from
+        // them, in one module (public/js/logic.js).
         tasks: d.tasks, done: d.done, threads: d.threads, risks: d.risks,
         meetings: d.meetings, reports: d.reports, decisions: d.decisions,
       };
@@ -407,6 +381,18 @@ export function createApi(config, env) {
       throw new HttpError(403, 'This record is not in the configured database');
     }
     return page;
+  }
+
+  // The client sends the last_edited_time it saw. A newer edit in Notion wins:
+  // the action is refused instead of overwriting it.
+  function assertNotChanged(page, body) {
+    const seen = body?.expectEdited;
+    if (!seen) return;
+    const now = Date.parse(page.last_edited_time || '');
+    const was = Date.parse(seen);
+    if (Number.isFinite(now) && Number.isFinite(was) && now > was) {
+      throw new HttpError(409, 'Changed in Notion, action not applied');
+    }
   }
 
   function assertProjectPage(page, relProp, allowEmpty = false) {
@@ -472,6 +458,7 @@ export function createApi(config, env) {
   async function updateTask(id, body) {
     const page = await guardedPage(id, 'tasks_db');
     assertProjectPage(page, S.tasks.project);
+    assertNotChanged(page, body);
     const props = await schemaProps('tasks_db');
     const { properties } = buildProps(props, {
       [S.tasks.status]: pick(body.status, await optionsOf('tasks_db', S.tasks.status, S.tasks.statuses), 'status'),
@@ -518,10 +505,15 @@ export function createApi(config, env) {
   async function updateRisk(id, body) {
     const page = await guardedPage(id, 'risks_db');
     assertProjectPage(page, S.risks.project);
+    assertNotChanged(page, body);
     const props = await schemaProps('risks_db');
+    if (body.reviewed && !props[S.risks.lastReviewed]) {
+      throw new HttpError(400, `Property "${S.risks.lastReviewed}" is missing in Risks, so Reviewed cannot be saved.`);
+    }
     const { properties } = buildProps(props, {
       [S.risks.status]: pick(body.status, await optionsOf('risks_db', S.risks.status, S.risks.statuses), 'status'),
       [S.risks.severity]: pick(body.severity, await optionsOf('risks_db', S.risks.severity, S.risks.severities), 'severity'),
+      [S.risks.lastReviewed]: body.reviewed ? todayIn(tz) : undefined,
       [S.risks.lastUpdated]: todayIn(tz),
     });
     return { risk: mapRisk(await notion.updatePage(id, { properties })) };
@@ -548,6 +540,7 @@ export function createApi(config, env) {
   async function updateDecision(id, body) {
     const page = await guardedPage(id, 'decisions_db');
     assertProjectPage(page, S.decisions.project);
+    assertNotChanged(page, body);
     const props = await schemaProps('decisions_db');
     const { properties } = buildProps(props, {
       [S.decisions.status]: pick(body.status, await optionsOf('decisions_db', S.decisions.status, S.decisions.statuses), 'status'),
@@ -561,10 +554,18 @@ export function createApi(config, env) {
   async function updateThread(id, body) {
     const page = await guardedPage(id, 'threads_db');
     assertProjectPage(page, S.threads.project);
-    const status = pick(body.status, await optionsOf('threads_db', S.threads.status, S.threads.statuses), 'status');
-    if (!status) throw new HttpError(400, 'status is required');
+    assertNotChanged(page, body);
     const props = await schemaProps('threads_db');
     const hasManual = Boolean(props[S.threads.manualStatusAt]);
+    // "Still relevant" from the stale review: only the manual mark moves, the
+    // status stays. Freshness counts from the later of the last reply and this mark.
+    if (body.touch && body.status === undefined) {
+      if (!hasManual) throw new HttpError(400, `Property "${S.threads.manualStatusAt}" is missing in Threads, so "Still relevant" cannot be saved.`);
+      const { properties } = buildProps(props, { [S.threads.manualStatusAt]: new Date().toISOString() });
+      return { thread: mapThread(await notion.updatePage(id, { properties })), warning: null };
+    }
+    const status = pick(body.status, await optionsOf('threads_db', S.threads.status, S.threads.statuses), 'status');
+    if (!status) throw new HttpError(400, 'status is required');
     const values = { [S.threads.status]: status };
     if (hasManual) values[S.threads.manualStatusAt] = new Date().toISOString();
     const { properties } = buildProps(props, values);
@@ -592,11 +593,19 @@ export function createApi(config, env) {
         return json({
           title: config.app?.title || 'PM Control Tower',
           locale: config.app?.locale || 'en', timezone: tz,
-          projects: projects.map((p) => ({ slug: p.slug, name: p.name, color: p.color, hasCurrentState: Boolean(p.current_state_page_id) })),
+          projects: projects.map((p) => ({
+            slug: p.slug, name: p.name, short: p.short_name || null, color: p.color, hasCurrentState: Boolean(p.current_state_page_id),
+            turn: turnFor(p), freshness: freshnessFor(p),
+          })),
+          freshness: freshnessFor(null),
           inbox: Boolean(db.inbox_db),
           automation: Boolean(db.automation_db || config.automation?.fixtures),
           turn,
           threadManualStatus: Boolean(db.threads_db) && Boolean((await schemaProps('threads_db').catch(() => ({})))[S.threads.manualStatusAt]),
+          riskFields: await (async () => {
+            const rp = db.risks_db ? await schemaProps('risks_db').catch(() => ({})) : {};
+            return { trigger: Boolean(rp[S.risks.triggerDate]), reviewed: Boolean(rp[S.risks.lastReviewed]) };
+          })(),
           options: {
             taskStatuses: await optionsOf('tasks_db', S.tasks.status, S.tasks.statuses),
             priorities: await optionsOf('tasks_db', S.tasks.priority, S.tasks.priorities),
@@ -620,6 +629,10 @@ export function createApi(config, env) {
       }
       if (m === 'GET' && path === '/api/overview') return json(await overview(fresh));
       let r;
+      // "Open in Notion" for a project: a redirect, so page IDs stay out of the client config.
+      if (m === 'GET' && (r = path.match(/^\/api\/p\/([\w-]+)\/notion$/))) {
+        return new Response(null, { status: 302, headers: { Location: `https://www.notion.so/${cleanId(project(r[1]).project_page_id)}`, 'Cache-Control': 'no-store' } });
+      }
       if (m === 'GET' && (r = path.match(/^\/api\/p\/([\w-]+)\/(\w+)$/))) return json(await projectSection(r[1], r[2], url, fresh));
       if (m === 'GET' && path === '/api/inbox') return json({ items: await inboxNew() });
       if (m === 'GET' && path === '/api/automation') return json(await automationData(fresh));

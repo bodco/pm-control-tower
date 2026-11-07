@@ -1,6 +1,6 @@
 {
   "name": "pm-control-tower-dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "PM Control Tower dashboard: an installable web app over your Control Tower Notion databases.",
@@ -8,9 +8,10 @@
     "setup": "node scripts/setup.mjs",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node test/smoke.mjs",
+    "test": "node test/smoke.mjs && node test/logic.mjs && node test/contrast.mjs",
     "demo": "node test/demo-server.mjs",
-    "build:single": "node scripts/build-single.mjs"
+    "build:single": "node scripts/build-single.mjs",
+    "icons": "node scripts/make-icons.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

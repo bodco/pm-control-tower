@@ -8,29 +8,39 @@ The dashboard (`tools/dashboard/`) is that screen. It is an installable web app 
 
 ## What it shows
 
+The layout since dashboard 2.1 is a "calm dashboard" built for a quick triage: one sentence per page, numbers as a quiet strip, at most one colored fact per row, actions hidden until hover, focus, a swipe or a tap.
+
 | View | Content | Source |
 |---|---|---|
-| Home | four numbers (Overdue, Your turn, Critical risk, Due today), Start here (most urgent first, across projects), a row per project worst first with its health and reason, a quick task form | Tasks Tracker, Threads, Risks |
-| Project > Overview | four numbers, open task mix, Needs you here, open risks, recent decisions, meetings and reports | Tasks Tracker, Threads, Risks, Decisions, Meetings, Reports |
-| Tasks, Threads, Meetings, Decisions, Risks, Reports | the project's records with filters; threads show whose turn it is and for how many working days | the matching database |
-| Automation | read-only: failed last runs, running now, coming up, recent runs, scheduled tasks and skills per project and general | optional `automation_db` and `runs_db` |
-| Settings | projects on the board, language, theme, whose-turn swap, swipe left | this device only |
-| Current state | the project's Current State page, read-only | `notion.current_state_page` of the project config |
+| Today | a sentence ("2 replies and 3 tasks need you"), numbers that filter the queue (Needs you, Overdue, Your turn, Critical risk, Due today), a failed scheduled task, the Needs you queue, "to nudge" and "stale threads", the next call, projects with a health word | Tasks Tracker, Threads, Risks, Meetings, optional Automation |
+| Inbox | notes captured with "+", routed to a project as tasks | Inbox |
+| Project | Overview, Work (tasks or threads grouped by their Notion status), Log (meetings, decisions, reports in one stream), Risks; a menu with Current state, the project's Automation and Open in Notion | all project databases |
+| Automation | read-only: what needs a look, the schedule as a table, skills with search | optional `automation_db` and `runs_db` |
+| Settings | language, theme, projects on the board, whose-turn swap, keys | this device only |
 
-Every record carries its project chip. Records of projects that are not in the dashboard config are never shown.
+Every record carries its project. Records of projects that are not in the dashboard config are never shown.
 
-Project health is a rule, not a score: red "Needs you" for a critical risk, an overdue High task or a thread on your turn for more than 2 working days; amber "Watch" for anything overdue or due today, a high risk or any thread on your turn; green "On track" otherwise. Which thread statuses mean "your turn" comes from `app.turn` in the dashboard config (default: `Awaiting Reply` is yours, `Need Follow-up` is theirs, as in `projects/_standards.md` section 11).
+The rules live in one client module, so each number has one definition and a click on it opens exactly the list it counted:
+
+- **Needs you**: threads on your turn, overdue and due-today tasks, Critical risks and risks whose trigger date is 7 days away or closer. Order: overdue and critical, then your turn by age, then today.
+- **Freshness**: the age counts from the last message on either side, or the last manual change. 14 to 30 days is "quiet"; 30 days and more is stale and counted nowhere, with a one-card-at-a-time review. Their turn becomes "to nudge" after 5 days. The thresholds are in `app.freshness` of the dashboard config, per project if needed.
+- **Health** is a rule, not a score: red "Needs you" for a critical risk, an overdue High task or a thread on your turn for more than 2 working days; amber "Watch" for anything overdue or due today, a high risk or any thread on your turn; green "On track" otherwise. Which thread statuses mean "your turn" comes from `app.turn` (default: `Awaiting Reply` is yours, `Need Follow-up` is theirs, as in `projects/_standards.md` section 11).
+- **Dates**: under 7 days relative ("today 15:00", "tomorrow", "Mon", "3d"), older "4 Nov", overdue "2d late"; no ISO timestamps anywhere.
+- **Next call**: the next meeting today or tomorrow from Meetings, with 2 or 3 things to raise (your-turn threads and risks of that project).
+
+Risks can carry two optional dates, `Trigger Date` and `Last Reviewed`. With them the dashboard shows when a risk fires, flags one not reviewed for 14 days, and offers Reviewed; without them it sorts risks by severity and hides those parts.
 
 ## What it can change
 
 | Database | Actions | Notes |
 |---|---|---|
-| Tasks Tracker | done or reopen, status, priority, due date, new task | a new task gets `Source = manual`; the project is always picked explicitly (Default Project Rule) |
-| Risks | status, severity | `Last Updated` = today |
+| Tasks Tracker | done or reopen, snooze (the due date moves), status, priority, new task, a task from a thread, a task from the Inbox | a new task gets `Source = manual` (`inbox` when routed); the project is always picked explicitly (Default Project Rule) |
+| Threads | status and its icon; "Still relevant" | a human status, kept by the collectors until a new message arrives (below); "Still relevant" writes only `Manual Status At` |
+| Risks | status, severity, Reviewed | `Last Updated` = today; Reviewed writes `Last Reviewed` and needs that property |
 | Decisions | new decision, status | new = `Active`; decisions are never deleted, only Superseded or Cancelled |
-| Threads | status and its icon | a human status, kept by the collectors until a new message arrives (below) |
+| Inbox | new note, route to Tasks | a note may have no project; routing needs one |
 
-Inbox is not shown in the app any more; quick capture goes straight to Tasks Tracker with an explicit project. Automation is read-only. Nothing is sent to anyone: the dashboard writes only to Notion.
+Every change shows Undo for 6 seconds and is written when the toast ends. Offline, changes wait in a queue and sync later. If the record changed in Notion after the dashboard loaded it, the change is refused instead of overwriting the newer edit. Automation is read-only: everything runs from Cowork. Nothing is sent to anyone: the dashboard writes only to Notion.
 
 ## Manual thread status
 

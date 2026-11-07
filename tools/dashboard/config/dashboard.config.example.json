@@ -1,9 +1,16 @@
 {
-  "_comment": "Copy to dashboard.config.json (git-ignored) and fill in your own IDs. The values here are placeholders. notion.* are data source IDs (collection://...), the same keys as in projects/<slug>.md. automation_db and runs_db are optional (read-only Automation page). app.turn maps thread statuses to whose turn it is.",
+  "_comment": "Copy to dashboard.config.json (git-ignored) and fill in your own IDs. The values here are placeholders. notion.* are data source IDs (collection://...), the same keys as in projects/<slug>.md. automation_db and runs_db are optional (read-only Automation page). app.turn maps thread statuses to whose turn it is; app.freshness holds the freshness thresholds in days. A project can override turn and freshness with its own keys of the same name; short_name is the short label in rows (default: the first word of name).",
   "app": {
     "title": "PM Control Tower",
     "locale": "en",
     "timezone": "Europe/Kyiv",
+    "freshness": {
+      "quiet_days": 14,
+      "stale_days": 30,
+      "nudge_days": 5,
+      "turn_sla_workdays": 2,
+      "stale_bulk_days": 90
+    },
     "turn": {
       "mine": [
         "Awaiting Reply"
@@ -39,6 +46,7 @@
     {
       "slug": "playbook",
       "name": "Internal Delivery Playbook",
+      "short_name": "Playbook",
       "color": "#2f9e6b",
       "project_page_id": "00000000000000000000000000000012",
       "workspace_page_id": "00000000000000000000000000000021",
