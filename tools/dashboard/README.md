@@ -46,6 +46,10 @@ Every record carries its project. The dashboard reads and writes only the projec
 
 A change that arrives while the record was edited in Notion after the dashboard loaded it is refused (HTTP 409) instead of overwriting the newer edit. Automation is read-only. Nothing is sent to anyone. The dashboard writes only to your Notion.
 
+## Ask Claude
+
+A card (a thread, a task or a risk) has an **Ask Claude** button, and the key `A` does the same in a list. It copies a short context pack to the clipboard: the project and its slug, the Notion page id and links, the status, the Jira key, and related candidates from what the dashboard already loaded (meetings of the same project within 21 days, tasks, threads and decisions that share a Jira key or words). Paste it into Claude (Cowork or the phone app) and add one sentence after `My decision:`. The `resolve-item` skill then verifies the candidates in Notion, shows a plan (Decision, task with the agreed date, thread status, one Topic linking the story) and writes after your OK. The dashboard itself runs nothing and writes nothing for this.
+
 ## How it works
 
 ```

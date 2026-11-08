@@ -511,7 +511,7 @@ export function viewSettings() {
 }
 export function keysGrid() {
   const k = (keys, label) => [h('dt', keys.map((x) => h('span.kbd', x))), h('dd', label)];
-  return h('dl.keys', k(['J', 'K'], t('kMove')), k(['Enter'], t('kOpen')), k(['E'], t('kDone')), k(['R'], t('kReplied')), k(['S'], t('kSnooze')),
+  return h('dl.keys', k(['J', 'K'], t('kMove')), k(['Enter'], t('kOpen')), k(['E'], t('kDone')), k(['R'], t('kReplied')), k(['S'], t('kSnooze')), k(['A'], t('kAsk')),
     k(['N'], t('kAdd')), k(['/'], t('kFilter')), k(['⌘', 'K'], t('kPalette')), k(['?'], t('kHelp')), k(['Esc'], t('kClose')));
 }
 export function viewMore() {

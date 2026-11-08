@@ -8,6 +8,7 @@ import { cleanTitle, fmtDue, fmtAge, fmtIn, fmtWhen, today, addDays, nextWeekday
 import * as L from './logic.js';
 import { act, create, loadAll } from './net.js';
 import { openSheet, closeSheet, toast, optionList, chips, btn, dot, healthWord } from './ui.js';
+import { ASK_KINDS, packFor } from './askclaude.js';
 
 let app = { render: () => {}, go: () => {} };
 export function setAppHooks(hooks) { app = { ...app, ...hooks }; }
@@ -58,7 +59,12 @@ export function snoozePicker(x) {
 }
 
 // ---------- descriptors ----------
-export function describe(item, { showProject = true, showStatus = false, grouped = false } = {}) {
+export function describe(item, opts) {
+  const d = describeBase(item, opts);
+  if (ASK_KINDS.includes(item.kind)) d.ask = () => askClaude(item);
+  return d;
+}
+function describeBase(item, { showProject = true, showStatus = false, grouped = false } = {}) {
   const { kind, x } = item;
   const c = ctx();
   const pending = state.pending.has(x.id);
@@ -84,7 +90,6 @@ export function describe(item, { showProject = true, showStatus = false, grouped
       id: x.id, kind, glyph: /mail/i.test(channel(x) || '') ? 'mail' : 'chat', title: cleanTitle(x.title), pending,
       meta: [showProject ? projTag(x.project) : null, channel(x),
         showStatus && !grouped ? turnLabel(tn0, x.status) : null,
-        x.hasDraft ? t('draftReady') : null,
         L.isQuiet(c, x) ? t('quiet') : null],
       fact: { text: fmtAge(L.lastActivity(x)) || t('dAge', { n: age }), cls: L.turnPastSla(c, x) ? 'wait' : '' },
       primary: tn0 === 'mine' ? { label: t('aReplied'), glyph: 'check', run: () => threadReplied(x) } : null,
@@ -184,10 +189,10 @@ export function details(item) {
   const buttons = [];
   const after = (fn) => () => { closeSheet(); fn(); };
   if (d.primary) buttons.push(btn(d.primary.label, { primary: true, glyph: d.primary.glyph, onclick: after(d.primary.run) }));
-  if (kind === 'thread' && x.hasDraft) buttons.push(btn(t('aDraft'), { glyph: 'doc', onclick: () => openUrl(x.url) }));
   if (d.snooze) buttons.push(btn(t('aSnooze'), { glyph: 'snooze', onclick: after(() => snoozePicker(x)) }));
   if (['task', 'thread', 'risk', 'decision'].includes(kind)) buttons.push(btn(t('aStatus'), { glyph: 'more', onclick: after(() => statusSheet(item)) }));
   if (kind === 'thread') buttons.push(btn(t('aMakeTask'), { glyph: 'plus', onclick: after(() => makeTask(x)) }));
+  if (ASK_KINDS.includes(kind)) buttons.push(btn(t('aAsk'), { glyph: 'skill', onclick: after(() => askClaude(item)) }));
   const links = [
     d.sourceUrl ? h('a.linkrow', { href: d.sourceUrl, target: '_blank', rel: 'noopener' }, icon('open'), x.slackLink ? t('openSlack') : t('openMail')) : null,
     x.url ? h('a.linkrow', { href: x.url, target: '_blank', rel: 'noopener' }, icon('open'), t('openNotion')) : null,
@@ -238,6 +243,20 @@ async function makeTask(th) {
     toast(r.queued ? t('queuedOffline') : t('tCreated'));
     if (!r.queued) loadAll(true).then(app.render).catch(() => {});
   } catch (e) { toast(`${t('notSaved')}: ${e.message}`, { error: true }); }
+}
+
+// ---------- Ask Claude: copy a context pack, then type the decision in Claude ----------
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch { /* fall back below */ }
+  try {
+    const ta = h('textarea', { 'aria-hidden': 'true', style: { position: 'fixed', top: '0', opacity: '0' } });
+    ta.value = text; document.body.append(ta); ta.select();
+    const ok = document.execCommand('copy'); ta.remove(); return ok;
+  } catch { return false; }
+}
+export async function askClaude(item) {
+  const ok = await copyText(packFor(ctx(), item));
+  toast(ok ? t('askCopied') : t('askFailed'), { error: !ok });
 }
 
 // ---------- stale review: one card at a time ----------

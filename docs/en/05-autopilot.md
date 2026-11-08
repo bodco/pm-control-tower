@@ -33,8 +33,7 @@ Historical note: in April 2026 a migration of the Cowork automations to Claude C
 | 07:05 daily | **the cloud Routine `Acme daily Slack sync`** (replaced the local `acme-daily-slack-sync`) | `slack-collector` for yesterday and today with an overlap, auto-classification, the review pass over every non-Closed thread. The reason for the move: the local prompt called a non-existent `acme-slack-collector` and the failure could not be diagnosed from the cloud. Steps 2 (JSON) and 4 (Jira) are deliberately skipped in the cloud prompt: there is no disk and no local Jira MCP |
 | ~09:15 daily (06:15 UTC) | **the cloud Routine `Acme threads -> Jira tickets`**  | A queue (not a time window): it takes threads whose `Jira Sync` is empty or `Error`, a three-level duplicate check (the Notion log → the Slack permalink anchor in the Jira description → a semantic search), at most 10 threads per run, older threads go to a backlog for manual confirmation. Covers what `slack-collector` Step 4 cannot do in the cloud |
 | 09:01 Mon-Fri | `daily-work-report` | The daily work report in Ukrainian (calendar, meetings, threads, Jira, Slack; yesterday + the plan for today) → Reports DB + `~/work/Daily Reports/` |
-| 09:12 daily | `daily-process-mail-0910` | `mac-mail-collector` → `inbox-responder` |
-| 09:32 daily | `inbox-responder` | Draft replies to new threads (a separate run for the threads that came in from Slack) |
+| 09:12 daily | `daily-process-mail-0910` | `mac-mail-collector` |
 | 11:08 Mon-Fri | `daily-team-prep` | Prep for the 12:00 internal sync (the skill decides from the config whether today is a sync day) |
 | daily at 15:30 | `daily-current-state-distillation` | An incremental update of the Current State pages of all active projects (currently Acme and Beta) for the last 2 days |
 | daily at 15:30 | `deploy-analysis-daily` | Stage vs prod across the repos from the config for the last 24 h, local refs only |
@@ -64,7 +63,7 @@ Historical note: in April 2026 a migration of the Cowork automations to Claude C
 
 ### The week at a glance
 
-- **Every morning (Mon-Fri):** slack-sync 07:05 → work-report 09:01 → mail + inbox-responder 09:12 → inbox-responder 09:32 → team-prep 11:08 → the 12:00 meeting → 15:30 current-state + deploy-analysis; branch-review at 10/12/14/16/18.
+- **Every morning (Mon-Fri):** slack-sync 07:05 → work-report 09:01 → mail 09:12 → team-prep 11:08 → the 12:00 meeting → 15:30 current-state + deploy-analysis; branch-review at 10/12/14/16/18.
 - **Monday:** topics 06:32 + weekly-overview 08:09 + planning-prep 16:09 → planning at 17:00.
 - **Tuesday:** status-prep 16:02 → status at 17:00.
 - **Thursday:** 1-1 prep 16:04 → 1-1 at 17:00; stability-scan 22:10.

@@ -94,7 +94,7 @@ Workspace, Project; повний текст у тілі сторінки.
 | `project-lifecycle` | E | Режими kickoff (конфіг, Notion-якорі, Charter, перше рішення, tech start, реєстрація конфігу), handover-in (KT з доказами, baseline, незадокументовані обіцянки), health-check (8 областей RAG з доказами), team-onboarding/offboarding, closure / перехід у саппорт | on-demand + щомісячний health check (2-ге число) |
 | `client-satisfaction-tracker` | E | Настрій клієнта зі Slack/Gmail/транскриптів з культурною калібровкою (Culture Map, індивідуальні профілі, 4 рівні сигналів, 6 культурних патернів) | 1-ше і 15-те число |
 | `thread-ticket-sync` | E | Двофазний: треди без тікетів у клієнтському Notion → перетворення обраних тредів на задачі (individual / consolidated) | on-demand |
-| `inbox-responder` | E | Відкриті треди без драфту (Need Follow-up, Awaiting Reply, AI Review) → категорія, контекст (Sentry, логи, Jira, Topics), драфт відповіді мовою треду, Inbox Review; Status та іконку не пише | щодня після пошти |
+| `resolve-item` | E | Застосовує рішення PM щодо одного треду, задачі чи ризику до всього навколо: знаходить повʼязану зустріч, треди, задачі й рішення, показує план і після підтвердження пише Decision, задачу з узгодженою датою, статус треду (з `Manual Status At`) і один Topic, що обʼєднує історію. Ніколи не зберігає драфти відповідей у Notion, не чіпає Jira чи борд клієнта, нічого не відправляє | on-demand: встав текст "Ask Claude" з дашборда, далі рішення |
 
 ### 5. Управління трекером і моніторингом
 

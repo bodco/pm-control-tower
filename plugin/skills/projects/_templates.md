@@ -84,7 +84,6 @@ also work in cloud runs, use `notion:` sources or `notion_templates_page_id`.
 | `project-lifecycle.handover-pack` | project-lifecycle | Handover pack at closure | "Mode closure", step 3 | page under the project page |
 | `notion-meeting-topics` | notion-meeting-topics | Bilingual meeting report | "Report Structure" | appended to the meeting page |
 | `topic-manager.month-section` | topic-manager | Monthly section of a topic | "Month Section Format" | Topics DB page body |
-| `inbox-responder.draft` | inbox-responder | Draft reply to a thread | "Draft structure" | Threads DB `Draft Response` |
 | `jira-management.bug` | jira-management | Bug ticket description | "Ticket template - bug tickets" | tracker ticket |
 | `jira-management.feature` | jira-management | Feature ticket description | "Ticket template - feature/enhancement" | tracker ticket |
 | `slack-collector.ticket` | slack-collector | Ticket from a Slack thread | "4.4 - Create the ticket" | tracker ticket |

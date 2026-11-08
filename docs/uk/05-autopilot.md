@@ -33,8 +33,7 @@
 | 07:05 щодня | **хмарна Routine `Acme daily Slack sync`** (замінила локальну `acme-daily-slack-sync`) | `slack-collector` за вчора і сьогодні з перекриттям, авто-класифікація, review pass по всіх non-Closed тредах. Причина переносу: локальний промпт кликав неіснуючий `acme-slack-collector` і збій не діагностувався з хмари. Кроки 2 (JSON) і 4 (Jira) свідомо пропущені в хмарному промпті: немає диска і немає локального Jira MCP |
 | ~09:15 щодня (06:15 UTC) | **хмарна Routine `Acme threads -> Jira tickets`**  | Черга (не часове вікно): бере треди з `Jira Sync` порожнім або `Error`, трирівнева перевірка дублів (журнал Notion → якір Slack-permalink у Jira description → смисловий пошук), максимум 10 тредів за прогін, старі треди у беклог на ручне підтвердження. Покриває те, що `slack-collector` Step 4 не може зробити в хмарі |
 | 09:01 Пн-Пт | `daily-work-report` | Щоденний робочий звіт українською (календар, мітинги, треди, Jira, Slack; вчора + план на сьогодні) → Reports DB + `~/work/Daily Reports/` |
-| 09:12 щодня | `daily-process-mail-0910` | `mac-mail-collector` → `inbox-responder` |
-| 09:32 щодня | `inbox-responder` | Драфти відповідей на нові треди (окремий запуск для тредів, що прийшли зі Slack) |
+| 09:12 щодня | `daily-process-mail-0910` | `mac-mail-collector` |
 | 11:08 Пн-Пт | `daily-team-prep` | Prep до внутрішнього синку 12:00 (скіл сам визначає за конфігом, чи сьогодні день синку) |
 | щодня 15:30 | `daily-current-state-distillation` | Інкрементальне оновлення сторінок Current State усіх активних проєктів (зараз Acme і Beta) за останні 2 дні |
 | щодня 15:30 | `deploy-analysis-daily` | Stage vs prod по репо з конфігу за 24 год, тільки локальні refs |
@@ -64,7 +63,7 @@
 
 ### Схема тижня
 
-- **Кожен ранок (Пн-Пт):** slack-sync 07:05 → work-report 09:01 → mail + inbox-responder 09:12 → inbox-responder 09:32 → team-prep 11:08 → мітинг 12:00 → 15:30 current-state + deploy-analysis; branch-review о 10/12/14/16/18.
+- **Кожен ранок (Пн-Пт):** slack-sync 07:05 → work-report 09:01 → mail 09:12 → team-prep 11:08 → мітинг 12:00 → 15:30 current-state + deploy-analysis; branch-review о 10/12/14/16/18.
 - **Понеділок:** topics 06:32 + weekly-overview 08:09 + planning-prep 16:09 → планінг 17:00.
 - **Вівторок:** status-prep 16:02 → статус 17:00.
 - **Четвер:** 1-1 prep 16:04 → 1-1 17:00; stability-scan 22:10.

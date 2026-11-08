@@ -41,8 +41,8 @@
 **Трекер:** `jira-management`, `jira-board-health` (гігієна борди),
 `velocity-report`.
 
-**Комунікації:** `slack-collector`, `inbox-responder` (чернетки відповідей),
-`thread-ticket-sync`, `notion-meeting-topics`, `topic-manager`.
+**Комунікації:** `slack-collector`,
+`thread-ticket-sync`, `notion-meeting-topics`, `topic-manager`, `resolve-item` (застосовує одне рішення до треду, його задачі, зустрічі й теми).
 
 **Ризики і стан:** `risk-register`, `stability-scan`, `sentry-assistant`,
 `deploy-analysis`, `project-lifecycle`.
@@ -57,7 +57,7 @@
 плагіна і прожени перші скіли руками.
 
 Статус: бета. Кожен випуск з 1.1.0 звірений наскрізь із шаблоном Notion і
-шаблоном конфігу (поточний: 1.10.0), але плагін ще ніхто, крім автора, не встановлював. Гострі кути
+шаблоном конфігу (поточний: 1.11.0), але плагін ще ніхто, крім автора, не встановлював. Гострі кути
 будуть, повідомляй про них.
 
 ## Чого тут свідомо немає

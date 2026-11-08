@@ -137,10 +137,9 @@ thread-ticket-sync, jira-management, jira-board-health, sentry-assistant) starts
 If the config file doesn't exist, tell the user: "Project config not found.
 Available projects: [list files in projects/]"
 
-Two documented exceptions to step 1: `mac-mail-collector` reads ALL active configs
-(it routes mail to projects by `email_routing`), and `inbox-responder` takes the
-project from the `Project` relation of each thread it processes. Both still read
-the config before writing anything.
+One documented exception to step 1: `mac-mail-collector` reads ALL active configs
+(it routes mail to projects by `email_routing`). It still reads the config before
+writing anything.
 
 ## Task tracker access and graceful degradation - MANDATORY
 

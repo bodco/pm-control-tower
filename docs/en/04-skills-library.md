@@ -94,7 +94,7 @@ The practical consequence for Slack, **resolved**: the Claude connector holds on
 | `project-lifecycle` | E | Modes: kickoff (config, Notion anchors, Charter, first decision, tech start, config registration), handover-in (KT with evidence, baseline, undocumented promises), health-check (8 RAG areas with evidence), team-onboarding/offboarding, closure / transition to support | on-demand + monthly health check (the 2nd) |
 | `client-satisfaction-tracker` | E | Client sentiment from Slack/Gmail/transcripts with cultural calibration (Culture Map, individual profiles, 4 signal levels, 6 cultural patterns) | 1st and 15th of the month |
 | `thread-ticket-sync` | E | Two-phase: threads without tickets in the client's Notion, then turning selected threads into tasks (individual / consolidated) | on-demand |
-| `inbox-responder` | E | Open threads without a draft (Need Follow-up, Awaiting Reply, AI Review) to a category, context (Sentry, logs, Jira, Topics), a reply draft in the thread's language, Inbox Review; never writes Status or the icon | daily after the mail run |
+| `resolve-item` | E | Applies the PM's decision about one thread, task or risk to everything around it: finds the related meeting, threads, tasks and decisions, shows a plan, and after approval writes a Decision, the task with the agreed date, the thread status (with `Manual Status At`) and one Topic that links the story. Never stores reply drafts in Notion, never touches Jira or the client board, never sends | on-demand: paste the "Ask Claude" text from the dashboard, then the decision |
 
 ### 5. Tracker and monitoring management
 

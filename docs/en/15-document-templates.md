@@ -59,7 +59,6 @@ The "Built-in template" column names a section of `plugin/skills/<skill>/SKILL.m
 |---|---|---|---|---|---|
 | `notion-meeting-topics` | Bilingual meeting report | `notion-meeting-topics` | "Report Structure" | appended to the end of the meeting page | EN + UA |
 | `topic-manager` | Monthly section of a topic | `topic-manager.month-section` | "Month Section Format" | Topics DB page body | UA |
-| `inbox-responder` | Draft reply to a thread | `inbox-responder.draft` | "Step 4", "Draft structure" | Threads DB field `Draft Response` + the Inbox Review page | language of the original |
 | `jira-management` | Bug ticket description | `jira-management.bug` | "Ticket template (description) - bug tickets" | tracker ticket | EN |
 | `jira-management` | Feature ticket description | `jira-management.feature` | "Ticket template - feature/enhancement" | tracker ticket | EN |
 | `slack-collector` | Ticket from a Slack thread | `slack-collector.ticket` | "4.4 - Create the ticket" | tracker ticket | EN |

@@ -159,7 +159,6 @@ export function createApi(config, env) {
     status: prop(pg, S.threads.status), types: prop(pg, S.threads.type) || [],
     category: prop(pg, S.threads.category),
     description: short(cleanDescription(prop(pg, S.threads.description)), 280),
-    hasDraft: Boolean(prop(pg, S.threads.draft)),
     lastReply: prop(pg, S.threads.lastReply), reportedAt: prop(pg, S.threads.reportedAt),
     emailLink: prop(pg, S.threads.emailLink), slackLink: prop(pg, S.threads.slackLink),
     jiraKey: prop(pg, S.threads.jiraKey),

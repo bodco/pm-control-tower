@@ -59,9 +59,9 @@ What deliberately stays human at every stage: the sandwich between the client, t
 | Project Charter | a page under the project page, from the config | `project-lifecycle` kickoff |
 | Pre-start Checklist | Phase 0 in `08`, K1 in `project-lifecycle` | `project-lifecycle` kickoff |
 | KT / Handover, Health Check, Team Onboarding, Closure | the `project-lifecycle` modes | the PM on request; health check monthly on schedule |
-| Change Request, Scope creep | `change-request`, the Extras Log under the project page | the PM, threads with Category `Scope Change` from `inbox-responder` |
+| Change Request, Scope creep | `change-request`, the Extras Log under the project page | the PM, threads the PM marks as a scope change |
 | Technical start | kickoff mode (K4) | `project-lifecycle` |
-| Senior practices | early warning signals and bus factor in `_standards.md` section 7; no-surprises in the reader rule | `risk-register`, `client-satisfaction-tracker`, `inbox-responder` |
+| Senior practices | early warning signals and bus factor in `_standards.md` section 7; no-surprises in the reader rule | `risk-register`, `client-satisfaction-tracker` |
 
 ## 5. What has been done
 ### Wave 1 (0.7.0): standards and schema

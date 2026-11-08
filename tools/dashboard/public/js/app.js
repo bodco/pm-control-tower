@@ -169,6 +169,7 @@ function onKey(e) {
   else if (k === 'e' && d.kind === 'task') { e.preventDefault(); d.primary?.run(); }
   else if (k === 'r' && (d.kind === 'thread' || d.kind === 'risk') && d.primary) { e.preventDefault(); d.primary.run(); }
   else if (k === 's' && d.snooze) { e.preventDefault(); d.snooze(); }
+  else if ((k === 'a' || k === 'A') && d.ask) { e.preventDefault(); d.ask(); }
   else if (k === 'o' && d.notionUrl) { e.preventDefault(); window.open(d.notionUrl, '_blank', 'noopener'); }
 }
 

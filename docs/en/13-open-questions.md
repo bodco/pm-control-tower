@@ -27,7 +27,7 @@ Prioritized during the optimization pass (`07`). An item that has sat through tw
 | T4 | `methodology`: sprint length and capacity source in `pm_profile`, `sprint-planning-prep` for Scrum projects (`03`) | pending |
 | T5 | Track calibration hours against hours saved for at least a month, so that the "a full working day per week" from `11` has the other half of the balance | pending |
 | T6 | An anonymization map (real name → pseudonym) as a private file outside the repository, so that anonymizing documents is not done from memory | pending |
-| T7 | A PM voice profile for `inbox-responder` and `client-report` drafts (tone, length, signature) as a PM Profile section | pending |
+| T7 | A PM voice profile for `client-report` drafts (tone, length, signature) as a PM Profile section | pending |
 | T8 | Setting fixVersion `vYYYY-MM` on Done tickets automatically on the 1st (manual today, `06` domain 3) | pending |
 | T9 | A regression checklist skill for a project without QA (`06` domain 7) | pending |
 | T10 | A risk → task link into the Tasks Tracker from `risk-register` (`06` domain 6) | pending |

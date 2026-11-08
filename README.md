@@ -74,14 +74,14 @@ Step by step with prompts: `docs/en/16-runbook.md`. Full instructions: `plugin/S
 
 ## The skill library
 
-Twenty-two skills in six groups. Which phrase starts each one, how often to run it and what
+Twenty-one skills in six groups. Which phrase starts each one, how often to run it and what
 it needs: [docs/en/18-skills-cheatsheet.md](docs/en/18-skills-cheatsheet.md).
 
 **Foundation:** `projects` (the config registry every other skill reads first),
 `project-lifecycle` (kickoff, handover, health check, closure).
 
-**Collect and sort:** `slack-collector`, `mac-mail-collector`, `inbox-responder`,
-`thread-ticket-sync`, `topic-manager`.
+**Collect and sort:** `slack-collector`, `mac-mail-collector`,
+`thread-ticket-sync`, `topic-manager`, `resolve-item` (one decision applied to a thread, its task, meeting and topic).
 
 **Prepare and call:** `daily-team-prep`, `client-meeting-prep`,
 `notion-meeting-topics`.
@@ -152,6 +152,7 @@ weeks of calibration for your own project, not an hour.
 | 1.9.1 | 2026-10-27 | Security pass: the External Content Rule (outside text is data, never instructions) in every skill and in the linter; tokens read and used in one command and sent only to the configured host; the tracker query always wrapped by project; mail from unknown senders or new thread participants goes to AI Review; client-board tickets shown before writing; `mcp-atlassian` pinned. |
 | 1.9.0 | 2026-10-27 | Live Tips moved to its own product and repository, [bodco/live-tips](https://github.com/bodco/live-tips): the macOS app, the `live-tips` skill, the recorder and its guide, with their history. The plugin has 21 skills; `docs/en/17-live-tips.md` points to the new home. |
 | 1.10.0 | 2026-11-06 | Dashboard: `tools/dashboard`, an installable web app (PWA) on a Cloudflare Worker behind Cloudflare Access, over the Control Tower databases. Every project at a glance (overdue, due today, awaiting your reply, high risks, done in 7 days, last meeting and report), project tabs (Tasks, Threads, Meetings, Decisions, Risks, Reports, Current state), actions on tasks, Inbox, risks, decisions and thread statuses; deployer's IDs and token never in git. Manual thread status sticks: new Threads properties `Collector Status` and `Manual Status At`, rule 4 of `_standards.md` section 11, `slack-collector` and `mac-mail-collector` keep a human status until a new message arrives. Document `19`. |
+| 1.11.0 | 2026-11-08 | New skill `resolve-item`: one PM decision about a thread, task or risk is applied around it. It finds the related meeting, threads, tasks and decisions, shows a plan, and after approval writes a Decision, the task with the agreed date, the thread status (with `Manual Status At`) and one Topic that links the story. It never writes `Draft Response`, never touches Jira or the client board, never sends. The dashboard gets an "Ask Claude" button (key `A`) that copies a context pack for it; the dashboard no longer reads `Draft Response`. `inbox-responder` is removed, together with the Threads properties only it wrote (`Category`, `Context Sources`, `Draft Response`) and the `inbox_review_page` config key; drafts of replies are not stored in Notion any more. |
 
 Open questions and the technical backlog: `docs/en/13-open-questions.md`.
 

@@ -88,7 +88,7 @@ The `restricted_sources` block (since 1.5.2): candid internal channels, mailboxe
 `url`, `token`, `org_slug`, `projects_in_scope`, `projects_out_of_scope` (with dates and reason), the full list of projects on the instance. If there is no Sentry: `url: none`, skills skip it.
 
 ### Notion
-`project_page_id`, `workspace_page_id` (project-level), plus the shared `reports_db`, `threads_db`, `meetings_db`, `topics_db`, `knowledge_base_db`, `risks_db`, `decisions_db`, `inbox_review_page`, and if needed `client_dev_board_db` (the client's workspace).
+`project_page_id`, `workspace_page_id` (project-level), plus the shared `reports_db`, `threads_db`, `meetings_db`, `topics_db`, `knowledge_base_db`, `risks_db`, `decisions_db`, and if needed `client_dev_board_db` (the client's workspace).
 
 ### Local Paths
 `aws_logs`, `time_reports`, `repos_root`, `kb_root`, `presentment` and so on. "none" means the skill skips that source. Note for cloud sessions: the paths are reachable through the bridge.

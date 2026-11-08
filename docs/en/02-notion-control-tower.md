@@ -53,9 +53,6 @@ Inbound communications from every channel. One page = one thread.
 | `Status` | select | `Closed`, `Need Follow-up`, `Awaiting Reply`, `Replied`, `Spectator Mode`, `AI Review`. Meanings, rules and the matching icons live in one place: `projects/_standards.md` section 11. Written by the collector, or by a human (by hand or from the dashboard) |
 | `Collector Status` | text | the status the collector last wrote; a `Status` that differs from it was changed by a human. Only the collector writes it |
 | `Manual Status At` | date | when a human set the status; the collectors keep that status until a newer message arrives, then recompute and clear the date |
-| `Category` | select | set by inbox-responder: Error/Bug, Data Question, Scope Change, Blocker, Status Update, FYI |
-| `Context Sources` | multi_select | Sentry, AWS Logs, Jira Board, Topics DB, Knowledge Base, LLM Only (what inbox-responder used) |
-| `Draft Response` | text | a draft reply in the language of the thread |
 | `Description` | text | a short preview; the full text only in the page body |
 | `Email Link`, `Slack Link` | url | links to the source |
 | `Reported at` | date | the first message |
@@ -68,7 +65,7 @@ Inbound communications from every channel. One page = one thread.
 | Page icon | by status | set by the status, not by the last author (`projects/_standards.md` section 11; for Email 📤 when every message is outgoing with no reply). This is the page icon, not a property |
 | Page body | blocks | the full thread text in 2000-character blocks |
 
-The status and icon table lives only in `projects/_standards.md` section 11; skills and docs point to it. The collectors (`slack-collector`, `mac-mail-collector`) recompute `Status` and the icon on every pass, even when `Last Reply Date` did not move; a status a human set (in Notion or from the dashboard, `tools/dashboard`) is kept until the thread gets a message newer than `Manual Status At` (rule 4 of section 11); without that mark no status is immutable. The `slack-collector` review pass (Step 3B) re-reads every non-Closed Slack thread of the project daily, with no date window. `inbox-responder` never writes the status or the icon.
+The status and icon table lives only in `projects/_standards.md` section 11; skills and docs point to it. The collectors (`slack-collector`, `mac-mail-collector`) recompute `Status` and the icon on every pass, even when `Last Reply Date` did not move; a status a human set (in Notion or from the dashboard, `tools/dashboard`) is kept until the thread gets a message newer than `Manual Status At` (rule 4 of section 11); without that mark no status is immutable. The `slack-collector` review pass (Step 3B) re-reads every non-Closed Slack thread of the project daily, with no date window.
 
 ### 💬 Meetings
 Written by Notion AI Meeting Notes (transcript + summary + action items). Then `notion-meeting-topics` appends a bilingual report to the same page.

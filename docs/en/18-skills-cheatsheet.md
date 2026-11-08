@@ -21,9 +21,9 @@ template duplicated into your workspace, and one project config file `projects/<
    one that matches. The phrases below are examples, not passwords.
 2. **Name the project.** Skills read the project config first. Without a project name, a
    ticket key or a channel from a config, the skill asks which project you mean, even when
-   you have only one: mixing two projects is the worst failure of the system. Three skills
-   work across all projects on purpose: `mac-mail-collector` and `inbox-responder` (each
-   thread is routed to its own project) and `weekly-overview` when you ask for all
+   you have only one: mixing two projects is the worst failure of the system. Two skills
+   work across all projects on purpose: `mac-mail-collector` (each thread is routed
+   to its own project) and `weekly-overview` when you ask for all
    projects.
 3. **Add the period or the link when it matters:** "for last week", "since Monday", the
    Notion link of a meeting.
@@ -64,11 +64,11 @@ for the Orbit team sync" an hour before the sync.
 |---|---|---|---|
 | Morning | get yesterday's Slack into Notion | `slack-collector` | "collect Slack for Orbit since yesterday" |
 | Morning | get my mail into Notion | `mac-mail-collector` | "process mail" |
-| Morning | see what needs my reply, with drafts | `inbox-responder` | "draft replies for Orbit" |
 | Before a meeting | be ready for the standup or internal sync | `daily-team-prep` | "prep me for the Orbit standup" |
 | Before a meeting | be ready for a client call | `client-meeting-prep` | "client prep for the Orbit planning" |
 | After a meeting | turn the notes into decisions and action items | `notion-meeting-topics` | "meeting <Notion link>" |
 | After a meeting | log "can you just add one more thing" | `change-request` | "the client asks to add a CSV export on Orbit" |
+| After a meeting | settle a thread or task with what was decided | `resolve-item` | paste the dashboard "Ask Claude" text, then "postponed, the client agreed to the 2-4 day estimate" |
 | Weekly | see last week across all projects | `weekly-overview` | "weekly overview for all projects" |
 | Weekly | check the board before the review | `jira-board-health` | "board health for Orbit" |
 | Weekly | know what can go wrong | `risk-register` | "update the risk register for Orbit" |
@@ -100,9 +100,9 @@ for the Orbit team sync" an hour before the sync.
 |---|---|---|---|---|
 | `slack-collector` | Project channels in the Threads DB, one page per thread, no duplicates, with a status that says whose turn it is | "collect Slack for Orbit for the week" | daily, early morning | Slack (Claude connector, your own local MCP server, or Chrome), Notion |
 | `mac-mail-collector` | New incoming and sent mail, routed to projects by the configs, as full threads in the Threads DB | "process mail" | daily, morning | a Mac with Mail.app and the export agent, see [10a. Mail collector setup](10a-mail-collector-setup.md) |
-| `inbox-responder` | A reply draft in the thread's language for every thread in Awaiting Reply, Need Follow-up or AI Review that has none, with context. Never changes the status | "draft replies for Orbit" | daily, after the mail run | Threads DB; tracker and Sentry optional |
 | `thread-ticket-sync` | Which threads have no ticket on the client's board, then the ones you pick become tasks there | "which Orbit threads have no tickets for September", then "create tickets for Orbit: 2, 4" | on demand | the client board in the config, Chrome in Cowork |
 | `topic-manager` | Long-running subjects from meetings and threads in the Topics DB, each linked to its sources | "update topics for Orbit for the week" | weekly | Meetings and Threads DBs |
+| `resolve-item` | One decision applied everywhere: a Decision record, the task with the agreed date, the thread status and one Topic that links the thread, the meeting and the task. Shows a plan first and writes after your OK. Never stores reply drafts in Notion, never touches Jira, never sends | paste the "Ask Claude" text from the dashboard, then "postponed, estimate agreed with the client" | on demand | Threads, Meetings, Tasks Tracker, Decisions and Topics DBs |
 
 ### 3. Prepare and call
 

@@ -48,7 +48,7 @@
  Gmail ─────┼─▶ Threads DB ──┐                                                             
  Mail.app ──┘ (буфер на диску ┤                                                            
                → Threads)    │   prep-скіли ─────────▶ Reports DB ──┐                     
- Календар ─┐                 ├─▶ inbox-responder ────▶ Threads (draft)                    
+ Календар ─┐                 ├─▶ resolve-item ───────▶ Decisions, Topics                    
  Meetings ─┼─▶ Meetings DB ──┤   topic-manager ──────▶ Topics DB     ├─▶ CONTROL TOWER ─▶ Людина:
  (Notion AI)                 │   risk-register ──────▶ Risks DB      │   Today's Reports    відправити,
  Jira ─────────────────────▶ ┤   weekly/monthly ─────▶ Reports DB    │   Awaiting Reply     вирішити,
@@ -122,7 +122,7 @@
 
 | База | Хто пише | Хто читає | Роль |
 |---|---|---|---|
-| Threads | колектори (Slack, Gmail, Mail.app) | inbox-responder, topic-manager, weekly-overview, client-satisfaction, Current State | вхідні комунікації з класифікацією статусу |
+| Threads | колектори (Slack, Gmail, Mail.app) | topic-manager, weekly-overview, client-satisfaction, Current State | вхідні комунікації з класифікацією статусу |
 | Meetings | Notion AI (транскрипт + summary) | notion-meeting-topics, daily-team-prep, topic-manager, risk-register, Monthly digest | пам'ять про зустрічі |
 | Topics | topic-manager (on-demand і тижневий режим), Gemini | всі prep- і звітні скіли, Gemini-бріфи | наскрізні теми, що тягнуться тижнями |
 | Decisions | людина, monthly digest, Gemini (notion-project-brief) | Gemini QA, Claude для перевірки констрейнтів | журнал рішень, джерело constraints |
@@ -167,7 +167,7 @@ Cowork дає Claude: файлові інструменти, bash-пісочни
 ### Приклад А. Slack-повідомлення клієнта стає тікетом
 1. 07:05 `acme-daily-slack-sync` викликає `slack-collector` за вчора: нові треди у Threads DB зі статусом та іконкою за таблицею з `projects/_standards.md` розділ 11 (🔴 = відкрита дія на нашому боці).
 2. Той же запуск робить review pass по всіх non-Closed Slack-тредах проєкту без вікна дат (нові коментарі, перерахунок статусу й іконки) і gap-аналіз "треди без тікетів".
-3. 09:12 `daily-process-mail-0910` збирає пошту, потім `inbox-responder` бере відкриті треди без драфту (Need Follow-up, Awaiting Reply, AI Review), класифікує, підтягує контекст (Sentry, логи, Jira, Topics), пише драфт відповіді у тред і на сторінку Inbox Review.
+3. 09:12 `daily-process-mail-0910` збирає пошту в Threads DB; колектор виставляє статус і іконку кожного треду.
 4. Вранці ПМ відкриває Control Tower: відкриті треди з драфтами, вирішує, що відправити, що перетворити на тікет (`jira-management` або `thread-ticket-sync`).
 
 ### Приклад Б. Клієнтський мітинг у вівторок

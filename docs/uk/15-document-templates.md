@@ -59,7 +59,6 @@
 |---|---|---|---|---|---|
 | `notion-meeting-topics` | Двомовний звіт з мітингу | `notion-meeting-topics` | "Report Structure" | дописується в кінець сторінки мітингу | EN + UA |
 | `topic-manager` | Місячна секція теми | `topic-manager.month-section` | "Month Section Format" | тіло сторінки в Topics DB | UA |
-| `inbox-responder` | Драфт відповіді на тред | `inbox-responder.draft` | "Step 4", "Draft structure" | Threads DB, поле `Draft Response` + сторінка Inbox Review | мова оригіналу |
 | `jira-management` | Опис баг-тікета | `jira-management.bug` | "Ticket template (description) - bug tickets" | тікет у трекері | EN |
 | `jira-management` | Опис фіча-тікета | `jira-management.feature` | "Ticket template - feature/enhancement" | тікет у трекері | EN |
 | `slack-collector` | Тікет зі Slack-треду | `slack-collector.ticket` | "4.4 - Create the ticket" | тікет у трекері | EN |

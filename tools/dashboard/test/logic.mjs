@@ -7,6 +7,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import * as L from '../public/js/logic.js';
 import { setDateContext, fmtDue, fmtAge, fmtIn, fmtWhen, cleanTitle, hasIso } from '../public/js/dates.js';
 import { I18N, setLang, tn } from '../public/js/i18n.js';
+import { packFor, relatedFor } from '../public/js/askclaude.js';
 
 let passed = 0;
 function test(name, fn) {
@@ -143,6 +144,43 @@ test('ISO dates are cut from titles', () => {
   assert.equal(cleanTitle('Sync (2026-11-04 10:00:00Z) notes'), 'Sync notes');
   assert.equal(cleanTitle('Retro - 2026-11-01'), 'Retro');
   assert.equal(cleanTitle('2026-11-01'), '2026-11-01', 'a title that is only a date is kept');
+});
+test('Ask Claude pack: fixed project, related candidates, nothing from other projects', () => {
+  const thread = { id: 'th1', url: 'https://notion.example/th1', project: 'orbit', title: 'Export flag for free card issue ORB-12', status: 'Need Follow-up', lastReply: ts(-5), reportedAt: ts(-6), description: 'Estimate for the export flag requested', slackLink: 'https://slack.example/p1', jiraKey: 'ORB-12' };
+  const octx = { cfg, hidden: [], ov: {
+    threads: [thread, { id: 'th2', project: 'orbit', title: 'Unrelated invoice question', status: 'Awaiting Reply', lastReply: ts(-2) }],
+    tasks: [{ id: 'tk1', url: 'https://notion.example/tk1', project: 'orbit', title: 'Estimate export flag', status: 'To Do', due: day(3), jira: 'ORB-12' },
+      { id: 'tk2', url: 'https://notion.example/tk2', project: 'playbook', title: 'Export flag estimate', status: 'To Do' }],
+    meetings: [
+      { id: 'm1', url: 'https://notion.example/m1', project: 'orbit', title: 'Orbit Client Sync', date: ts(-4) },
+      { id: 'm2', url: 'https://notion.example/m2', project: 'orbit', title: 'Old sync', date: ts(-60) },
+      { id: 'm3', url: 'https://notion.example/m3', project: 'playbook', title: 'Playbook sync', date: ts(-4) }],
+    decisions: [{ id: 'd1', url: 'https://notion.example/d1', project: 'orbit', title: 'Export flag scope agreed', date: day(-20), context: 'export flag for free card issue' }],
+  } };
+  const rel = relatedFor(octx, 'thread', thread);
+  assert.deepEqual(rel.meetings.map((m) => m.id), ['m1'], 'only the same project, inside 21 days');
+  assert.deepEqual(rel.tasks.map((x) => x.id), ['tk1']);
+  assert.deepEqual(rel.decisions.map((x) => x.id), ['d1']);
+  assert.deepEqual(rel.threads.map((x) => x.id), [], 'unrelated thread is not a candidate');
+  const text = packFor(octx, { kind: 'thread', x: thread });
+  assert.ok(text.startsWith('[CT-RESOLVE v1]'));
+  assert.match(text, /Project: Orbit SaaS Launch \(slug: orbit\)/);
+  assert.match(text, /Notion page id: th1/);
+  assert.match(text, /Jira key: ORB-12/);
+  assert.match(text, /meeting \| Orbit Client Sync/);
+  assert.ok(!text.includes('Playbook') && !text.includes('Old sync'), 'no other project, no old meeting');
+  assert.ok(text.trimEnd().endsWith('My decision:'));
+  assert.ok(!text.includes('\u2014'), 'em dash found');
+});
+test('Ask Claude pack: a task and a risk, and an empty candidate list', () => {
+  const octx = { cfg, hidden: [], ov: { threads: [], tasks: [], meetings: [], decisions: [] } };
+  const task = { id: 'tk9', url: 'https://notion.example/tk9', project: 'orbit', title: 'Confirm launch checklist', status: 'To Do', priority: 'High', due: day(1) };
+  const text = packFor(octx, { kind: 'task', x: task });
+  assert.match(text, /Item: task/);
+  assert.match(text, new RegExp(`Due: ${day(1)}`));
+  assert.match(text, /- none found/);
+  const risk = { id: 'r9', url: 'https://notion.example/r9', project: 'orbit', title: 'Vendor delay', status: 'Open', severity: 'High', owner: 'PM', summary: 'Vendor may slip' };
+  assert.match(packFor(octx, { kind: 'risk', x: risk }), /severity: High/);
 });
 test('Ukrainian plurals', () => {
   setLang('uk');

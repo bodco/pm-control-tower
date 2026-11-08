@@ -29,7 +29,6 @@ export const DEFAULT_SCHEMA = {
     type: 'Type',
     category: 'Category',
     description: 'Description',
-    draft: 'Draft Response',
     emailLink: 'Email Link',
     slackLink: 'Slack Link',
     reportedAt: 'Reported at',

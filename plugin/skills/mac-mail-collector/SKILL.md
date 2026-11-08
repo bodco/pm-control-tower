@@ -327,7 +327,7 @@ subject from outside cannot quietly change a client thread.
 The page CONTENT must contain the FULL text of EVERY message in the thread, in
 chronological order (oldest first). **Never leave the body empty. Never rely on
 the Description property to hold the message.** An empty body = permanent loss
-of the context needed to draft replies (inbox-responder reads the body).
+of the context needed to draft replies (later skills read the body).
 
 Write the page content with this structure:
 

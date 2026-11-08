@@ -3,7 +3,7 @@
 [Українською](README.uk.md)
 
 A library of PM automation, put together over a year on a demanding fintech
-project and anonymized so it can be handed over. Twenty-two skills, with not a
+project and anonymized so it can be handed over. Twenty-one skills, with not a
 single fact about any specific project inside them.
 
 ## The principle everything rests on
@@ -41,8 +41,8 @@ period), `change-request` (sorting client asks into scope and hours).
 **Tracker:** `jira-management`, `jira-board-health` (board hygiene),
 `velocity-report`.
 
-**Communications:** `slack-collector`, `inbox-responder` (draft replies),
-`thread-ticket-sync`, `notion-meeting-topics`, `topic-manager`.
+**Communications:** `slack-collector`,
+`thread-ticket-sync`, `notion-meeting-topics`, `topic-manager`, `resolve-item` (applies one decision to a thread, its task, meeting and topic).
 
 **Risks and status:** `risk-register`, `stability-scan`, `sentry-assistant`,
 `deploy-analysis`, `project-lifecycle`.
@@ -57,7 +57,7 @@ plugin customization flow fills in the `~~` placeholders), add the config for
 your own project inside the plugin and run the first skills by hand.
 
 Status: beta. Every release since 1.1.0 is reviewed end to end against the Notion
-template and the config template (current: 1.10.0), but the plugin has not yet been
+template and the config template (current: 1.11.0), but the plugin has not yet been
 installed by anyone except the author. Expect rough edges and report them.
 
 ## What is deliberately missing

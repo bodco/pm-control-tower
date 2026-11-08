@@ -1,6 +1,6 @@
 ---
 name: change-request
-description: "Scope-change engine for any registered project: sorts every client ask into bucket A (trivial, log only), B (real, hours) or C (looks small but touches data, money, security or public contracts), keeps a per-project Extras Log including free work, drafts a client-facing Change Request in English, records the client's decision in the Decisions DB, and watches the goodwill budget. Follows projects/_standards.md and the PM Profile. Never defaults to a project, never sends anything. Use when the user mentions \"change request\", \"CR\", \"зміна скоупу\", \"scope change\", \"клієнт просить додати\", \"хотєлка\", \"дрібна доробка\", \"extras log\", \"що ми зробили понад скоуп\", \"goodwill\", \"CR approved\", \"клієнт погодив CR\", or when inbox-responder or a scheduled run hands over threads with Category Scope Change."
+description: "Scope-change engine for any registered project: sorts every client ask into bucket A (trivial, log only), B (real, hours) or C (looks small but touches data, money, security or public contracts), keeps a per-project Extras Log including free work, drafts a client-facing Change Request in English, records the client's decision in the Decisions DB, and watches the goodwill budget. Follows projects/_standards.md and the PM Profile. Never defaults to a project, never sends anything. Use when the user mentions \"change request\", \"CR\", \"зміна скоупу\", \"scope change\", \"клієнт просить додати\", \"хотєлка\", \"дрібна доробка\", \"extras log\", \"що ми зробили понад скоуп\", \"goodwill\", \"CR approved\", \"клієнт погодив CR\", or when a scheduled run hands over threads about a scope change."
 ---
 
 # Change Request
@@ -53,10 +53,10 @@ need it into a Change Request the PM can send.
 ## Step 1 - Collect the asks
 
 Inputs, any of:
-- a Threads DB page (the usual path: `inbox-responder` sets Category `Scope Change`);
+- a Threads DB page (the usual path: a thread the PM points at, or one a scheduled run hands over);
 - a meeting page (Meetings DB) or a quote pasted by the PM;
 - **batch mode** ("пройдись по scope change за тиждень"): Threads for the project in the
-  period with Category `Scope Change`, plus meeting pages in the period searched for
+  period that look like scope changes, plus meeting pages in the period searched for
   "can we add", "what if", "would it be possible", "а якщо", "додати", "ще одне". Skip
   asks already present in the Extras Log (match by source link, then by meaning).
 

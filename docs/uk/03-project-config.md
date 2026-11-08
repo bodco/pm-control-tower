@@ -88,7 +88,7 @@ task_tracker:
 `url`, `token`, `org_slug`, `projects_in_scope`, `projects_out_of_scope` (з датами і причиною), повний список проєктів на інстансі. Якщо Sentry немає: `url: none`, скіли пропускають.
 
 ### Notion
-`project_page_id`, `workspace_page_id` (проєктні), плюс спільні `reports_db`, `threads_db`, `meetings_db`, `topics_db`, `knowledge_base_db`, `risks_db`, `decisions_db`, `inbox_review_page`, за потреби `client_dev_board_db` (клієнтський воркспейс).
+`project_page_id`, `workspace_page_id` (проєктні), плюс спільні `reports_db`, `threads_db`, `meetings_db`, `topics_db`, `knowledge_base_db`, `risks_db`, `decisions_db`, за потреби `client_dev_board_db` (клієнтський воркспейс).
 
 ### Local Paths
 `aws_logs`, `time_reports`, `repos_root`, `kb_root`, `presentment` тощо. "none" = скіл пропускає джерело. Примітка для хмарних сесій: шляхи доступні через bridge.

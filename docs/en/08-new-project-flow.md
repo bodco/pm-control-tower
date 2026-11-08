@@ -105,7 +105,7 @@ Create scheduled tasks with IDs taken from the config (Meetings Schedule → ID 
 | 2 | `daily-team-prep` (shared, if there is one internal sync) or `<slug>-team-prep` | working days, 55 min before the sync | daily-team-prep for <Project> |
 | 3 | prep tasks for each client meeting | 55 min before each one | client-meeting-prep type <X> for <Project> |
 | 4 | `weekly-overview` (shared across all projects) | Mon 08:0x | already exists, picks up the new project automatically |
-| 5 | `daily-process-mail` (shared) | daily | mac-mail-collector + inbox-responder; add the project to the prompt |
+| 5 | `daily-process-mail` (shared) | daily | mac-mail-collector; add the project to the prompt |
 
 The second wave (week 2), if there is engineering scope: `stability-scan` (once a week in the evening), `deploy-analysis-daily`, `friday-review-prep` with board health, `<slug>-branch-review` if needed. The third wave (month 1): `risk-register` before the review, `client-satisfaction` on the 1st/15th, `monthly-velocity`.
 

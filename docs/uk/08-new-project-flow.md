@@ -105,7 +105,7 @@
 | 2 | `daily-team-prep` (спільний, якщо один внутрішній синк) або `<slug>-team-prep` | робочі дні за 55 хв до синку | daily-team-prep для <Project> |
 | 3 | prep-задачі під кожен клієнтський мітинг | за 55 хв до кожного | client-meeting-prep тип <X> для <Project> |
 | 4 | `weekly-overview` (спільний для всіх проєктів) | Пн 08:0x | вже існує, підхоплює новий проєкт автоматично |
-| 5 | `daily-process-mail` (спільний) | щодня | mac-mail-collector + inbox-responder; додати проєкт у промпт |
+| 5 | `daily-process-mail` (спільний) | щодня | mac-mail-collector; додати проєкт у промпт |
 
 Друга хвиля (тиждень 2), якщо є інженерний скоуп: `stability-scan` (раз на тиждень увечері), `deploy-analysis-daily`, `friday-review-prep` з board health, `<slug>-branch-review` за потреби. Третя хвиля (місяць 1): `risk-register` перед review, `client-satisfaction` 1-ше/15-те, `monthly-velocity`.
 

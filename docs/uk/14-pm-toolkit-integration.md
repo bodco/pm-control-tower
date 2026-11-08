@@ -59,9 +59,9 @@
 | Project Charter | сторінка під сторінкою проєкту, з конфігу | `project-lifecycle` kickoff |
 | Pre-start Checklist | Phase 0 у `08`, K1 у `project-lifecycle` | `project-lifecycle` kickoff |
 | KT / Handover, Health Check, Team Onboarding, Закриття | режими `project-lifecycle` | ПМ за запитом; health check щомісяця за розкладом |
-| Change Request, Scope creep | `change-request`, Extras Log під сторінкою проєкту | ПМ, треди з Category `Scope Change` від `inbox-responder` |
+| Change Request, Scope creep | `change-request`, Extras Log під сторінкою проєкту | ПМ, треди, які ПМ позначив як зміну скоупу |
 | Технічний старт | режим kickoff (K4) | `project-lifecycle` |
-| Senior-практики | early warning signals і bus factor у `_standards.md` розділ 7; no-surprises у правилі читача | `risk-register`, `client-satisfaction-tracker`, `inbox-responder` |
+| Senior-практики | early warning signals і bus factor у `_standards.md` розділ 7; no-surprises у правилі читача | `risk-register`, `client-satisfaction-tracker` |
 
 ## 5. Що зроблено
 ### Хвиля 1 (0.7.0): стандарти і схема

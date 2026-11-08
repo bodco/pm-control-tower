@@ -155,7 +155,6 @@ restricted_sources: []
 - **project_page_id**: {UUID of the project page in the Projects DB}
 - **workspace_page_id**: {UUID of the workspace page in the Workspaces DB}
 - **current_state_page**: {UUID of the Current State page under the project page, or none}
-- **inbox_review_page**: {UUID of the Inbox Review page under the project page, or none}   (inbox-responder appends its daily section here)
 - **reports_db**: collection://~~notion-reports-db
 - **threads_db**: collection://~~notion-threads-db
 - **meetings_db**: collection://~~notion-meetings-db
@@ -165,8 +164,8 @@ restricted_sources: []
 - **decisions_db**: collection://~~notion-decisions-db
 - **tasks_tracker_db**: collection://~~notion-tasks-tracker-db
 
-(All databases are shared across projects; only project_page_id, workspace_page_id,
-current_state_page and inbox_review_page are per project. Projects are separated by the
+(All databases are shared across projects; only project_page_id, workspace_page_id
+and current_state_page are per project. Projects are separated by the
 relation values, so tagging is what keeps them apart.)
 
 ### Notion relation property names (unified 2026-09-08)

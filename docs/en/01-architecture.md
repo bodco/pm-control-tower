@@ -48,7 +48,7 @@ The layers above are a static map of components. A new PM finds it easier to und
  Gmail ─────┼─▶ Threads DB ──┐
  Mail.app ──┘ (disk buffer   ┤
                → Threads)    │   prep skills ────────▶ Reports DB ──┐
- Calendar ──┐                ├─▶ inbox-responder ────▶ Threads (draft)
+ Calendar ──┐                ├─▶ resolve-item ───────▶ Decisions, Topics
  Meetings ──┼─▶ Meetings DB ─┤   topic-manager ──────▶ Topics DB     ├─▶ CONTROL TOWER ─▶ Human:
  (Notion AI)                 │   risk-register ──────▶ Risks DB      │   Today's Reports    send,
  Jira ─────────────────────▶ ┤   weekly/monthly ─────▶ Reports DB    │   Awaiting Reply     decide,
@@ -122,7 +122,7 @@ The roles of the databases in the data flow:
 
 | Database | Who writes | Who reads | Role |
 |---|---|---|---|
-| Threads | collectors (Slack, Gmail, Mail.app) | inbox-responder, topic-manager, weekly-overview, client-satisfaction, Current State | incoming communications with status classification |
+| Threads | collectors (Slack, Gmail, Mail.app) | topic-manager, weekly-overview, client-satisfaction, Current State | incoming communications with status classification |
 | Meetings | Notion AI (transcript + summary) | notion-meeting-topics, daily-team-prep, topic-manager, risk-register, Monthly digest | the memory of meetings |
 | Topics | topic-manager (on-demand and weekly mode), Gemini | all prep and reporting skills, Gemini briefs | cross-cutting topics that run for weeks |
 | Decisions | the human, monthly digest, Gemini (notion-project-brief) | Gemini QA, Claude when checking constraints | the decision log, the source of constraints |
@@ -167,7 +167,7 @@ Needed when Notion accumulates a history that Claude cannot re-read in a single 
 ### Example A. A client's Slack message becomes a ticket
 1. 07:05 `acme-daily-slack-sync` invokes `slack-collector` for yesterday: new threads in the Threads DB with a status and an icon from the table in `projects/_standards.md` section 11 (🔴 = an open action on our side).
 2. The same run does a review pass over every non-Closed Slack thread of the project, with no date window (new comments, status and icon recomputed), and a gap analysis of "threads without tickets".
-3. 09:12 `daily-process-mail-0910` collects the mail, then `inbox-responder` takes the open threads without a draft (Need Follow-up, Awaiting Reply, AI Review), classifies them, pulls in context (Sentry, logs, Jira, Topics), and writes a draft reply into the thread and onto the Inbox Review page.
+3. 09:12 `daily-process-mail-0910` collects the mail into the Threads DB; the collector sets each thread's status and icon.
 4. In the morning the PM opens the Control Tower: open threads with drafts, and decides what to send and what to turn into a ticket (`jira-management` or `thread-ticket-sync`).
 
 ### Example B. A client meeting on Tuesday
