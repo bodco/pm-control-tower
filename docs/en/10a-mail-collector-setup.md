@@ -46,7 +46,8 @@ Key decisions worth keeping when you rewrite it for yourself:
 
 - **Walk only `INBOX`.** Otherwise archives and spam pour into the buffer by the thousands of files.
 - **A timestamp per mailbox** in `~/work/Mail/.last_scan_timestamps.json`.
-- **The timestamp moves forward only if ALL messages in the mailbox were processed without errors.** This is the core idea: on a partial failure the next run re-reads the same range and skips the already saved files based on the file existing. That way there are no holes in what was collected.
+- **The timestamp moves forward only if ALL messages in the mailbox were processed without errors.** This is the core idea: on a partial failure the next run re-reads the same range and skips the already saved files based on the file existing. That way there are no holes in what was collected. But cap it: if the mailbox has no timestamp yet, or it has been stuck for more than 3 days, advance it anyway and keep the failures in the log. Otherwise one message Mail.app cannot read keeps the mailbox on a full rescan forever.
+- **Let Mail.app filter the window.** Read only `every message of mbox whose date received > cutoff`, where the cutoff is the mailbox timestamp minus a 1-day overlap. Never walk every message of the INBOX and never compare dates per message in a `do shell script`: on mailboxes with thousands of messages one run takes longer than the 15-minute interval, so the collector never stops and drains the battery. The overlap keeps the gap safety, because already saved files are skipped.
 - **A retry per message** up to 3 times, and only then the error counter.
 - **Sanitizing the account name** for the folder name (spaces, Cyrillic, slashes).
 - **The "file already exists" check looks in `incoming/`, `processed/` and `backlog/`**, not only in `incoming/`. Then the skill can move files between folders freely and the export never duplicates them.
@@ -113,6 +114,8 @@ BUFFER_ROOT="$HOME/work/Mail"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_FILE="$BUFFER_ROOT/.collector.log"
 mkdir -p "$BUFFER_ROOT"
+# keep the log small: one rotated copy of 10 MB
+[ -f "$LOG_FILE" ] && [ "$(stat -f %z "$LOG_FILE")" -gt 10485760 ] && mv -f "$LOG_FILE" "$LOG_FILE.1"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"; }
 
 # Mail.app must be running: AppleScript does not launch it on its own

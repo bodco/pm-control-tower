@@ -42,3 +42,6 @@ __pycache__/
 .metrics/
 target/
 .coverage
+
+# Pacenote search index (machine-local)
+.livetips-index/
