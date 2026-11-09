@@ -30,7 +30,7 @@ The 2.1 layout is a "calm dashboard": one sentence per page, quiet numbers, at m
 
 **Risks** use two optional date properties, `Trigger Date` and `Last Reviewed`. With them a risk shows "in 2d", "not reviewed 15d" after 14 days, and has a Reviewed action. Without them these parts are hidden and risks sort by severity.
 
-**Gestures and keys.** Phone: swipe right is the main action (task Done, your-turn thread Replied, risk Reviewed); swipe left snoozes a task to tomorrow (a long swipe opens the date choice); tap opens the details sheet with every action as a button; long press opens the status menu; pull down to refresh. Laptop: actions appear on hover or focus; J and K move, Enter opens, E done, R replied, S snooze, N add, / filter, ⌘K search and jump, ? all keys. Every change shows Undo for 6 seconds and is written to Notion when the toast ends. Offline, changes wait in a queue (a clock mark on the row) and sync when the connection returns; if the record changed in Notion meanwhile, the change is dropped with "Changed in Notion, action not applied".
+**Gestures and keys.** Phone: swipe right is the main action (task Done, your-turn thread Replied, risk Reviewed); swipe left snoozes a task to tomorrow (a long swipe opens the date choice); tap opens the details sheet: the record's full text and page content (in a box that scrolls when it is long) and every action as a button; long press opens the status menu; pull down to refresh. Laptop: actions appear on hover or focus; J and K move, Enter opens, E done, R replied, S snooze, N add, / filter, ⌘K search and jump, ? all keys. Every change shows Undo for 6 seconds and is written to Notion when the toast ends. Offline, changes wait in a queue (a clock mark on the row) and sync when the connection returns; if the record changed in Notion meanwhile, the change is dropped with "Changed in Notion, action not applied".
 
 Every record carries its project. The dashboard reads and writes only the projects listed in its config and refuses records of any other project. When you create a task or a decision you pick the project explicitly: the dashboard never guesses it (Default Project Rule). An Inbox note can have no project.
 
@@ -67,28 +67,26 @@ phone / laptop  ──►  Cloudflare Access (login with your email)
 - Access protects the whole app, static files included. The Worker checks the Access token again (signature, audience, expiry, optional email allow-list) and refuses everything when Access is not configured.
 - Reads are cached for 30 seconds inside the Worker; any write clears the cache. The app keeps the last good data for offline use and says when it shows cached data.
 
-## Set up (about 20 minutes)
+## Set up (20 to 30 minutes)
 
-You need: Node 18+, a free Cloudflare account, and your Control Tower in Notion.
+The full walk-through for someone new, with a check after every step, the properties table, Access, devices, updates, rollback and troubleshooting: **[docs/en/20-dashboard-install.md](../../docs/en/20-dashboard-install.md)**. The short version:
 
-1. **Notion integration.** In Notion, Settings > Connections > Develop or manage integrations, create an internal integration with read and update content. Copy its token. Share the Control Tower page (with its databases) and every Current State page with this integration.
+You need: Node 18+, a free Cloudflare account with Zero Trust (free plan), and your Control Tower in Notion.
+
+1. **Notion integration.** [notion.so/profile/integrations](https://www.notion.so/profile/integrations) > New integration (Internal) with Read, Update and Insert content. Copy its secret. Connect it to the Control Tower page (... > Connections) and to every Current State page.
 2. **Install and create local files.**
    ```bash
    cd tools/dashboard
    npm install
-   npm run setup        # creates config/dashboard.config.json and wrangler.toml
+   npm run setup        # creates config/dashboard.config.json and wrangler.toml (both git-ignored)
    ```
-3. **Fill in `config/dashboard.config.json`.** The `notion.*` values are the same data source IDs as in `projects/<slug>.md` (`collection://...`). Add one entry per project: `slug`, `name`, `color`, `project_page_id`, `workspace_page_id`, `current_state_page_id`. Property names follow `docs/en/02-notion-control-tower.md`; if yours differ, override them under `schema` (see `src/schema.js`).
-4. **Token.**
-   ```bash
-   npx wrangler login
-   npx wrangler secret put NOTION_TOKEN
-   ```
-5. **Deploy.** `npm run deploy` prints the `*.workers.dev` URL. If Wrangler cannot reach Cloudflare from your machine, run `npm run build:single` and upload `dist/worker.single.mjs` as described in `DEVELOPMENT.md`.
-6. **Access.** In the Cloudflare dashboard: Workers > your Worker > Settings > Domains & Routes, enable Cloudflare Access on the workers.dev route (or create a self-hosted Access application for a custom domain). Allow only your email. Copy the application **Audience (AUD) tag** and your team domain (`<team>.cloudflareaccess.com`) into `wrangler.toml`, set `ALLOWED_EMAILS`, and run `npm run deploy` again.
-7. **Install the app.** Open the URL and log in. On iPhone: Share > Add to Home Screen. On Android or desktop Chrome/Edge: Install app.
+3. **Fill in `config/dashboard.config.json`:** the data source IDs (`notion.*`, the same as in `projects/<slug>.md`) and one entry per project (`slug`, `name`, `color`, `project_page_id`, `workspace_page_id`, `current_state_page_id`). Property names follow `docs/en/02-notion-control-tower.md`; different names go under `schema` (see `src/schema.js`).
+4. **Check.** `NOTION_TOKEN='<secret>' npm run doctor` checks the files, every placeholder, that the token sees each database and page, and the expected properties. It never prints the token.
+5. **Deploy.** `npx wrangler login`, `npx wrangler secret put NOTION_TOKEN`, `npm run deploy`. If Wrangler cannot reach Cloudflare, `npm run build:single` and upload `dist/worker.single.mjs` (`DEVELOPMENT.md`).
+6. **Access.** Enable Cloudflare Access on the workers.dev route (Worker > Settings > Domains & Routes) or a self-hosted Access application for your own domain; allow only your email. Put the team domain and the **Audience (AUD) tag** into `wrangler.toml` (`ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, optional `ALLOWED_EMAILS`), `npm run deploy` again, then `npm run doctor -- --url https://<your address>`.
+7. **Install the app.** iPhone: Safari > Share > Add to Home Screen. Android or desktop Chrome/Edge: Install app.
 
-A custom domain such as `dashboard.example.com` works only for a domain whose DNS is hosted in Cloudflare. The workers.dev URL needs no DNS changes.
+A custom domain such as `dashboard.example.com` works only for a domain whose DNS is hosted in Cloudflare. The workers.dev URL needs no DNS changes. Automatic deploy from GitHub: the template `.github/workflows/dashboard-deploy.yml.example` (document 20, section 10).
 
 ## Threads: manual status
 
@@ -99,7 +97,7 @@ The Threads database needs two properties (in the public template since 1.10.0):
 ```bash
 npm install
 npm run demo     # mock Notion with demo data on http://localhost:8787
-npm test         # API and Access checks, client rules, WCAG AA contrast of the tokens
+npm test         # API and Access checks, client rules, doctor, WCAG AA contrast of the tokens
 ```
 
 ## Continue development
@@ -112,6 +110,7 @@ npm test         # API and Access checks, client rules, WCAG AA contrast of the 
 |---|---|
 | `public/` | the PWA: `index.html`, `styles.css`, `sw.js`, manifest, icons, and `js/` (ES modules, no build step) |
 | `src/worker.js` | Worker entry: Access check, static files, `/api` |
+| `scripts/setup.mjs`, `scripts/doctor.mjs` | `npm run setup` creates the private files from the examples; `npm run doctor` checks an installation |
 | `src/worker-inline.js`, `scripts/build-single.mjs` | the same Worker as one module with the PWA embedded |
 | `src/api.js` | queries and the allowed writes (the numbers are counted in `public/js/logic.js`) |
 | `src/notion.js` | Notion REST client (API version 2025-09-03) |
@@ -119,4 +118,5 @@ npm test         # API and Access checks, client rules, WCAG AA contrast of the 
 | `src/schema.js` | property names of the Control Tower databases |
 | `config/dashboard.config.example.json` | config template (your copy is git-ignored) |
 | `wrangler.example.toml` | Worker settings template (your copy is git-ignored) |
-| `test/` | mock Notion, demo server, API smoke tests, client rule tests (`logic.mjs`), contrast check (`contrast.mjs`) |
+| `test/` | mock Notion, demo server, API smoke tests, client rule tests (`logic.mjs`), doctor checks (`doctor.mjs`), contrast check (`contrast.mjs`) |
+| `../../.github/workflows/dashboard-deploy.yml.example` | optional automatic deploy on push to `main` (off until you rename it) |

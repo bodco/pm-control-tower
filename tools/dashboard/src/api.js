@@ -157,7 +157,6 @@ export function createApi(config, env) {
     id: pg.id, url: pg.url, project: slugOf(pg, S.threads.project),
     title: prop(pg, S.threads.title) || '(untitled)',
     status: prop(pg, S.threads.status), types: prop(pg, S.threads.type) || [],
-    category: prop(pg, S.threads.category),
     description: short(cleanDescription(prop(pg, S.threads.description)), 280),
     lastReply: prop(pg, S.threads.lastReply), reportedAt: prop(pg, S.threads.reportedAt),
     emailLink: prop(pg, S.threads.emailLink), slackLink: prop(pg, S.threads.slackLink),
@@ -371,6 +370,45 @@ export function createApi(config, env) {
       return out;
     }
     return { url: page.url, edited: page.last_edited_time, title: prop(page, Object.keys(page.properties || {}).find((k) => page.properties[k].type === 'title')), blocks: await tree(p.current_state_page_id, 0) };
+  }
+
+  // The body of one record for the details sheet: the full text property and the
+  // page content (top level, one level of children, capped). Read-only, guarded
+  // like a write: configured database and a configured project only.
+  const BODY_KINDS = {
+    tasks: ['tasks_db', () => S.tasks.description, () => S.tasks.project],
+    threads: ['threads_db', () => S.threads.description, () => S.threads.project],
+    risks: ['risks_db', () => S.risks.summary, () => S.risks.project],
+    decisions: ['decisions_db', () => S.decisions.context, () => S.decisions.project],
+    meetings: ['meetings_db', () => S.meetings.summary, () => S.meetings.project],
+    reports: ['reports_db', () => S.reports.summary, () => S.reports.project],
+    inbox: ['inbox_db', () => S.inbox.notes, () => S.inbox.project],
+  };
+  async function recordBody(kind, id) {
+    const spec = BODY_KINDS[kind];
+    if (!spec) throw new HttpError(404, 'Unknown record kind');
+    const [dbKey, textProp, projProp] = spec;
+    const page = await guardedPage(id, dbKey);
+    assertProjectPage(page, projProp(), kind === 'inbox');
+    let budget = 10;
+    let count = 0;
+    async function tree(bid, depth) {
+      const blocks = await notion.children(bid, 1);
+      const out = [];
+      for (const b of blocks) {
+        if (count >= 80) break;
+        const node = simplifyBlock(b);
+        if (!node) continue;
+        count++;
+        if (b.has_children && depth < 1 && budget > 0 && b.type !== 'child_page' && b.type !== 'child_database') {
+          budget--;
+          node.children = await tree(b.id, depth + 1);
+        }
+        out.push(node);
+      }
+      return out;
+    }
+    return { text: cleanDescription(prop(page, textProp()) || '') || null, blocks: await tree(id, 0), edited: page.last_edited_time };
   }
 
   // ---------- writes ----------
@@ -634,6 +672,7 @@ export function createApi(config, env) {
       }
       if (m === 'GET' && (r = path.match(/^\/api\/p\/([\w-]+)\/(\w+)$/))) return json(await projectSection(r[1], r[2], url, fresh));
       if (m === 'GET' && path === '/api/inbox') return json({ items: await inboxNew() });
+      if (m === 'GET' && (r = path.match(/^\/api\/body\/(\w+)\/([\w-]+)$/))) return json(await recordBody(r[1], r[2]));
       if (m === 'GET' && path === '/api/automation') return json(await automationData(fresh));
 
       if (m === 'POST' && path === '/api/tasks') return json(await createTask(body), 201);

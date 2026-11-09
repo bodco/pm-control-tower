@@ -28,6 +28,9 @@
 
 24. **An internal channel never goes to the client, not even by paraphrase.** Candid internal discussion (account strategy, staffing, who is to blame for an incident) is useful context and poison in a client report. Marking such sources `restricted_sources` in the config and filtering them out of every client-facing output at Step 0 is cheaper than one leaked sentence (`03`, `projects/SKILL.md`).
 
+25. **One rule per number, and a click opens what it counted.** When the same number is counted in two places, the places drift apart and one project shows two different values. In the dashboard every metric has one definition in one module, its tooltip gives the formula, and a click opens exactly those rows. A number nobody can open is not trusted.
+26. **Nothing red without an action.** A screen full of red teaches you to ignore red: in the first reviews nobody trusted the red numbers, because threads untouched for 300+ days were still in the counters. The dashboard now uses red on at most three items, each with an action next to it (reply, snooze, review); stale threads older than 30 days count nowhere and wait in one review instead of shouting. Calm is a feature: the PM opens the screen because it is quiet enough to read.
+
 ## Antipatterns (what breaks the system most often)
 
 | Antipattern | Why it is bad | What to do instead |
@@ -53,6 +56,8 @@
 | A date-stamped fact not checked for 90+ days | silent staleness | Automation Health Check, re-verification |
 | A chart across the team-change date with no annotation | reads like a collapse | Metric Continuity warning in the config |
 | A collector filtering by a time marker (`-newer`) | late-exported data is lost for good, silently | the queue is the `incoming/` folder, the marker is informational; an old buffer goes to `backlog/` |
+| A metric counted differently in two places | the same project shows two numbers, nobody trusts either | one definition per metric (`public/js/logic.js` in the dashboard), a click opens the counted rows |
+| A red badge without an action next to it | red becomes noise, real alarms get missed | red on at most three items, each with an action; stale items in one quiet review |
 
 ## Security and privacy
 

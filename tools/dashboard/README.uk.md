@@ -30,7 +30,7 @@
 
 **Ризики** використовують дві необовʼязкові дати, `Trigger Date` і `Last Reviewed`. З ними ризик показує "за 2 д", "без перегляду 15 д" після 14 днів і має дію "Переглянуто". Без них ці частини сховані, а ризики сортуються за severity.
 
-**Жести і клавіші.** Телефон: свайп вправо це основна дія (задача Done, тред твоєї черги Replied, ризик Переглянуто); свайп вліво відкладає задачу на завтра (довгий свайп відкриває вибір дати); тап відкриває шторку деталей з усіма діями кнопками; довге натискання відкриває меню статусу; потягни вниз, щоб оновити. Ноутбук: дії зʼявляються при наведенні чи фокусі; J і K рух, Enter відкрити, E done, R replied, S відкласти, N додати, / фільтр, ⌘K пошук і перехід, ? усі клавіші. Кожна зміна показує "Відмінити" 6 секунд і пишеться в Notion, коли toast зникає. Офлайн зміни чекають у черзі (позначка годинника в рядку) і синхронізуються, коли звʼязок повертається; якщо запис тим часом змінили в Notion, зміна скасовується з повідомленням "Змінено в Notion, дію не застосовано".
+**Жести і клавіші.** Телефон: свайп вправо це основна дія (задача Done, тред твоєї черги Replied, ризик Переглянуто); свайп вліво відкладає задачу на завтра (довгий свайп відкриває вибір дати); тап відкриває шторку деталей: повний текст запису і вміст сторінки (у блоці, що прокручується, коли текст довгий) і всі дії кнопками; довге натискання відкриває меню статусу; потягни вниз, щоб оновити. Ноутбук: дії зʼявляються при наведенні чи фокусі; J і K рух, Enter відкрити, E done, R replied, S відкласти, N додати, / фільтр, ⌘K пошук і перехід, ? усі клавіші. Кожна зміна показує "Відмінити" 6 секунд і пишеться в Notion, коли toast зникає. Офлайн зміни чекають у черзі (позначка годинника в рядку) і синхронізуються, коли звʼязок повертається; якщо запис тим часом змінили в Notion, зміна скасовується з повідомленням "Змінено в Notion, дію не застосовано".
 
 Кожен запис має свій проєкт. Дашборд читає і пише тільки проєкти зі свого конфігу і відмовляє для записів будь-якого іншого проєкту. Коли створюєш задачу чи рішення, проєкт обираєш явно: дашборд ніколи його не вгадує (Default Project Rule). Нотатка в Inbox може бути без проєкту.
 
@@ -67,28 +67,26 @@
 - Access захищає весь застосунок, зокрема статичні файли. Worker ще раз перевіряє токен Access (підпис, audience, термін дії, необовʼязковий список email) і відмовляє в усьому, якщо Access не налаштований.
 - Читання кешується на 30 секунд усередині Worker; будь-який запис скидає кеш. Застосунок тримає останні успішні дані для офлайну і показує, коли дані з кешу.
 
-## Налаштування (близько 20 хвилин)
+## Налаштування (20-30 хвилин)
 
-Потрібно: Node 18+, безкоштовний акаунт Cloudflare і твій Control Tower у Notion.
+Повний покроковий шлях для нової людини, з перевіркою після кожного кроку, таблицею властивостей, Access, пристроями, оновленням, відкатом і типовими помилками: **[docs/uk/20-dashboard-install.md](../../docs/uk/20-dashboard-install.md)**. Коротко:
 
-1. **Інтеграція Notion.** У Notion: Settings > Connections > Develop or manage integrations, створи internal integration з правами read і update content. Скопіюй токен. Поділись з інтеграцією сторінкою Control Tower (з її базами) і кожною сторінкою Current State.
-2. **Встановлення і локальні файли.**
+Потрібно: Node 18+, безкоштовний акаунт Cloudflare із Zero Trust (план Free) і твій Control Tower у Notion.
+
+1. **Інтеграція Notion.** [notion.so/profile/integrations](https://www.notion.so/profile/integrations) > New integration (Internal) з правами Read, Update і Insert content. Скопіюй secret. Підключи інтеграцію до сторінки Control Tower (... > Connections) і до кожної сторінки Current State.
+2. **Встанови і створи локальні файли.**
    ```bash
    cd tools/dashboard
    npm install
-   npm run setup        # створює config/dashboard.config.json і wrangler.toml
+   npm run setup        # створює config/dashboard.config.json і wrangler.toml (обидва в git-ignore)
    ```
-3. **Заповни `config/dashboard.config.json`.** Значення `notion.*` це ті самі ID data source, що й у `projects/<slug>.md` (`collection://...`). Додай по запису на проєкт: `slug`, `name`, `color`, `project_page_id`, `workspace_page_id`, `current_state_page_id`. Назви властивостей ідуть за `docs/uk/02-notion-control-tower.md`; якщо твої інші, перевизнач їх у `schema` (див. `src/schema.js`).
-4. **Токен.**
-   ```bash
-   npx wrangler login
-   npx wrangler secret put NOTION_TOKEN
-   ```
-5. **Деплой.** `npm run deploy` покаже URL `*.workers.dev`. Якщо Wrangler з твоєї машини до Cloudflare не дістає, запусти `npm run build:single` і завантаж `dist/worker.single.mjs`, як описано в `DEVELOPMENT.md`.
-6. **Access.** У дашборді Cloudflare: Workers > твій Worker > Settings > Domains & Routes, увімкни Cloudflare Access для маршруту workers.dev (або створи self-hosted застосунок Access для власного домену). Дозволь тільки свій email. Скопіюй **Audience (AUD) tag** застосунку і team domain (`<team>.cloudflareaccess.com`) у `wrangler.toml`, задай `ALLOWED_EMAILS` і ще раз запусти `npm run deploy`.
-7. **Встанови апку.** Відкрий URL і увійди. На iPhone: Поділитися > На екран «Додому». На Android або в Chrome/Edge на компʼютері: Install app.
+3. **Заповни `config/dashboard.config.json`:** data source ID (`notion.*`, ті самі, що в `projects/<slug>.md`) і по запису на проєкт (`slug`, `name`, `color`, `project_page_id`, `workspace_page_id`, `current_state_page_id`). Назви властивостей за `docs/uk/02-notion-control-tower.md`; інші назви задаються в `schema` (див. `src/schema.js`).
+4. **Перевір.** `NOTION_TOKEN='<secret>' npm run doctor` перевіряє файли, кожен плейсхолдер, що токен бачить кожну базу й сторінку, і очікувані властивості. Токен не друкує.
+5. **Деплой.** `npx wrangler login`, `npx wrangler secret put NOTION_TOKEN`, `npm run deploy`. Якщо Wrangler не дістає до Cloudflare, `npm run build:single` і завантаж `dist/worker.single.mjs` (`DEVELOPMENT.md`).
+6. **Access.** Увімкни Cloudflare Access на маршруті workers.dev (Worker > Settings > Domains & Routes) або self-hosted застосунок Access для власного домену; дозволь лише свою пошту. Впиши team domain і **Audience (AUD) tag** у `wrangler.toml` (`ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, необовʼязково `ALLOWED_EMAILS`), знову `npm run deploy`, потім `npm run doctor -- --url https://<твоя адреса>`.
+7. **Встанови апку.** iPhone: Safari > Поділитися > На екран «Додому». Android або Chrome/Edge на компʼютері: Install app.
 
-Власний домен на кшталт `dashboard.example.com` працює тільки для домену, DNS якого обслуговує Cloudflare. URL workers.dev не потребує змін у DNS.
+Власний домен на кшталт `dashboard.example.com` працює лише для домену, DNS якого в Cloudflare. URL workers.dev не потребує змін DNS. Автодеплой із GitHub: шаблон `.github/workflows/dashboard-deploy.yml.example` (документ 20, розділ 10).
 
 ## Треди: ручний статус
 
@@ -99,7 +97,7 @@
 ```bash
 npm install
 npm run demo     # mock Notion з демо-даними на http://localhost:8787
-npm test         # перевірки API і Access, правила клієнта, контраст токенів за WCAG AA
+npm test         # перевірки API і Access, правила клієнта, doctor, контраст токенів за WCAG AA
 ```
 
 ## Продовжити розробку
@@ -112,6 +110,7 @@ npm test         # перевірки API і Access, правила клієнт
 |---|---|
 | `public/` | PWA: `index.html`, `styles.css`, `sw.js`, manifest, іконки і `js/` (ES-модулі без білду) |
 | `src/worker.js` | вхід Worker: перевірка Access, статичні файли, `/api` |
+| `scripts/setup.mjs`, `scripts/doctor.mjs` | `npm run setup` створює приватні файли з прикладів; `npm run doctor` перевіряє встановлення |
 | `src/worker-inline.js`, `scripts/build-single.mjs` | той самий Worker одним модулем із вбудованою PWA |
 | `src/api.js` | запити і дозволені записи (числа рахуються в `public/js/logic.js`) |
 | `src/notion.js` | REST-клієнт Notion (API version 2025-09-03) |
@@ -119,4 +118,5 @@ npm test         # перевірки API і Access, правила клієнт
 | `src/schema.js` | назви властивостей баз Control Tower |
 | `config/dashboard.config.example.json` | шаблон конфігу (твоя копія в .gitignore) |
 | `wrangler.example.toml` | шаблон налаштувань Worker (твоя копія в .gitignore) |
-| `test/` | mock Notion, демо-сервер, smoke-тести API, тести правил клієнта (`logic.mjs`), перевірка контрасту (`contrast.mjs`) |
+| `test/` | mock Notion, демо-сервер, smoke-тести API, тести правил клієнта (`logic.mjs`), перевірки doctor (`doctor.mjs`), перевірка контрасту (`contrast.mjs`) |
+| `../../.github/workflows/dashboard-deploy.yml.example` | необовʼязковий автодеплой при push у `main` (вимкнений, поки не перейменуєш) |

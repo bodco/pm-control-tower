@@ -112,10 +112,12 @@ A risk the review named explicitly: after the Mac wakes up, the overdue tasks ca
 1. **The Notion Reports DB** - always (Type, Skill, Date, Summary, Project, Workspace, the full text).
 2. **The session's local outputs folder** - a duplicate for Cowork tasks; for daily-work-report also `~/work/Daily Reports/`.
 3. **Side effects in external systems** - limited and explicit: Jira tickets from stability-scan, pages in Threads/Topics/Risks/Decisions, comments in the Slack thread from acme-branch-review (only as a reply to an explicit `REVIEW:`), a CSV for the client's Notion. Nothing is sent to the client automatically.
+4. **The dashboard** (`19`, optional) - shows what the autopilot wrote, from the same databases: the Today queue, a line when a scheduled task failed, and with the two Automation databases a read-only schedule and run history. It never starts a task: everything runs from Cowork.
 
 ## What breaks and how you see it
 
 - The Mac went to sleep or the app was closed - the local tasks did not run. Visible from the empty Today's Reports section in the morning. The fix: `Run now` in Cowork.
+- A task failed and nobody opened the reports - with the Automation databases connected, the dashboard Today page shows one line about it; the fix is still in Cowork.
 - A cloud task does not see the Mac - it is not supposed to; if a task needs the disk, it has to be a local one.
 - A skill has fallen behind its config - Automation Health Check will show it on the 1st; between audits the signal is odd names of people or components in the reports.
 - Notion returned a 2000-character error, or a relation was silently not written - visible in the skill's report ("saved with warnings") or from a missing page; check the property names.

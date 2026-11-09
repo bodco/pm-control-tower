@@ -403,7 +403,7 @@ function renderRich(rich) {
     return el;
   });
 }
-function renderBlocks(blocks) {
+export function renderBlocks(blocks) {
   const out = [];
   let lst = null; let lt = null;
   for (const b of blocks || []) {

@@ -158,6 +158,21 @@ await test('records outside the configured projects or databases are refused', a
   assert.equal((await send('PATCH', `/api/tasks/${risk}`, { status: 'Done' })).status, 403, 'risk page patched as a task');
 });
 
+await test('record body: full text and page content, guarded like a write', async () => {
+  const weekly = findPage('🧪 Demo: send weekly status report').id;
+  const { status, body } = await get(`/api/body/tasks/${weekly}`);
+  assert.equal(status, 200, JSON.stringify(body));
+  assert.match(body.text, /launch checklist/);
+  assert.equal(body.blocks.length, 3);
+  assert.equal(body.blocks[1].type, 'bulleted_list_item');
+  const empty = await get(`/api/body/tasks/${findPage('🧪 Demo: review staging deploy notes').id}`);
+  assert.equal(empty.status, 200);
+  assert.deepEqual(empty.body.blocks, []);
+  assert.equal((await get(`/api/body/tasks/${findPage('Task of a project outside this dashboard').id}`)).status, 403);
+  assert.equal((await get(`/api/body/threads/${weekly}`)).status, 403, 'a task read as a thread');
+  assert.equal((await get(`/api/body/secrets/${weekly}`)).status, 404);
+});
+
 await test('creating a task requires an explicit project', async () => {
   assert.equal((await send('POST', '/api/tasks', { title: 'No project' })).status, 400);
   const r = await send('POST', '/api/tasks', { title: 'Dashboard task', project: 'playbook', priority: 'Low', due: '2030-02-02' });

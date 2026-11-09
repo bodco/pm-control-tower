@@ -8,6 +8,7 @@ Question numbers are never reassigned, so that links from other documents stay v
 - **#48. A `data_policy` section in the config.** `03` describes it as a plan (`allow_llm_code_inspection`, `allow_llm_slack_reading`, `anonymize_pii`), `_template.md` does not have it and no skill reads it. The question is wider than the keys: whether the config should record the client's and the company's consent to processing work data through Claude, and what to do on a project without such consent (switch off the collectors or the whole autopilot). Until decided, the framework assumes consent exists.
 - **#49. The handover pilot.** Plugin v1.1 has never been installed on anyone else's account. Closing criterion: a colleague on a clean account walks through `plugin/SETUP.md` up to the first `weekly-overview` without the author's help, and the defects found land in the backlog below. Until then the documentation and the deck call the package a beta.
 - **#50. Custom document templates (v1.2.0).** The mechanism is built (`15`) but has not been run against a real company template set. Open: a) closing criterion: at least two house templates (`client-report.monthly`, `change-request.cr`) pass `template-check` with no `missing` and produce a report the PM sends without reworking the structure by hand; b) whether automatic export to a branded `.docx` / `.pptx` from a corporate file is needed, or manual export is enough; c) where to keep `_templates.md` so a plugin reinstall does not lose it (today it lives inside the plugin, like the configs).
+- **#51. The dashboard on someone else's account.** The install (`20`) and `npm run doctor` have passed a clean-folder run with the demo, but no colleague has installed the dashboard with a real Notion and Cloudflare yet, and it has not been checked on a real iPhone. Closing criterion: one colleague goes from `20` to the app on their phone without the author's help, and the stuck points are fixed in `20`.
 
 ## Closed questions
 
@@ -31,6 +32,8 @@ Prioritized during the optimization pass (`07`). An item that has sat through tw
 | T8 | Setting fixVersion `vYYYY-MM` on Done tickets automatically on the 1st (manual today, `06` domain 3) | pending |
 | T9 | A regression checklist skill for a project without QA (`06` domain 7) | pending |
 | T10 | A risk → task link into the Tasks Tracker from `risk-register` (`06` domain 6) | pending |
+| T11 | Add `Trigger Date` and `Last Reviewed` to Risks in the public template through the sync procedure, and decide which skill fills `Trigger Date` (`risk-register`) | pending, needs the owner's OK on the diff |
+| T12 | Remove `Category`, `Context Sources`, `Draft Response` from Threads in the public template (deleted from git in 1.11.0) | pending, sync procedure |
 
 ## What to do when we come back to the second agent (not now, status: beta, frozen)
 

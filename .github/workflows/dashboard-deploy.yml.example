@@ -1,0 +1,87 @@
+# Automatic deploy of the dashboard (tools/dashboard) to Cloudflare Workers.
+#
+# This file is a template and does nothing while it ends in .example.
+# To turn it on in YOUR copy of the repository (docs/en/20-dashboard-install.md, step 10):
+#   1. Add the repository secrets (Settings > Secrets and variables > Actions):
+#        CLOUDFLARE_API_TOKEN     API token with "Workers Scripts: Edit" on your account
+#        CLOUDFLARE_ACCOUNT_ID    your Cloudflare account ID
+#        DASHBOARD_CONFIG_B64     base64 of config/dashboard.config.json
+#        WRANGLER_TOML_B64        base64 of wrangler.toml
+#      (macOS: base64 -i config/dashboard.config.json | pbcopy)
+#      NOTION_TOKEN is NOT needed here: it stays a Worker secret and deploys keep it.
+#   2. Optionally create an environment named "dashboard" (Settings > Environments)
+#      with required reviewers, so every deploy waits for your click.
+#   3. Rename this file to dashboard-deploy.yml and push to main.
+#
+# Security: no rights by default. The test job has no secrets at all; in the deploy
+# job the secrets are passed only to the two steps that need them, never to `npm ci`. Actions are pinned
+# to full commit SHAs. Wrangler comes from tools/dashboard/package-lock.json.
+
+name: Deploy dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/dashboard/**'
+      - '.github/workflows/dashboard-deploy.yml'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: dashboard-deploy
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: tools/dashboard
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/dashboard/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment: dashboard
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/dashboard/package-lock.json
+      - run: npm ci
+      - name: Write the private config from secrets
+        env:
+          DASHBOARD_CONFIG_B64: ${{ secrets.DASHBOARD_CONFIG_B64 }}
+          WRANGLER_TOML_B64: ${{ secrets.WRANGLER_TOML_B64 }}
+        run: |
+          test -n "$DASHBOARD_CONFIG_B64" || { echo "DASHBOARD_CONFIG_B64 is not set"; exit 1; }
+          test -n "$WRANGLER_TOML_B64" || { echo "WRANGLER_TOML_B64 is not set"; exit 1; }
+          printf '%s' "$DASHBOARD_CONFIG_B64" | base64 -d > config/dashboard.config.json
+          printf '%s' "$WRANGLER_TOML_B64" | base64 -d > wrangler.toml
+          node scripts/doctor.mjs > /dev/null || { node scripts/doctor.mjs | grep -E '^(FAIL|     fix)'; exit 1; }
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy

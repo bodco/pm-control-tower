@@ -7,7 +7,7 @@ This is the handoff for whoever picks the dashboard up next, a person or an AI a
 ```bash
 cd tools/dashboard
 npm install
-npm test        # API, safety and Access against a mock Notion; client rules; WCAG AA contrast
+npm test        # API, safety and Access against a mock Notion; client rules; doctor; WCAG AA contrast
 npm run demo    # http://localhost:8787 with neutral demo data, no Notion, no Cloudflare
 ```
 
@@ -29,7 +29,7 @@ and start the mock separately: `node -e "import('./test/mock-notion.mjs').then(m
 | `src/worker-inline.js` | entry for the single-module build (PWA embedded by `scripts/build-single.mjs`) | same as above, keep both in step |
 | `src/headers.js` | security headers and CSP for both entries | you load anything from another origin (avoid it) |
 | `src/auth.js` | Cloudflare Access JWT check, fails closed | the gate changes |
-| `src/api.js` | queries, the allowed writes (with the 409 conflict check on `expectEdited`), the router; `/api/config` also returns option colors, the turn mapping and freshness thresholds (per project too) and which optional risk dates exist | you add a view or an action |
+| `src/api.js` | queries, the record body for the details sheet (`GET /api/body/:kind/:id`, guarded like a write), the allowed writes (with the 409 conflict check on `expectEdited`), the router; `/api/config` also returns option colors, the turn mapping and freshness thresholds (per project too) and which optional risk dates exist | you add a view or an action |
 | `src/automation.js` | `AutomationSource`: the Notion reader for `automation_db` and `runs_db`, and the fixture source for demo and tests | the Automation databases change |
 | `src/notion.js` | REST client (API version 2025-09-03), property readers and builders | Notion changes its API |
 | `src/schema.js` | property names and default options of the Control Tower databases, including the optional `Trigger Date` and `Last Reviewed` of Risks | document `02` changes |
@@ -41,10 +41,12 @@ and start the mock separately: `node -e "import('./test/mock-notion.mjs').then(m
 | `public/js/actions.js` | per entity: what a row shows and its actions; the details sheet, status menu, snooze, stale review, quick add, Inbox routing, ⌘K | an action changes |
 | `public/js/views.js`, `public/js/app.js` | the pages; navigation, routing, keys, boot | a page or the shell changes |
 | `public/styles.css` | v2 tokens (dark main, light, `data-theme` override, 2.0 names kept as aliases) and components | the look changes; then run `node test/contrast.mjs` |
+| `scripts/doctor.mjs` | `npm run doctor`: checks the private files, placeholders, Access values, that the token sees each database and page, the expected properties (required and optional with what is lost), and with `--url` the login gate. Never prints the token. Tested in `test/doctor.mjs` | the dashboard starts reading a new database or property: add it to `DATABASES` or `PROPERTIES` |
 | `scripts/make-icons.mjs` | renders the PWA icons from 🗼 (needs Playwright) | the icon changes |
 | `public/sw.js` | offline shell and last-good API data | you add a static file (add it to `SHELL`, bump `VERSION`) |
 | `test/mock-notion.mjs` | in-memory Notion with demo data and the same filter rules as Notion | the API starts using a new endpoint or filter |
 | `test/smoke.mjs` | end-to-end API checks | every new API behaviour gets a check |
+| `test/doctor.mjs` | doctor against the mock and temporary install folders, including that the token never appears in the output | doctor changes |
 | `test/logic.mjs`, `test/contrast.mjs` | client rules and strings; WCAG AA of the token pairs in both themes | rules, strings or tokens change |
 
 ## Rules the code keeps
@@ -84,11 +86,12 @@ A sync task keeps them current: it lists the Cowork scheduled tasks, upserts one
 | Path | Command | When |
 |---|---|---|
 | Wrangler | `npm run deploy` | your machine reaches `api.cloudflare.com` |
+| GitHub Actions | `.github/workflows/dashboard-deploy.yml.example`, renamed to `.yml` in your copy (secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DASHBOARD_CONFIG_B64`, `WRANGLER_TOML_B64`) | every push to `main` under `tools/dashboard/` should deploy after green tests |
 | Single module | `npm run build:single` (all files embedded as base64, see below), then upload `dist/worker.single.mjs` as an ES module through the Cloudflare API (`PUT /accounts/{id}/workers/scripts/{name}`, metadata `main_module`, `keep_bindings: ["secret_text"]`) or the dashboard editor | Wrangler cannot reach Cloudflare (sandboxes, locked networks) |
 
 The single-module build embeds every PWA file as base64: plain HTML and JS inside the upload body can trip the Cloudflare dashboard WAF. If uploads through the dashboard session still return "Sorry, you have been blocked", use `npm run deploy` from a machine that reaches `api.cloudflare.com`.
 
-After any deploy: open `/api/config` through the gate and check that every project is listed and `threadManualStatus` is `true`.
+After any deploy: `npm run doctor -- --url https://<address>`, then open `/api/config` through the gate and check that every project is listed and `threadManualStatus` is `true`. The install for a new person is `docs/en/20-dashboard-install.md`; keep it in step when setup, config keys or properties change.
 
 ## Roadmap
 

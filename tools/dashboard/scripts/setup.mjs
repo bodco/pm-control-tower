@@ -9,6 +9,8 @@ for (const [from, to] of pairs) {
   if (existsSync(to)) console.log(`keep   ${to} (already exists)`);
   else { copyFileSync(from, to); console.log(`create ${to}`); }
 }
-console.log('\nNext: fill in config/dashboard.config.json and wrangler.toml, then run');
-console.log('  npx wrangler secret put NOTION_TOKEN');
-console.log('  npm run deploy');
+console.log('\nNext (docs/en/20-dashboard-install.md):');
+console.log('  1. fill in config/dashboard.config.json and wrangler.toml');
+console.log('  2. NOTION_TOKEN=<your integration token> npm run doctor');
+console.log('  3. npx wrangler login && npx wrangler secret put NOTION_TOKEN');
+console.log('  4. npm run deploy');

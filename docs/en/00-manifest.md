@@ -20,6 +20,7 @@ The consequence: the PM lives in reaction mode. There is no time left for thinki
 3. **One truth about the state of the project.** The project config file is the single source of truth about the team, access, scope, meetings and integrations. Skills read it instead of carrying facts inside themselves.
 4. **Scaling to new projects without rewriting the core.** A new project = a new config + pages in Notion + a schedule + (if needed) a few project adapters. Engine skills pick it up automatically, even if the client has no tracker API: in that case they work with what is available.
 5. **Transferability.** You can hand another PM the core (principles, config template, generic skills) and in a day or two they stand up their own Control Tower.
+6. **A calm view of everything, on any device.** The optional dashboard (`19`) shows every project from the same Notion databases on a phone or a laptop: what needs you today, whose turn it is, the next call. It is a view, not a second store: nothing runs from it and nothing is sent from it.
 
 ## What the framework does not promise
 

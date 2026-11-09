@@ -27,3 +27,4 @@ Read in this order. Documents 00 to 02 explain what the framework is, 10 is the 
 | 17 | [Live Tips (moved)](17-live-tips.md) | The call co-pilot is a separate product now: github.com/bodco/live-tips |
 | 18 | [Skills cheat sheet](18-skills-cheatsheet.md) | Which skill for which job, the phrase that starts it, the rhythm and what it needs, in six groups |
 | 19 | [Dashboard](19-dashboard.md) | The PM's cockpit on any device: every project at a glance, act on tasks, threads, risks and decisions; architecture, safety, manual thread status |
+| 20 | [Dashboard install](20-dashboard-install.md) | Install the dashboard yourself in 20 to 30 minutes: Notion integration, properties, config, `npm run doctor`, deploy, Cloudflare Access, devices, updates, rollback, troubleshooting, a guided prompt for Claude |

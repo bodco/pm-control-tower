@@ -9,6 +9,7 @@ A skill = a folder with a `SKILL.md` file (plus, if needed, `README.md`, `script
 Skills are synced between Claude Desktop (Cowork) and cloud sessions. Two different numbers that should not be confused:
 
 - **The handover package** (the `pm-control-tower` plugin): **21 skills**, all of type E (engines) plus the infrastructure skill `projects`. This is what a colleague receives.
+- **Not a skill:** the dashboard (`19`). Its Ask Claude button copies a context pack that `resolve-item` reads; the dashboard itself runs no skill.
 - **The author's instance**: about 50 entries in the synced folder: the same engines, project adapters (P), frozen adapters (H), other-domain skills (X) and stock Anthropic skills (S). No exact count is kept, because it goes stale every week. In the catalog below, types P/H/X/S are not part of the package and are shown as examples of what the 20% of adapters looks like.
 
 ## Anatomy of a PM skill (an engine)

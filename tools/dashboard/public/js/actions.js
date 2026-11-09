@@ -4,9 +4,9 @@
 
 import { h, icon, state, ctx, settings, fill } from './core.js';
 import { t, tn } from './i18n.js';
-import { cleanTitle, fmtDue, fmtAge, fmtIn, fmtWhen, today, addDays, nextWeekday, dayOf } from './dates.js';
+import { cleanTitle, fmtDue, fmtAge, fmtIn, fmtWhen, today, addDays, nextWeekday, dayOf, shortDate } from './dates.js';
 import * as L from './logic.js';
-import { act, create, loadAll } from './net.js';
+import { act, create, loadAll, api } from './net.js';
 import { openSheet, closeSheet, toast, optionList, chips, btn, dot, healthWord } from './ui.js';
 import { ASK_KINDS, packFor } from './askclaude.js';
 
@@ -200,10 +200,29 @@ export function details(item) {
   openSheet(null, h('div.detail',
     h('p.eyebrow.dm', eyebrow.map((e, i) => [i ? h('span.sep', { 'aria-hidden': 'true' }) : null, typeof e === 'string' ? h('span', e) : e])),
     h('h2.dt', d.title),
-    text ? h('p.dx', text) : null,
+    bodyBox(kind, x, text),
     facts.length ? h('dl.facts', facts.map(([k, v]) => [h('dt', k), h('dd', v)])) : null,
     buttons.length ? h('div.acts2', buttons) : null,
     h('div.links', links)), { kind: 'panel', label: d.title });
+}
+
+// The record's text and page content, loaded when the sheet opens. A short
+// preview (what the list already has) shows at once; the full text replaces it.
+// Long content scrolls inside the box, so the actions stay in view.
+const BODY_KIND = { task: 'tasks', thread: 'threads', risk: 'risks', decision: 'decisions', meeting: 'meetings', report: 'reports', inbox: 'inbox' };
+function bodyBox(kind, x, preview) {
+  const k = BODY_KIND[kind];
+  if (!k || !x.id) return preview ? h('p.dx', preview) : null;
+  const box = h('div.dbody', { tabindex: '0', 'aria-label': t('fBody') }, preview ? h('p.dx', preview) : h('p.dx.muted', t('loading')));
+  Promise.all([api(`/api/body/${k}/${encodeURIComponent(x.id)}`), import('./views.js')]).then(([r, V]) => {
+    const kids = [];
+    if (r.text) kids.push(h('p.dx', r.text));
+    if (r.blocks?.length) kids.push(h('div.doc.docin', V.renderBlocks(r.blocks)));
+    if (kids.length) fill(box, ...kids);
+    else if (preview) fill(box, h('p.dx', preview));
+    else box.remove();
+  }).catch(() => { if (preview) fill(box, h('p.dx', preview)); else box.remove(); });
+  return box;
 }
 
 // Long press / "More": status from the Notion options, plus the rest.
@@ -292,6 +311,38 @@ export function closeOldStale(slugs) {
   act({ label: tn('tClosedN', old.length), changes: old.map((th) => ({ kind: 'threads', obj: th, body: { status: 'Closed' } })) });
 }
 
+// ---------- due date chips: presets plus "Pick a date" ----------
+// The last chip holds a native date input, so the phone opens its own picker.
+// A picked date is shown on the chip ("13 Nov") and selected like any preset.
+// The DOM is updated in place: re-rendering while the iPhone wheel is open
+// would close it.
+export function dueChips(st, presets, label) {
+  const td = today();
+  const row = h('div.chiprow', { role: 'group', 'aria-label': label || null });
+  const isPreset = (v) => presets.some((o) => o.value === v);
+  const pickLabel = () => (st.due && !isPreset(st.due) ? shortDate(st.due) : t('sPickDate'));
+  const sync = () => {
+    for (const b of row.querySelectorAll('[data-v]')) b.setAttribute('aria-pressed', String(b.dataset.v === st.due));
+    pick.setAttribute('aria-pressed', String(Boolean(st.due) && !isPreset(st.due)));
+    txt.textContent = pickLabel();
+  };
+  const date = h('input.chipdate', { type: 'date', min: td, 'aria-label': t('sPickDate') });
+  if (st.due && !isPreset(st.due)) date.value = st.due;
+  const onDate = () => { if (date.value && date.value >= td) { st.due = date.value; sync(); } };
+  date.addEventListener('change', onDate);
+  date.addEventListener('input', onDate);
+  const txt = h('span', pickLabel());
+  const pick = h('label.chip.chippick', icon('cal'), txt, date);
+  // Desktop browsers open the calendar only from its own icon: open it on any click.
+  date.addEventListener('click', () => { try { date.showPicker?.(); } catch { /* not allowed here */ } });
+  for (const o of presets) {
+    row.append(h('button.chip', { type: 'button', 'data-v': o.value, onclick: () => { st.due = st.due === o.value ? null : o.value; if (st.due) date.value = ''; sync(); } }, o.label));
+  }
+  row.append(pick);
+  sync();
+  return row;
+}
+
 // ---------- quick add ----------
 // Default: an Inbox note without a project. Chips turn it into a task or a
 // decision; those need a project (never guessed; inside a project it is set).
@@ -308,7 +359,7 @@ export function quickAdd({ slug = null, kind = 'note' } = {}) {
     fill(body, input,
       chips(kinds, st.kind, (v) => { st.kind = v; paint(); }, { label: t('qaKind') }),
       chips(projs.map((p) => ({ value: p.slug, label: shortName(p), color: p.color })), st.project, (v) => { st.project = st.project === v ? null : v; paint(); }, { label: t('fProject') }),
-      st.kind === 'task' ? chips([{ value: td, label: t('sToday') }, { value: addDays(td, 1), label: t('sTomorrow') }, { value: nextWeekday(td, 1), label: t('sMonday') }], st.due, (v) => { st.due = st.due === v ? null : v; paint(); }, { label: t('fDue') }) : null,
+      st.kind === 'task' ? dueChips(st, [{ value: td, label: t('sToday') }, { value: addDays(td, 1), label: t('sTomorrow') }], t('fDue')) : null,
       hint);
   };
   const save = async () => {
@@ -339,7 +390,7 @@ export function routeInbox(item) {
   const paint = () => fill(body,
     h('p.dx', cleanTitle(item.title)),
     h('div.og', h('p.ogl', t('fProjectReq')), chips(projs.map((p) => ({ value: p.slug, label: p.name, color: p.color })), st.project, (v) => { st.project = v; paint(); })),
-    h('div.og', h('p.ogl', t('fDue')), chips([{ value: td, label: t('sToday') }, { value: addDays(td, 1), label: t('sTomorrow') }, { value: nextWeekday(td, 1), label: t('sMonday') }, { value: addDays(td, 7), label: t('sNextWeek') }], st.due, (v) => { st.due = st.due === v ? null : v; paint(); })),
+    h('div.og', h('p.ogl', t('fDue')), dueChips(st, [{ value: td, label: t('sToday') }, { value: addDays(td, 1), label: t('sTomorrow') }, { value: addDays(td, 7), label: t('sNextWeek') }], t('fDue'))),
     h('div.og', h('p.ogl', t('fPriority')), chips((state.cfg.options?.priorities || []).map((v) => ({ value: v, label: v })), st.priority, (v) => { st.priority = st.priority === v ? null : v; paint(); })),
     hint);
   const save = async () => {

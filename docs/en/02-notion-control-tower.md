@@ -157,6 +157,8 @@ A live register maintained by `risk-register`.
 
 Every risk has a dossier in its body: description, symptoms, impact, mitigation plan, escalation triggers, Signal History. With no signals for 30+ days it is closed. Visibility decides what goes into an external report.
 
+The dashboard (`19`) can read two optional date properties here, `Trigger Date` and `Last Reviewed`. They are not in the template yet; without them the dashboard sorts risks by severity (document `20`, section 4).
+
 ### Tasks Tracker: the PM's personal operating system
 This is not "one more task tracker" and not a duplicate of Jira. The axiom:
 
@@ -256,7 +258,7 @@ A distillation of "what is happening right now": open questions, planned deploys
 The day runs around the Focus desk.
 
 **Morning:**
-1. Focus desk, **My day**: Do next (the plan for the day), Reply & follow up (`Awaiting Reply` first, it is your turn), Risks needing attention, Recent reports (what the scheduled skills generated: the daily report, draft replies, prep).
+1. Focus desk, **My day**: Do next (the plan for the day), Reply & follow up (`Awaiting Reply` first, it is your turn), Risks needing attention, Recent reports (what the scheduled skills generated: the daily report, prep, reviews). On a phone the same morning pass works in the optional dashboard (`19`), Today page.
 2. The **Overdue** tab: is anything past due?
 3. Inbox: any new items? Process them in 2 min.
 

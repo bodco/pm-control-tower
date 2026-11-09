@@ -61,6 +61,22 @@ The layers above are a static map of components. A new PM finds it easier to und
 
 Read it this way: everything that arrives from outside first becomes a record in a database (Threads/Meetings), then skills turn those records into artifacts (prep, draft, topic, risk, report), the artifacts settle into memory (Reports/Topics/Risks/Decisions/Current State), and the human sees them on a single page and acts. The project config defines the filters and rules at every step.
 
+## The view layer: the dashboard (optional)
+
+The dashboard (`tools/dashboard`, document `19`) is a read-and-act view over layer 2, not a sixth layer with its own data. It does not replace the Notion page: the page stays the hub, the dashboard is the quick screen for the phone and the morning triage.
+
+```
+ PM (phone / laptop) ──▶ Cloudflare Access ──▶ Worker (PWA + /api) ──▶ Notion API ──▶ the same 11 databases
+                                                    │                                    ▲
+                                    nothing is stored here; one token, a Worker secret   │ skills write, as before
+```
+
+- **Reads** Tasks Tracker, Threads, Meetings, Decisions, Risks, Reports, Inbox and the Current State pages of the configured projects; optionally two Automation databases (read-only).
+- **Writes** only small human decisions: a task done or snoozed, a thread status (with `Manual Status At`, so the collectors keep it), a risk reviewed, a new decision, an Inbox note. Nothing runs from the app and nothing goes to anyone.
+- **Ask Claude** is the bridge back to layer 3: the app copies a context pack (`[CT-RESOLVE v1]`), the PM pastes it into Claude with one sentence, and `resolve-item` shows a plan and writes after the OK.
+
+Install: document `20`.
+
 ## Core and adapters: what of this is universal
 
 The split that settles the question "is this a framework, or a description of Acme":

@@ -1,5 +1,5 @@
 {
-  "_comment": "Copy to dashboard.config.json (git-ignored) and fill in your own IDs. The values here are placeholders. notion.* are data source IDs (collection://...), the same keys as in projects/<slug>.md. automation_db and runs_db are optional (read-only Automation page). app.turn maps thread statuses to whose turn it is; app.freshness holds the freshness thresholds in days. A project can override turn and freshness with its own keys of the same name; short_name is the short label in rows (default: the first word of name).",
+  "_comment": "Copy to dashboard.config.json (git-ignored) and fill in your own IDs. The values here are placeholders. notion.* are data source IDs (collection://...), the same keys as in projects/<slug>.md. automation_db and runs_db are optional (read-only Automation page). app.turn maps thread statuses to whose turn it is; app.freshness holds the freshness thresholds in days. A project can override turn and freshness with its own keys of the same name; short_name is the short label in rows (default: the first word of name). workspace_page_id is the page of the workspace (client or company, for example Northwind Studio) in the Workspaces database. timezone is an IANA name such as Europe/Kyiv or America/New_York. After filling it in, run npm run doctor.",
   "app": {
     "title": "PM Control Tower",
     "locale": "en",

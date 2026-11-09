@@ -4,15 +4,15 @@ import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 
 const DS = {
-  tasks: '00000000000000000000000000000001',
-  threads: '00000000000000000000000000000002',
-  meetings: '00000000000000000000000000000003',
-  decisions: '00000000000000000000000000000004',
-  risks: '00000000000000000000000000000005',
-  reports: '00000000000000000000000000000006',
-  inbox: '00000000000000000000000000000007',
+  tasks: 'de000000000000000000000000000001',
+  threads: 'de000000000000000000000000000002',
+  meetings: 'de000000000000000000000000000003',
+  decisions: 'de000000000000000000000000000004',
+  risks: 'de000000000000000000000000000005',
+  reports: 'de000000000000000000000000000006',
+  inbox: 'de000000000000000000000000000007',
 };
-export const IDS = { DS, orbit: '00000000000000000000000000000011', playbook: '00000000000000000000000000000012', other: '00000000000000000000000000000099', ws: '00000000000000000000000000000021', state: '00000000000000000000000000000031' };
+export const IDS = { DS, orbit: 'de000000000000000000000000000011', playbook: 'de000000000000000000000000000012', other: 'de000000000000000000000000000099', ws: 'de000000000000000000000000000021', state: 'de000000000000000000000000000031' };
 
 const SCHEMAS = {
   tasks: { 'Task name': 'title', Status: 'status', Priority: 'select', 'Effort level': 'select', Type: 'select', Source: 'select', 'Due date': 'date', Description: 'rich_text', 'Jira Issue Key': 'rich_text', Project: 'relation', Workspace: 'relation', Inbox: 'relation' },
@@ -29,6 +29,7 @@ export function createMock({ withManualProp = true, withRiskDates = true } = {})
   if (!withManualProp) delete schemas.threads['Manual Status At'];
   if (!withRiskDates) { delete schemas.risks['Trigger Date']; delete schemas.risks['Last Reviewed']; }
   const pages = new Map();
+  const bodies = new Map();
   const log = [];
   const dsKey = (id) => Object.entries(DS).find(([, v]) => v === id.replace(/-/g, ''))?.[0];
 
@@ -68,7 +69,13 @@ export function createMock({ withManualProp = true, withRiskDates = true } = {})
   // ---------- seed ----------
   const O = [IDS.orbit], P = [IDS.playbook], X = [IDS.other];
   add('tasks', { 'Task name': '🧪 Demo: confirm launch checklist with client', Status: 'In progress', Priority: 'High', Source: 'client-meeting-prep', 'Due date': day(0), Project: O });
-  add('tasks', { 'Task name': '🧪 Demo: send weekly status report', Status: 'To Do', Priority: 'Medium', Source: 'weekly-overview', 'Due date': day(-2), Project: O });
+  const weekly = add('tasks', { 'Task name': '🧪 Demo: send weekly status report', Status: 'To Do', Priority: 'Medium', Source: 'weekly-overview', 'Due date': day(-2), Description: 'Status for the client: launch checklist, export ETA, open risks.', Project: O });
+  // Page content of one task, for the details sheet (GET /api/body).
+  bodies.set(weekly.id, [
+    { object: 'block', id: randomUUID(), type: 'paragraph', has_children: false, paragraph: { rich_text: [{ plain_text: 'Draft the weekly status from the overview report.', annotations: {} }] } },
+    { object: 'block', id: randomUUID(), type: 'bulleted_list_item', has_children: false, bulleted_list_item: { rich_text: [{ plain_text: 'Launch checklist: 2 items open', annotations: {} }] } },
+    { object: 'block', id: randomUUID(), type: 'bulleted_list_item', has_children: false, bulleted_list_item: { rich_text: [{ plain_text: 'Export ETA: waiting on QA sign-off', annotations: {} }] } },
+  ]);
   add('tasks', { 'Task name': '🧪 Demo: review staging deploy notes', Status: 'Under Review', Priority: 'Low', Source: 'manual', 'Due date': day(3), Project: O });
   add('tasks', { 'Task name': '🧪 Demo: renew analytics access', Status: 'On Hold', Priority: 'Medium', Source: 'manual', 'Due date': day(10), Project: O });
   add('tasks', { 'Task name': '🧪 Demo: draft change request for export feature', Status: 'To Do', Priority: 'High', Source: 'change-request', Project: O });
@@ -125,6 +132,10 @@ export function createMock({ withManualProp = true, withRiskDates = true } = {})
     { type: 'callout', callout: { rich_text: [{ plain_text: 'Updated daily by the current-state skill.' }], icon: { emoji: '🧭' } } },
     { type: 'table', table: {} },
   ].map((b, i) => ({ object: 'block', id: `b${i}`, has_children: false, ...b }));
+  // Project pages, so `npm run doctor` can check that the token sees them.
+  for (const [key, name] of [['orbit', 'Orbit SaaS Launch'], ['playbook', 'Internal Delivery Playbook']]) {
+    pages.set(IDS[key], { object: 'page', id: IDS[key], url: `https://www.notion.so/demo-${key}`, parent: { type: 'page_id' }, properties: { title: { type: 'title', title: [{ plain_text: `🧪 Demo: ${name}` }] } }, last_edited_time: ts(-1, 6) });
+  }
   pages.set(IDS.state, { object: 'page', id: IDS.state, url: 'https://www.notion.so/demo-current-state', parent: { type: 'page_id' }, properties: { title: { type: 'title', title: [{ plain_text: '🧪 Demo: Orbit Current State' }] } }, last_edited_time: ts(0, 6) });
 
   // ---------- filter evaluation ----------
@@ -203,6 +214,7 @@ export function createMock({ withManualProp = true, withRiskDates = true } = {})
     log.push({ method: req.method, path: url.pathname, body });
     try {
       let m;
+      if (req.method === 'GET' && url.pathname === '/v1/users/me') return send(200, { object: 'user', type: 'bot', name: 'Demo integration' });
       if (req.method === 'GET' && (m = url.pathname.match(/^\/v1\/data_sources\/(\w+)$/))) {
         const db = dsKey(m[1]);
         if (!db) return send(404, { code: 'object_not_found', message: 'Could not find data_source' });
@@ -238,8 +250,10 @@ export function createMock({ withManualProp = true, withRiskDates = true } = {})
         return send(200, page);
       }
       if (req.method === 'GET' && (m = url.pathname.match(/^\/v1\/blocks\/(\w+)\/children$/))) {
-        if (m[1] !== IDS.state) return send(404, { code: 'object_not_found', message: 'Could not find block' });
-        return send(200, { object: 'list', results: stateBlocks, has_more: false });
+        if (m[1] === IDS.state) return send(200, { object: 'list', results: stateBlocks, has_more: false });
+        const owner = [...pages.values()].find((p) => p.id.replace(/-/g, '') === m[1].replace(/-/g, ''));
+        if (!owner) return send(404, { code: 'object_not_found', message: 'Could not find block' });
+        return send(200, { object: 'list', results: bodies.get(owner.id) || [], has_more: false });
       }
       send(404, { code: 'not_found', message: `mock: ${req.method} ${url.pathname}` });
     } catch (e) {

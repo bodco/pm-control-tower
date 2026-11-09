@@ -53,8 +53,12 @@ Four skills give value on day one: `projects` (fill in one config), `daily-team-
 work lives in mail). Add the rest when a routine starts to hurt.
 
 A typical weekday morning on autopilot, one scheduled task per line, in this order:
-"collect Slack for Orbit since yesterday", "process mail", "draft replies", then "prep me
-for the Orbit team sync" an hour before the sync.
+"collect Slack for Orbit since yesterday", "process mail", then "prep me for the Orbit
+team sync" an hour before the sync.
+
+With the optional dashboard (`19`, install: `20`) the morning starts on its Today page.
+Something settled in a call? Press **Ask Claude** (key `A`) on the card, paste the pack
+into Claude and add one sentence: `resolve-item` does the rest after your OK.
 
 ---
 

@@ -75,3 +75,13 @@
 | **The 5-minute rule** | The agent's autonomy boundary: without confirmation it writes only where the consequence can be undone within 5 minutes; everything else waits for the human (`projects/SKILL.md`) |
 | **Tempo** | Time tracking in Jira; exports for client reports and estimates |
 | **PROJ** | The Jira project key for Acme |
+| **Dashboard** | The optional installable web app (`tools/dashboard`, documents `19` and `20`): a calm view over the Control Tower databases on any device, with small actions; Notion stays the only store |
+| **Ask Claude** | The dashboard button (key `A`) on a thread, task or risk card: copies a context pack to the clipboard for `resolve-item`; the dashboard itself runs nothing |
+| **CT-RESOLVE** | The header of that context pack (`[CT-RESOLVE v1]`): project and slug, page id and links, status, Jira key, related candidates, ending with `My decision:` |
+| **resolve-item** | The skill that applies one PM decision around an item: verifies the candidates, shows a plan (Decision, Task with the agreed date, Thread status, Topic) and writes after the OK |
+| **Manual Status At** | A Threads date property: when a human set the status. The collectors keep that status until a newer message arrives, then recompute and clear the date |
+| **Collector Status** | A Threads text property only the collectors write: the status they last set. A `Status` that differs from it was changed by a human |
+| **Topic as a story** | One Topics page that links the thread, the meeting, the decision and the task of one subject, so the whole story is read in one place (`resolve-item` creates it when there is none) |
+| **Needs you** | The dashboard queue: threads on your turn, overdue and due-today tasks, critical risks and risks about to trigger |
+| **Stale thread** | A thread with no activity for 30 days or more (configurable): counted nowhere, collected into one review |
+| **doctor** | `npm run doctor` in `tools/dashboard`: checks an installation (files, placeholders, Access, that the token sees each database, the properties) and says what to fix; never prints the token |

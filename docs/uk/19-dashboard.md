@@ -77,10 +77,11 @@
 
 ## Деплой
 
-Два способи, обидва покроково в `tools/dashboard/README.uk.md`:
+Встановлення для нової людини, покроково з перевіркою після кожного кроку, описано в документі [20](20-dashboard-install.md). `npm run doctor` перевіряє встановлення (файли, плейсхолдери, Access, що токен бачить кожну базу, очікувані властивості) і ніколи не друкує токен. Три способи деплою:
 
 1. `npm run deploy` через Wrangler (PWA як Workers Static Assets).
 2. `npm run build:single` збирає один модуль із вбудованою PWA (`dist/worker.single.mjs`) для завантаження через API або дашборд Cloudflare, коли Wrangler з твоєї машини до Cloudflare не дістає.
+3. Автодеплой із GitHub: шаблон `.github/workflows/dashboard-deploy.yml.example` (тести, потім `wrangler deploy`), вимкнений, поки ви не перейменуєте його у своїй копії.
 
 Вхід це Cloudflare Access (безкоштовний план Zero Trust, який при реєстрації просить картку навіть за $0). Адреса це URL `*.workers.dev` або власний домен у зоні, що обслуговується Cloudflare.
 

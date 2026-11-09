@@ -68,6 +68,10 @@ Create the scheduled tasks in Cowork following the table in `08-new-project-flow
 
 The first two weeks: 10 minutes every morning in the CONTROL TOWER, following the scheme in `07-operating-rhythm.md`. This matters more than any skill: the system stays alive as long as people walk into it.
 
+## Step 9 (optional). The dashboard
+
+When the Notion page works for you, add the phone view: `tools/dashboard`, an installable web app over the same databases (`19`). It needs Node 18+, a free Cloudflare account and 20 to 30 minutes; the step-by-step install with a check after every step and `npm run doctor` is document [20](20-dashboard-install.md). Skip it on day one: the dashboard only shows what the skills and you already put into Notion.
+
 ## Adaptation matrix for a different stack
 
 | A colleague's stack | Approach | Status (2026-04, updated 09) | Difficulty |
@@ -96,7 +100,7 @@ The first two weeks: 10 minutes every morning in the CONTROL TOWER, following th
 
 ## What you take with you (the artifacts)
 
-- This Control Tower folder (documents 00-14).
+- This Control Tower folder (documents 00-20), with `tools/dashboard` if you want the phone view.
 - `projects/SKILL.md`, `projects/_template.md`.
 - The set of generic skills (layer 2).
 - The template for the Cowork global instructions.

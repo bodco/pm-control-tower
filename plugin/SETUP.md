@@ -105,6 +105,10 @@ explicitly and refers to the skill; it never repeats the skill's instructions.
 
 The call co-pilot is a separate product: [Live Tips](https://github.com/bodco/live-tips). Install the macOS app or its `live-tips` skill from there; it reads the project configs from Step 4 when they exist.
 
+## Step 8 (optional). The dashboard on your phone
+
+Not part of the plugin: `tools/dashboard` in the repository, an installable web app over the same Notion databases, with an **Ask Claude** button that copies a context pack for `resolve-item`. It uses its own Notion integration token (a Cloudflare Worker secret), not the plugin's secrets file. Install: `docs/en/20-dashboard-install.md`.
+
 ## If something does not work
 
 | Symptom | Cause |

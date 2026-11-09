@@ -90,3 +90,7 @@ Meetings database; it is a paid Notion add-on, not part of the plugin.
 If a connector is missing, skills do not fail. They write a line into the report
 about the unavailable source and do the rest. This is intentional and is called
 graceful degradation.
+
+## Not a connector: the dashboard
+
+The dashboard (`tools/dashboard`, `docs/en/19-dashboard.md`) does not use MCP or any connector. A Cloudflare Worker calls the Notion API with its own integration token, stored as the Worker secret `NOTION_TOKEN`; nothing about it goes into `.mcp.json` or the secrets file. Install: `docs/en/20-dashboard-install.md`.

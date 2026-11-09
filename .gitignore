@@ -26,6 +26,8 @@ private/
 reviews/
 prompts/
 scripts/
+# ...except the dashboard's own scripts (setup, doctor, build-single, make-icons)
+!tools/dashboard/scripts/
 Claude outputs/
 Notion/
 _to_delete/

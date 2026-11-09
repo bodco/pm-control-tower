@@ -34,11 +34,13 @@ library works with the new reality a second later. Nothing is hardcoded anywhere
 | `plugin/` | A Claude plugin: 21 project-agnostic PM skills plus MCP server config. Source files |
 | `dist/pm-control-tower.plugin` | The same plugin, packed and ready to install in one click |
 | `tools/notion-mirror/` | A read-only Markdown copy of your Control Tower Notion on the Mac, used for facts and local search; set up from the Live Tips app or by hand (`tools/notion-mirror/README.md`) |
+| `tools/dashboard/` | An optional installable web app (PWA) over the Control Tower databases for the phone and the laptop: Today, whose turn, risks, the next call, small actions, Ask Claude. Cloudflare Worker behind Cloudflare Access, Notion is the only store. Install: `docs/en/20-dashboard-install.md` |
 | `docs/en/` | Framework documentation in English |
 | `docs/uk/` | The same documentation in Ukrainian |
 | `templates/` | `secrets.env.example`: variable names, fake values, and where the real file must live (the same copy travels inside the plugin) |
 | `templates/documents/` | a sample document template and a README: how to plug in company or personal templates (`docs/en/15-document-templates.md`) |
 | `templates/cowork-global-instructions.md` | a Cowork global instructions template (Ukrainian and English) for step 6 of `docs/en/16-runbook.md` |
+| `.github/workflows/dashboard-deploy.yml.example` | an optional automatic deploy of the dashboard, off until you rename it in your copy |
 
 ## The Notion template
 
@@ -63,6 +65,7 @@ usable on its own, with none of the automation in this repository.
    every `~~` placeholder: your database IDs, your home folder, your tracker.
 4. Say to Claude: `set up a new project <Name>, case A`. It builds the config, the Notion pages and the folders itself.
 5. Try it: `prepare me for the sync on <your project>`.
+6. Optional, when the basics work: the dashboard on your phone, `docs/en/20-dashboard-install.md` (20 to 30 minutes, `npm run doctor` checks every step).
 
 Step by step with prompts: `docs/en/16-runbook.md`. Full instructions: `plugin/SETUP.md`. Placeholder reference: `plugin/CONNECTORS.md`.
 
@@ -153,6 +156,7 @@ weeks of calibration for your own project, not an hour.
 | 1.9.0 | 2026-10-27 | Live Tips moved to its own product and repository, [bodco/live-tips](https://github.com/bodco/live-tips): the macOS app, the `live-tips` skill, the recorder and its guide, with their history. The plugin has 21 skills; `docs/en/17-live-tips.md` points to the new home. |
 | 1.10.0 | 2026-11-06 | Dashboard: `tools/dashboard`, an installable web app (PWA) on a Cloudflare Worker behind Cloudflare Access, over the Control Tower databases. Every project at a glance (overdue, due today, awaiting your reply, high risks, done in 7 days, last meeting and report), project tabs (Tasks, Threads, Meetings, Decisions, Risks, Reports, Current state), actions on tasks, Inbox, risks, decisions and thread statuses; deployer's IDs and token never in git. Manual thread status sticks: new Threads properties `Collector Status` and `Manual Status At`, rule 4 of `_standards.md` section 11, `slack-collector` and `mac-mail-collector` keep a human status until a new message arrives. Document `19`. |
 | 1.11.0 | 2026-11-08 | New skill `resolve-item`: one PM decision about a thread, task or risk is applied around it. It finds the related meeting, threads, tasks and decisions, shows a plan, and after approval writes a Decision, the task with the agreed date, the thread status (with `Manual Status At`) and one Topic that links the story. It never writes `Draft Response`, never touches Jira or the client board, never sends. The dashboard gets an "Ask Claude" button (key `A`) that copies a context pack for it; the dashboard no longer reads `Draft Response`. `inbox-responder` is removed, together with the Threads properties only it wrote (`Category`, `Context Sources`, `Draft Response`) and the `inbox_review_page` config key; drafts of replies are not stored in Notion any more. |
+| 1.11.1 | 2026-11-08 | Dashboard install for someone new (dashboard 0.3.0, skills unchanged). Document `20` (EN and UK): requirements, the Notion integration with Insert content, required and optional properties with what is lost without each, config keys, `npm run doctor`, deploy, Cloudflare Access, own domain, iPhone, Android and desktop, updates, rollback, troubleshooting, a guided prompt for Claude. `npm run doctor` checks the private files, placeholders, Access values, that the token sees every database and page, the expected properties, and with `--url` the login gate; it never prints the token (`test/doctor.mjs`). Template `.github/workflows/dashboard-deploy.yml.example` (tests, then `wrangler deploy`, no rights by default, pinned actions, config from base64 secrets). The dashboard no longer reads the removed Threads `Category`. Dashboard 0.3.1: quick add and Inbox routing get a "Pick a date" chip with the phone's date picker instead of the ambiguous "Monday"; the details sheet shows the record's full text and page content (`GET /api/body/:kind/:id`, guarded like a write). Documents `00`, `01` (the view layer), `02`, `04`, `05`, `07`, `10` (optional step 9), `11` (lessons 25 and 26), `12` (Ask Claude, CT-RESOLVE, Manual Status At, Collector Status, Topic as a story, doctor), `13` (#51, T11, T12), `18`, `19` |
 
 Open questions and the technical backlog: `docs/en/13-open-questions.md`.
 

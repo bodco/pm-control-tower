@@ -77,10 +77,11 @@ phone / laptop  ->  sign-in gate (Cloudflare Access)
 
 ## Deploying
 
-Two ways, both described step by step in `tools/dashboard/README.md`:
+The install for someone new, step by step with a check after each step, is document [20](20-dashboard-install.md). `npm run doctor` checks an installation (files, placeholders, Access, that the token sees every database, the expected properties) and never prints the token. Three ways to deploy:
 
 1. `npm run deploy` with Wrangler (the PWA as Workers Static Assets).
 2. `npm run build:single` builds one module with the PWA embedded (`dist/worker.single.mjs`) for an upload through the Cloudflare API or dashboard, when Wrangler cannot reach Cloudflare from your machine.
+3. Automatic deploy from GitHub: the template `.github/workflows/dashboard-deploy.yml.example` (tests, then `wrangler deploy`), off until you rename it in your copy.
 
 The gate is Cloudflare Access (Zero Trust free plan, which asks for a card at sign-up even at $0). The address is the `*.workers.dev` URL or a custom domain on a zone hosted in Cloudflare.
 

@@ -27,7 +27,6 @@ export const DEFAULT_SCHEMA = {
     title: 'Thread Name',
     status: 'Status',
     type: 'Type',
-    category: 'Category',
     description: 'Description',
     emailLink: 'Email Link',
     slackLink: 'Slack Link',
@@ -38,6 +37,9 @@ export const DEFAULT_SCHEMA = {
     // Date property that marks a status set by a human. Collectors keep a
     // manual status until a new message arrives (projects/_standards.md s11).
     manualStatusAt: 'Manual Status At',
+    // Written by the collectors only. The dashboard never writes it; `npm run doctor`
+    // checks that it exists.
+    collectorStatus: 'Collector Status',
     statuses: ['Awaiting Reply', 'Need Follow-up', 'Replied', 'Spectator Mode', 'AI Review', 'Closed'],
     // The page icon follows the status. Closed has no icon.
     icons: {

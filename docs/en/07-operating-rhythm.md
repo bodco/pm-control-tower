@@ -11,9 +11,9 @@ This document describes what a real day, week and month look like once the autop
 - The project's Current State is updated for the last 2 days.
 
 ### 09:00-09:30 The morning ritual (high energy, 15-30 min)
-1. Open CONTROL TOWER.
+1. Open CONTROL TOWER, or on the phone the dashboard Today page (`19`): one sentence, the Needs you queue, the next call. Both read the same databases.
 2. Today's Reports: read the daily-work-report. This replaces "go through everything by hand".
-3. Open threads waiting on you. Three actions per thread: reply (or let `resolve-item` apply your decision), turn it into a ticket (`jira-management` or thread-ticket-sync), or defer it by writing the decision into the page body or `Description`. Do not change Status by hand: the next collector pass moves it by the reply.
+3. Open threads waiting on you. Three actions per thread: reply (or let `resolve-item` apply your decision), turn it into a ticket (`jira-management` or thread-ticket-sync), or defer it by writing the decision into the page body or `Description`. A status you change by hand (in Notion or in the dashboard) sticks until a new message arrives; then the collector recomputes it (`projects/_standards.md` section 11). Settled in a meeting? Press Ask Claude on the card, paste the pack into Claude with one sentence, and `resolve-item` updates the thread, the task, the decision and the topic after your OK.
 4. Inbox: process it in 2 min (Route / delete).
 5. Today / This Week + Overdue: pick the top 3 for the day. This is a menu, not a contract. Here you see the whole load together: both projects, company matters, personal. If today's total Effort level does not fit into the day, something gets moved before the day starts rather than at 19:00.
 6. Red signals: new Sentry errors from the prep, critical risks, deadlines. If something is on fire, `acme-debug` or `sentry-assistant` in a single sentence.
@@ -24,7 +24,7 @@ This document describes what a real day, week and month look like once the autop
 - The skill determines from the config whether today is a sync day (week A Mon/Wed/Fri, B Tue/Thu).
 
 ### The day (the work zone)
-- Async replies in batches 2-3 times a day, not reactively. The drafts already exist, so a batch takes minutes.
+- Async replies in batches 2-3 times a day, not reactively. The context is already in Threads and the preps, so a batch takes minutes; Claude drafts a reply on request, you send it.
 - Maintaining artefacts as you go: decisions into the Decisions DB (one sentence, date, source), state changes into the config, a risk into Risks via "check the risks" or by hand.
 - The client asked for "just one more small thing"? `change-request`: bucket A (logging, even when free), B (hours, a slot in planned work or a small CR) or C (touches data, money or security: always a CR). At the end of the month the Extras Log shows how much goodwill went beyond scope.
 - A meeting with the client? The prep is already in the Reports DB 55 minutes beforehand. After the meeting: "meeting <url>" → a bilingual report with action items on the meeting page.
