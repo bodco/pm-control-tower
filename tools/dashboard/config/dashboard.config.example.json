@@ -1,5 +1,5 @@
 {
-  "_comment": "Copy to dashboard.config.json (git-ignored) and fill in your own IDs. The values here are placeholders. notion.* are data source IDs (collection://...), the same keys as in projects/<slug>.md. automation_db and runs_db are optional (read-only Automation page). app.turn maps thread statuses to whose turn it is; app.freshness holds the freshness thresholds in days. A project can override turn and freshness with its own keys of the same name; short_name is the short label in rows (default: the first word of name). workspace_page_id is the page of the workspace (client or company, for example Northwind Studio) in the Workspaces database. timezone is an IANA name such as Europe/Kyiv or America/New_York. After filling it in, run npm run doctor.",
+  "_comment": "Copy to dashboard.config.json (git-ignored) and fill in your own IDs. The values here are placeholders. notion.* are data source IDs (collection://...), the same keys as in projects/<slug>.md. automation_db and runs_db are optional (read-only Automation page). app.turn maps thread statuses to whose turn it is; app.freshness holds the freshness thresholds in days. A project can override turn and freshness with its own keys of the same name; short_name is the short label in rows (default: the first word of name). projects_db (optional) turns on project discovery: every project in the Notion Projects database with Status In progress appears on the dashboard by itself, and the Settings page switches projects on and off (Dashboard select: Auto, On, Off). Entries in projects below then only add details (color, short_name, turn, freshness). workspace_page_id is the page of the workspace (client or company, for example Northwind Studio) in the Workspaces database. timezone is an IANA name such as Europe/Kyiv or America/New_York. After filling it in, run npm run doctor.",
   "app": {
     "title": "PM Control Tower",
     "locale": "en",
@@ -32,7 +32,8 @@
     "reports_db": "collection://00000000-0000-0000-0000-000000000006",
     "inbox_db": "collection://00000000-0000-0000-0000-000000000007",
     "automation_db": "collection://00000000-0000-0000-0000-000000000008",
-    "runs_db": "collection://00000000-0000-0000-0000-000000000009"
+    "runs_db": "collection://00000000-0000-0000-0000-000000000009",
+    "projects_db": "collection://00000000-0000-0000-0000-000000000010"
   },
   "projects": [
     {

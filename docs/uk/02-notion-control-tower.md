@@ -229,6 +229,9 @@ Projects:
 | `Project name` | title | |
 | `Status` | status | Not started, In progress, On Hold, Done (`project-lifecycle` ставить In progress на kickoff) |
 | `Start date`, `End date` | date | |
+| `Dashboard` | select | Auto, On, Off. Видимість на дашборді: Auto або порожньо йде за Status (показується, поки In progress), On і Off задають примусово. Записується зі сторінки Settings дашборда (`19`) |
+| `Current State` | url | Посилання на сторінку Current State проєкту (єдине джерело того, що правда зараз) |
+| `Slug` | text | Slug конфігу проєкту: `projects/<slug>.md`. За ним дашборд звʼязує рядок Projects із записом конфігу (без нього бере назву) |
 | `Workspace` | relation | пара до `Projects` у Workspaces |
 | `Tasks`, `Inbox`, `💬 Meetings`, `📚 Knowledge Base`, `📨 Threads`, `🧵 Topics` | relation | зворотні relation; Risks, Decisions і Reports посилаються сюди однобічно |
 

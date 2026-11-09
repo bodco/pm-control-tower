@@ -56,6 +56,14 @@ Until 1.10.0 every collector pass recomputed `Status`, so a status set by hand w
 
 Both properties are in the Threads database of the public template since 1.10.0. A Threads database without them keeps the old behaviour, and the collector says so in its summary.
 
+## Project discovery and the Settings switches
+
+The dashboard does not need a hand-written project list. Set `notion.projects_db` in `config/dashboard.config.json` (the Projects database ID) and every project whose `Status` is `In progress` appears on the board by itself, with the `Slug` and `Workspace` from its Projects row. Entries under `projects` in the config then only add details (color, short name, turn mapping, freshness) and always stay on, unless switched off.
+
+The switch for each project is on the Settings page. It is saved in Notion, in the Projects property `Dashboard` (select: `Auto`, `On`, `Off`), so it is the same on every device. `Auto` or empty means "follow Status" (config projects: always on); `On` and `Off` force the state. A project that is `Not started`, `On Hold` or `Done` is listed in Settings as off and can be switched on by hand. Without `notion.projects_db` the dashboard uses the config list and the switches are read-only.
+
+Add the `Dashboard` select to the Projects database before using the switches (a working-Notion change; the public template needs the same property, see the sync procedure).
+
 ## Architecture
 
 ```

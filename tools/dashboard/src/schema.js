@@ -105,6 +105,19 @@ export const DEFAULT_SCHEMA = {
     summary: 'Summary',
     project: 'Project',
   },
+  // Projects database: the list of projects the dashboard discovers.
+  projects: {
+    title: 'Project name',
+    slug: 'Slug',
+    status: 'Status',
+    // Select: Auto / On / Off. Written by the dashboard Settings page.
+    dashboard: 'Dashboard',
+    workspace: 'Workspace',
+    currentState: 'Current State',
+    // Discovered (not in the config) projects are shown while Status is one of these.
+    activeStatuses: ['In progress'],
+    modes: ['Auto', 'On', 'Off'],
+  },
   inbox: {
     title: 'Inbox Name',
     status: 'Status',

@@ -229,6 +229,9 @@ Projects:
 | `Project name` | title | |
 | `Status` | status | Not started, In progress, On Hold, Done (`project-lifecycle` sets In progress at kickoff) |
 | `Start date`, `End date` | date | |
+| `Dashboard` | select | Auto, On, Off. Dashboard visibility: Auto or empty follows Status (shown while In progress), On and Off force it. Written by the dashboard Settings page (`19`) |
+| `Current State` | url | Link to the project Current State page (single source of what is true now) |
+| `Slug` | text | Project config slug: `projects/<slug>.md`. The dashboard matches a Projects row to its config entry by it (falls back to the name) |
 | `Workspace` | relation | paired with `Projects` in Workspaces |
 | `Tasks`, `Inbox`, `💬 Meetings`, `📚 Knowledge Base`, `📨 Threads`, `🧵 Topics` | relation | back-relations; Risks, Decisions and Reports link here one way |
 

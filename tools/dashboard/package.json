@@ -9,7 +9,7 @@
     "doctor": "node scripts/doctor.mjs",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "node test/smoke.mjs && node test/logic.mjs && node test/doctor.mjs && node test/contrast.mjs",
+    "test": "node test/smoke.mjs && node test/logic.mjs && node test/projects.mjs && node test/doctor.mjs && node test/contrast.mjs",
     "demo": "node test/demo-server.mjs",
     "build:single": "node scripts/build-single.mjs",
     "icons": "node scripts/make-icons.mjs"

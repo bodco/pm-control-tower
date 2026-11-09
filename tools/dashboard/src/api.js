@@ -5,6 +5,7 @@
 
 import { Notion, NotionError, prop, buildProps, cleanId, sameId } from './notion.js';
 import { mergeSchema } from './schema.js';
+import { resolveProjects, modeFor } from './projects.js';
 import { notionAutomationSource, fixtureAutomationSource } from './automation.js';
 
 const TTL_MS = 30 * 1000;
@@ -45,11 +46,22 @@ function short(s, n) {
 export function createApi(config, env) {
   const S = mergeSchema(config.schema);
   const db = config.notion || {};
-  const projects = (config.projects || []).filter((p) => p.slug && p.project_page_id);
+  // `projects` is the live list of projects shown on the board (enabled ones).
+  // It is mutated in place by refreshProjects(), so every closure sees it.
+  const projects = [];
+  const PS = S.projects;
+  let allProjects = resolveProjects(config.projects, [], PS);
+  let projectsAt = 0;
+  let projectsError = null;
+  const applyProjects = () => {
+    projects.splice(0, projects.length, ...allProjects.filter((p) => p.enabled));
+    bySlug.clear();
+    for (const p of projects) bySlug.set(p.slug, p);
+  };
   const tz = config.app?.timezone || 'UTC';
   const notion = new Notion({ token: env.NOTION_TOKEN, base: env.NOTION_API_BASE || undefined });
 
-  const bySlug = new Map(projects.map((p) => [p.slug, p]));
+  const bySlug = new Map();
   // Which thread statuses mean "my turn" and "their turn". From config; the
   // defaults follow projects/_standards.md s11.
   const turn = {
@@ -72,6 +84,41 @@ export function createApi(config, env) {
     return { mine: o.mine || turn.mine, theirs: o.theirs || turn.theirs, ai: o.ai || turn.ai };
   }
   const cache = new Map();
+  applyProjects();
+
+  // Reads the Projects database (at most every TTL, or when asked) and
+  // re-resolves which projects are on the board. Without notion.projects_db,
+  // or if the read fails, the config list is used as is.
+  async function refreshProjects(force) {
+    if (!db.projects_db) return;
+    if (!force && Date.now() - projectsAt < TTL_MS) return;
+    const before = projects.map((p) => p.slug).join(',');
+    try {
+      const pages = await notion.query(db.projects_db, { pageSize: 100, maxPages: 2 });
+      allProjects = resolveProjects(config.projects, pages, PS);
+      projectsError = null;
+      projectsAt = Date.now();
+    } catch (e) {
+      projectsError = e.message;
+      projectsAt = Date.now() - TTL_MS + 5000; // retry soon
+    }
+    applyProjects();
+    if (projects.map((p) => p.slug).join(',') !== before) cache.clear();
+  }
+
+  async function setProjectEnabled(slug, body) {
+    const p = allProjects.find((x) => x.slug === slug);
+    if (!p) throw new HttpError(404, `Unknown project "${slug}"`);
+    if (typeof body?.enabled !== 'boolean') throw new HttpError(400, 'enabled (true/false) is required');
+    if (!db.projects_db || p.configOnly) throw new HttpError(400, 'This project is not in the Notion Projects database, so its switch cannot be saved. Set notion.projects_db in the config.');
+    const sp = (await notion.dataSource(db.projects_db)).properties || {};
+    if (!sp[PS.dashboard]) throw new HttpError(400, `Property "${PS.dashboard}" (select: ${PS.modes.join(', ')}) is missing in the Projects database.`);
+    const mode = modeFor(p, body.enabled);
+    await notion.updatePage(p.project_page_id, { properties: { [PS.dashboard]: { select: { name: mode } } } });
+    await refreshProjects(true);
+    cache.clear();
+    return { slug, mode, enabled: Boolean(allProjects.find((x) => x.slug === slug)?.enabled) };
+  }
 
   function requireDb(key) {
     if (!db[key]) throw new HttpError(500, `Config is missing notion.${key}`);
@@ -624,6 +671,8 @@ export function createApi(config, env) {
         if (request.headers.get('X-CT-Request') !== '1') throw new HttpError(403, 'Missing X-CT-Request header');
         cache.clear();
       }
+      await refreshProjects(fresh || path === '/api/config');
+      let r0;
       const body = m === 'GET' ? null : await request.json().catch(() => { throw new HttpError(400, 'Body must be JSON'); });
 
       if (m === 'GET' && path === '/api/config') {
@@ -634,6 +683,15 @@ export function createApi(config, env) {
             slug: p.slug, name: p.name, short: p.short_name || null, color: p.color, hasCurrentState: Boolean(p.current_state_page_id),
             turn: turnFor(p), freshness: freshnessFor(p),
           })),
+          // Every project the dashboard knows, for the Settings switches.
+          allProjects: allProjects.map((p) => ({
+            slug: p.slug, name: p.name, color: p.color, status: p.status, mode: p.mode, enabled: p.enabled,
+            discovered: p.discovered, configOnly: p.configOnly,
+          })),
+          projectsDiscovery: {
+            on: Boolean(db.projects_db), error: projectsError,
+            canToggle: Boolean(db.projects_db) && Boolean((await schemaProps('projects_db').catch(() => ({})))[PS.dashboard]),
+          },
           freshness: freshnessFor(null),
           inbox: Boolean(db.inbox_db),
           automation: Boolean(db.automation_db || config.automation?.fixtures),
@@ -664,6 +722,7 @@ export function createApi(config, env) {
           },
         });
       }
+      if (m === 'PATCH' && (r0 = path.match(/^\/api\/projects\/([\w-]+)$/))) return json(await setProjectEnabled(r0[1], body));
       if (m === 'GET' && path === '/api/overview') return json(await overview(fresh));
       let r;
       // "Open in Notion" for a project: a redirect, so page IDs stay out of the client config.

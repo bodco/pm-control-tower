@@ -5,10 +5,10 @@ import { h, icon, state, ctx, settings, saveSettings, isPhone, applyLang } from 
 import { t, tn } from './i18n.js';
 import { fmtAge, fmtWhen, fmtSoon, cleanTitle, today, dayOf, timeOf } from './dates.js';
 import * as L from './logic.js';
-import { loadSection, api } from './net.js';
+import { loadSection, loadAll, api } from './net.js';
 import {
   pageHead, sechead, block, list, row, quiet, alertRow, banner, metricStrip, healthWord, dot, optDot,
-  empty, btn, seg, textFilters, skeleton,
+  empty, btn, seg, textFilters, skeleton, toast,
 } from './ui.js';
 import { describe, staleReview, closeOldStale, quickAdd, shortName, palette } from './actions.js';
 
@@ -503,8 +503,16 @@ export function viewSettings() {
   return [pageHead({ title: t('navSettings') }), h('div.stack.top',
     block(sechead(t('language')), seg([{ value: 'en', label: 'English' }, { value: 'uk', label: 'Українська' }], settings.lang || document.documentElement.lang, (v) => { settings.lang = v; saveSettings(); applyLang(); rerender(); }, { label: t('language') })),
     block(sechead(t('theme')), seg([{ value: 'system', label: t('themeSystem') }, { value: 'dark', label: t('themeDark') }, { value: 'light', label: t('themeLight') }], settings.theme, (v) => { settings.theme = v; saveSettings(); window.dispatchEvent(new Event('ct:theme')); rerender(); }, { label: t('theme') })),
-    block(sechead(t('visibleProjects')), h('p.hint', t('visibleHint')), h('div.list', (c.cfg.projects || []).map((p) => setrow(h('span.pt', dot(p.color), p.name), null,
-      sw(!settings.hidden.includes(p.slug), (e) => { settings.hidden = e.target.checked ? settings.hidden.filter((x) => x !== p.slug) : [...new Set([...settings.hidden, p.slug])]; saveSettings(); rerender(); }, p.name))))),
+    block(sechead(t('visibleProjects')), h('p.hint', t(c.cfg.projectsDiscovery?.canToggle ? 'visibleHint' : 'visibleHintLocal')),
+      c.cfg.projectsDiscovery?.error ? h('p.hint', t('discoveryError', { s: c.cfg.projectsDiscovery.error })) : null,
+      h('div.list', (c.cfg.allProjects || c.cfg.projects || []).map((p) => setrow(h('span.pt', dot(p.color), p.name, p.discovered ? h('small', { style: { marginLeft: '8px', opacity: '0.7' } }, t('newProject')) : null), p.status || null,
+        h('input.switch', { type: 'checkbox', role: 'switch', checked: (p.enabled ?? true) || null, disabled: !c.cfg.projectsDiscovery?.canToggle || null, 'aria-label': p.name,
+          onchange: async (e) => {
+            const on = e.target.checked; e.target.disabled = true;
+            try { await api(`/api/projects/${encodeURIComponent(p.slug)}`, { method: 'PATCH', body: { enabled: on } }); await loadAll(true); }
+            catch (err) { toast(err.message, { error: true }); }
+            rerender();
+          } }))))),
     block(sechead(t('threads')), h('div.list', setrow(t('swapTurn'), t('swapTurnHint', { s: (c.cfg.turn?.mine || []).join(', ') }), sw(settings.swapTurn, (e) => { settings.swapTurn = e.target.checked; saveSettings(); rerender(); }, t('swapTurn'))))),
     isPhone() ? null : block(sechead(t('keys')), keysGrid()),
     block(sechead(t('about')), h('p.hint', t('aboutText'))))];

@@ -85,6 +85,9 @@ export const store = {
   del(k) { try { localStorage.removeItem(k); } catch { /* ignore */ } },
 };
 export const settings = Object.assign({ lang: null, theme: 'system', hidden: [], swapTurn: false, keysHintSeen: false }, store.get('ct.settings', {}));
+// Which projects are on the board is stored in Notion now (Projects > Dashboard),
+// so an old per-device list must not hide anything.
+settings.hidden = [];
 export function saveSettings() { store.set('ct.settings', settings); }
 export function applyLang() {
   const lang = settings.lang || (navigator.language || 'en').slice(0, 2);
